@@ -4,7 +4,15 @@ on:
     branches:
       - main
     tags: ['*']
+    paths-ignore:
+      - 'LICENSE.md'
+      - 'README.md'
+      - 'docs/**'
   pull_request:
+    paths-ignore:
+      - 'LICENSE.md'
+      - 'README.md'
+      - 'docs/**'
   workflow_dispatch:
 concurrency:
   # Skip intermediate builds: always.
@@ -19,11 +27,11 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.0'
           - '1.9'
-          - 'nightly'
         os:
           - ubuntu-latest
+          - macOS-latest
+          #- windows-latest
         arch:
           - x64
     steps:
