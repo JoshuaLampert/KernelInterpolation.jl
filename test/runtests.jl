@@ -2,5 +2,7 @@ using KernelInterpolation
 using Test
 
 @testset "KernelInterpolation.jl" begin
-    # Write your tests here.
+    include("test_aqua.jl")
+    include("test_unit.jl")
+    include("test_examples.jl")
 end
