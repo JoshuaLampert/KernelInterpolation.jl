@@ -4,7 +4,7 @@
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
 
-**KernelInterpolation.jl** is a [Julia](https://julialang.org/) package that implements mehods for multivariate interpolation in arbitrary dimension based on symmetric positive-definite kernels with a focus on radial-basis functions.
+**KernelInterpolation.jl** is a [Julia](https://julialang.org/) package that implements methods for multivariate interpolation in arbitrary dimension based on symmetric positive-definite kernels with a focus on radial-basis functions.
 
 ## Installation
 If you have not yet installed Julia, then you first need to [download Julia](https://julialang.org/downloads/). Please [follow the instructions for your operating system](https://julialang.org/downloads/platform/). KernelInterpolation.jl works with Julia v1.8 and newer. You can install KernelInterpolation.jl by executing the following commands from the Julia REPL
@@ -29,7 +29,7 @@ In order to interpolate discrete function values of a (potentially) multivariate
 ```julia
 julia> nodeset = homogeneous_hypercube(5, 2, (-2, -1), (2, 1))
 ```
-Here, we specified that the hypercube has 5 nodes along each of the 2 dimensions (i.e. in total we have $5^2 = 25$) nodes and the boundaries of the cube are given by the lower left corner located at (-2, -1) and the upper right corner at (2, 1). Similarly, `NodeSet`s can be constructed by the functions `random_hypercube`, `random_hypersphere` or `random_hypersphere_boundary` of by directly passing a set of nodes to the constructer of `NodeSet`. Besides the `nodeset`, we need the function values at the nodes. Let's say, we want to reconstruct the function $f(x) = \sin(x_1\cdot x_2)$. Then, we can create the vector of function values by
+Here, we specified that the hypercube has 5 nodes along each of the 2 dimensions (i.e. in total we have $5^2 = 25$) nodes and the boundaries of the cube are given by the lower left corner located at (-2, -1) and the upper right corner at (2, 1). Similarly, `NodeSet`s can be constructed by the functions `random_hypercube`, `random_hypersphere` or `random_hypersphere_boundary` of by directly passing a set of nodes to the constructor of `NodeSet`. Besides the `nodeset`, we need the function values at the nodes. Let's say, we want to reconstruct the function $f(x) = \sin(x_1\cdot x_2)$. Then, we can create the vector of function values by
 ```julia
 julia> f(x) = sin(x[1]*x[2])
 julia> ff = f.(nodeset)
