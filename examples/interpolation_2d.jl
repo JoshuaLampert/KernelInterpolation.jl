@@ -1,6 +1,5 @@
 using KernelInterpolation
 using Plots
-pyplot()
 
 # function to interpolate
 f(x) = sin(2 * pi * x[1])
