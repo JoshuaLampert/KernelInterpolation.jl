@@ -1,6 +1,5 @@
 using KernelInterpolation
 using Plots
-pyplot()
 
 # function to interpolate
 f(x) = cos(x[1]) * x[2]

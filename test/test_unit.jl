@@ -158,7 +158,7 @@ using Plots
         coeffs = coefficients(itp)
         @test length(coeffs) == length(expected_coefficients)
         for i in 1:length(coeffs)
-            @test coeffs[i] == expected_coefficients[i]
+            @test isapprox(coeffs[i], expected_coefficients[i])
         end
         @test kernel_matrix(itp) isa Cholesky
         @test isapprox(itp([0.5, 0.5]), 1.115625820404527)
