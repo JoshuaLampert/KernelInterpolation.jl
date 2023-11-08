@@ -2,7 +2,7 @@ module TestExamples
 
 using Test
 using KernelInterpolation
-# To obtain reproducable results in CI
+# To obtain reproducible results in CI
 using Random
 Random.seed!(1)
 
