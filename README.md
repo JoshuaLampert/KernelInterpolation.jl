@@ -25,7 +25,7 @@ In the Julia REPL, first load the package KernelInterpolation.jl
 ```julia
 julia> using KernelInterpolation
 ```
-In order to interpolate discrete function values of a (potentially) multivariate function $f: \mathbb{R}^d\to \mathbb{R}$, we first need a set of nodes $X = `\{x_1,\ldots,x_n`\}\subset\mathbb{R}^d$, where the function values of $f$ are known. In KernelInterpolation.jl we can, e.g., construct a homogeneous grid on a hypercube in 2 dimensions by calling
+In order to interpolate discrete function values of a (potentially) multivariate function $f: \mathbb{R}^d\to \mathbb{R}$, we first need a set of nodes $X = \\{x_1,\ldots,x_n\\}\subset\mathbb{R}^d$, where the function values of $f$ are known. In KernelInterpolation.jl we can, e.g., construct a homogeneous grid on a hypercube in 2 dimensions by calling
 ```julia
 julia> nodeset = homogeneous_hypercube(5, 2, (-2, -1), (2, 1))
 ```
