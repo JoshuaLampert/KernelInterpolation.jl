@@ -46,6 +46,7 @@ julia> itp([-1.3, 0.26])
 julia> f([-1.3, 0.26])
 -0.33160091709280176
 ```
+More examples can be found in the [`examples/`](https://github.com/JoshuaLampert/KernelInterpolation.jl/tree/main/examples) subdirectory.
 
 ### Visualization
 In order to visualize the results, you need to have [Plots.jl](https://github.com/JuliaPlots/Plots.jl) installed and loaded
