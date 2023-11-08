@@ -2,6 +2,9 @@ module TestExamples
 
 using Test
 using KernelInterpolation
+# To obtain reproducible results in CI
+using Random
+Random.seed!(1)
 
 include("test_util.jl")
 
