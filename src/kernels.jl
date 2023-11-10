@@ -156,7 +156,7 @@ function Base.show(io::IO, k::RadialCharacteristicKernel)
                  ", metric = ", k.metric, ")")
 end
 
-phi(k::RadialCharacteristicKernel, r::Real) = max(0, ((1 - k.shape_parameter * r)^k.beta))
+phi(k::RadialCharacteristicKernel, r::Real) = max(0, 1 - k.shape_parameter * r)^k.beta
 
 @doc raw"""
     PolyharmonicSplineKernel(k; metric = Euclidean())

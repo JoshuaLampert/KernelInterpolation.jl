@@ -92,19 +92,19 @@ function Base.push!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT}) where {Dim, 
     @assert length(v) == dim(nodeset)
     push!(nodeset.nodes, v)
 end
-
 function Base.merge(nodeset::NodeSet{Dim, RealT},
                     others::NodeSet{Dim, RealT}...) where {Dim, RealT}
     nodes_merged = similar(nodeset, 0)
     merge!(nodes_merged, nodeset, others...)
     return nodes_merged
 end
-
 function Base.merge!(nodeset::NodeSet{Dim, RealT},
                      others::NodeSet{Dim, RealT}...) where {Dim, RealT}
     foreach(other -> append!(nodeset.nodes, other.nodes), others)
     #     return NodeSet(merge(nodeset.nodes, foreach(other -> other.nodes, others)...))
 end
+Base.unique(nodeset::NodeSet) = NodeSet(unique(nodeset.nodes))
+Base.unique!(nodeset::NodeSet) = unique!(nodeset.nodes)
 
 """
     values_along_dim(nodeset::NodeSet, i::Int)

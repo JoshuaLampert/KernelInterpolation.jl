@@ -35,6 +35,7 @@ macro ki_testset(name, expr)
         @eval module $mod
         using Test
         using KernelInterpolation
+        using LinearAlgebra: norm # We use `norm` is all `@ki_testset`s
         include(@__FILE__)
         # We define `EXAMPLES_DIR` in (nearly) all test modules and use it to
         # get the path to the examples to be tested. However, that's not required

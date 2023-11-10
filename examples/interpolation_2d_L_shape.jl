@@ -11,6 +11,7 @@ x_max2 = (1 * pi, 2.0)
 nodeset1 = homogeneous_hypercube(5, 2, x_min1, x_max1)
 nodeset2 = homogeneous_hypercube(5, 2, x_min2, x_max2)
 nodeset = merge(nodeset1, nodeset2)
+unique!(nodeset)
 values = f.(nodeset)
 
 itp = interpolate(nodeset, values, RadialCharacteristicKernel(2.0))

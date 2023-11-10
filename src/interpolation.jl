@@ -53,13 +53,13 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
                      k = GaussKernel()) where {Dim, RealT}
     n = length(nodeset)
     @assert length(values) == n
-    kernel_matrix = Matrix{RealT}(undef, n, n)
+    distance_matrix = Matrix{RealT}(undef, n, n)
     for i in 1:n
         for j in 1:n
-            kernel_matrix[i, j] = k(nodeset[i], nodeset[j])
+            distance_matrix[i, j] = k(nodeset[i], nodeset[j])
         end
     end
-    factorized_distance_matrix = factorize(kernel_matrix)
+    factorized_distance_matrix = factorize(distance_matrix)
     c = factorized_distance_matrix \ values
     return Interpolation(k, factorized_distance_matrix, nodeset, c)
 end

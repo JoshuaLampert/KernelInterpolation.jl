@@ -131,6 +131,9 @@ using Plots
         nodeset8 = @test_nowarn merge(nodeset2, nodeset3)
         @test nodeset8 isa NodeSet{2, Float64}
         @test length(nodeset8) == 9
+        @test length(unique(nodeset1)) == 5
+        @test_nowarn unique!(nodeset1)
+        @test length(nodeset1) == 5
 
         x_min = (-2, -1, 4)
         x_max = (-1, 4, 6)
@@ -195,7 +198,7 @@ using Plots
         for i in 1:length(coeffs)
             @test isapprox(coeffs[i], expected_coefficients[i])
         end
-        @test kernel_matrix(itp) isa Cholesky
+        @test distance_matrix(itp) isa Cholesky
         @test isapprox(itp([0.5, 0.5]), 1.115625820404527)
     end
 
