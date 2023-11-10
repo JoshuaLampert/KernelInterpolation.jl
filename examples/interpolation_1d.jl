@@ -10,7 +10,7 @@ n = 8
 nodeset = NodeSet(LinRange(x_min, x_max, n))
 values = f.(nodeset)
 
-itp = interpolate(nodeset, values, GaussKernel(0.5))
+itp = interpolate(nodeset, values, GaussKernel(shape_parameter = 0.5))
 
 N = 1000
 many_nodes = NodeSet(LinRange(x_min, x_max, N))

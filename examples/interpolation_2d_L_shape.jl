@@ -13,7 +13,7 @@ nodeset2 = homogeneous_hypercube(5, 2, x_min2, x_max2)
 nodeset = merge(nodeset1, nodeset2)
 values = f.(nodeset)
 
-itp = interpolate(nodeset, values, GaussKernel())
+itp = interpolate(nodeset, values, RadialCharacteristicKernel(2.0))
 
 N = 500
 many_nodes1 = random_hypercube(N, 2, x_min1, x_max1)

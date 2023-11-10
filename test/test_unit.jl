@@ -17,19 +17,54 @@ using Plots
         x = [3.1, 3.0]
         y = [pi, 2.7]
 
-        k1 = @test_nowarn GaussKernel(2.0)
-        @test_nowarn print(k1)
+        k1 = @test_nowarn GaussKernel(shape_parameter = 2.0)
+        @test_nowarn println(k1)
         @test_nowarn display(k1)
         @test metric(k1) isa Euclidean
         @test isapprox(phi(k1, 0.5), 0.36787944117144233)
         @test isapprox(k1(x, y), 0.6928652138413648)
 
-        k2 = @test_nowarn GaussKernel(2.0, metric = Cityblock())
-        @test_nowarn print(k2)
+        k2 = @test_nowarn GaussKernel(shape_parameter = 2.0, metric = Cityblock())
+        @test_nowarn println(k2)
         @test_nowarn display(k2)
         @test metric(k2) isa Cityblock
         @test isapprox(phi(k2, 0.5), 0.36787944117144233)
         @test isapprox(k2(x, y), 0.6270417435402862)
+
+        k3 = @test_nowarn MultiquadricKernel()
+        @test_nowarn println(k3)
+        @test_nowarn display(k3)
+        @test metric(k3) isa Euclidean
+        @test isapprox(phi(k3, 0.5), 1.118033988749895)
+        @test isapprox(k3(x, y), 1.0448588176555913)
+
+        k4 = @test_nowarn InverseMultiquadricKernel()
+        @test_nowarn println(k4)
+        @test_nowarn display(k4)
+        @test metric(k4) isa Euclidean
+        @test isapprox(phi(k4, 0.5), 0.8944271909999159)
+        @test isapprox(k4(x, y), 0.9570671014135252)
+
+        k5 = @test_nowarn RadialCharacteristicKernel()
+        @test_nowarn println(k5)
+        @test_nowarn display(k5)
+        @test metric(k5) isa Euclidean
+        @test isapprox(phi(k5, 0.5), 0.25)
+        @test isapprox(k5(x, y), 0.48599089995881917)
+
+        k6 = @test_nowarn PolyharmonicSplineKernel(3)
+        @test_nowarn println(k6)
+        @test_nowarn display(k6)
+        @test metric(k6) isa Euclidean
+        @test isapprox(phi(k6, 0.5), 0.125)
+        @test isapprox(k6(x, y), 0.02778220597956396)
+
+        k7 = @test_nowarn ThinPlateSplineKernel()
+        @test_nowarn println(k7)
+        @test_nowarn display(k7)
+        @test metric(k7) isa Euclidean
+        @test isapprox(phi(k7, 0.5), -0.17328679513998632)
+        @test isapprox(k7(x, y), -0.10956712895893082)
     end
 
     @testset "NodeSet" begin
@@ -37,7 +72,7 @@ using Plots
                                          1.0 0.0
                                          0.0 1.0
                                          1.0 1.0])
-        @test_nowarn print(nodeset1)
+        @test_nowarn println(nodeset1)
         @test_nowarn display(nodeset1)
         @test eltype(nodeset1) == Float64
         @test dim(nodeset1) == 2
@@ -143,9 +178,9 @@ using Plots
                          1.0 1.0])
         f(x) = x[1] + x[2]
         ff = f.(nodes)
-        k = GaussKernel(0.5)
+        k = GaussKernel(shape_parameter = 0.5)
         itp = @test_nowarn interpolate(nodes, ff, k)
-        @test_nowarn print(itp)
+        @test_nowarn println(itp)
         @test_nowarn display(itp)
         @test kernel(itp) == k
         @test nodeset(itp) == nodes
