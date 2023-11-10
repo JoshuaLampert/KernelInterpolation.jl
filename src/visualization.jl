@@ -1,9 +1,9 @@
 @recipe function f(x::AbstractVector, k::RadialSymmetricKernel)
-   @series begin
+    @series begin
         xguide --> "r"
         title --> string(nameof(typeof(k)))
         x, phi.(Ref(k), x)
-   end
+    end
 end
 
 @recipe function f(nodeset::NodeSet)

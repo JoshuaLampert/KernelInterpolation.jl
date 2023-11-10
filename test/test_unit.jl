@@ -214,6 +214,8 @@ using Plots
                 @test_nowarn plot(nodes_fine, itp)
             end
         end
+        k = GaussKernel(shape_parameter = 0.5)
+        @test_nowarn plot(0.1:0.1:5.0, k)
     end
 end
 
