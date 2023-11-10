@@ -14,7 +14,7 @@ nodeset = merge(nodeset1, nodeset2)
 unique!(nodeset)
 values = f.(nodeset)
 
-itp = interpolate(nodeset, values, RadialCharacteristicKernel(2.0))
+itp = interpolate(nodeset, values, RadialCharacteristicKernel(2.0, shape_parameter = 0.2))
 
 N = 500
 many_nodes1 = random_hypercube(N, 2, x_min1, x_max1)
