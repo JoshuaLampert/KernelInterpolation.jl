@@ -83,7 +83,8 @@ struct MultiquadricKernel{RealT, M} <: RadialSymmetricKernel
 end
 
 function MultiquadricKernel(beta = 0.5; shape_parameter = 1.0, metric = Euclidean())
-    MultiquadricKernel{typeof(shape_parameter), typeof(metric)}(beta, shape_parameter, metric)
+    MultiquadricKernel{typeof(shape_parameter), typeof(metric)}(beta, shape_parameter,
+                                                                metric)
 end
 
 function Base.show(io::IO, k::MultiquadricKernel)
@@ -112,12 +113,14 @@ struct InverseMultiquadricKernel{RealT, M} <: RadialSymmetricKernel
 end
 
 function InverseMultiquadricKernel(beta = 0.5; shape_parameter = 1.0, metric = Euclidean())
-    InverseMultiquadricKernel{typeof(shape_parameter), typeof(metric)}(beta, shape_parameter,
+    InverseMultiquadricKernel{typeof(shape_parameter), typeof(metric)}(beta,
+                                                                       shape_parameter,
                                                                        metric)
 end
 
 function Base.show(io::IO, k::InverseMultiquadricKernel)
-    return print(io, "InverseMultiquadricKernel(beta = ", k.beta, ", shape_parameter = ", k.shape_parameter,
+    return print(io, "InverseMultiquadricKernel(beta = ", k.beta, ", shape_parameter = ",
+                 k.shape_parameter,
                  ", metric = ", k.metric, ")")
 end
 
@@ -142,12 +145,14 @@ struct RadialCharacteristicKernel{RealT, M} <: RadialSymmetricKernel
 end
 
 function RadialCharacteristicKernel(beta = 2.0; shape_parameter = 1.0, metric = Euclidean())
-    RadialCharacteristicKernel{typeof(shape_parameter), typeof(metric)}(beta, shape_parameter,
+    RadialCharacteristicKernel{typeof(shape_parameter), typeof(metric)}(beta,
+                                                                        shape_parameter,
                                                                         metric)
 end
 
 function Base.show(io::IO, k::RadialCharacteristicKernel)
-    return print(io, "RadialCharacteristicKernel(beta = ", k.beta, ", shape_parameter = ", k.shape_parameter,
+    return print(io, "RadialCharacteristicKernel(beta = ", k.beta, ", shape_parameter = ",
+                 k.shape_parameter,
                  ", metric = ", k.metric, ")")
 end
 
@@ -178,7 +183,8 @@ function PolyharmonicSplineKernel(k; metric = Euclidean())
 end
 
 function Base.show(io::IO, k::PolyharmonicSplineKernel)
-    return print(io, "PolyharmonicSplineKernel(k = ", k.exponent, ", metric = ", k.metric, ")")
+    return print(io, "PolyharmonicSplineKernel(k = ", k.exponent, ", metric = ", k.metric,
+                 ")")
 end
 
 function phi(k::PolyharmonicSplineKernel, r::Real)
