@@ -11,7 +11,9 @@ include("interpolation.jl")
 include("visualization.jl")
 include("util.jl")
 
-export GaussKernel, metric, phi
+export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
+       RadialCharacteristicKernel, PolyharmonicSplineKernel, ThinPlateSplineKernel
+export metric, phi
 export NodeSet, dim, values_along_dim, random_hypercube, homogeneous_hypercube,
        random_hypersphere, random_hypersphere_boundary
 export kernel, nodeset, coefficients, kernel_matrix, interpolate
