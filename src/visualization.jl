@@ -1,3 +1,11 @@
+@recipe function f(x::AbstractVector, k::RadialSymmetricKernel)
+   @series begin
+        xguide --> "r"
+        title --> string(nameof(typeof(k)))
+        x, phi.(Ref(k), x)
+   end
+end
+
 @recipe function f(nodeset::NodeSet)
     if dim(nodeset) == 1
         x = values_along_dim(nodeset, 1)
