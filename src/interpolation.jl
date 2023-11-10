@@ -5,7 +5,7 @@ Interpolation object that can be evaluated at a node.
 """
 struct Interpolation{K, A, Dim, RealT}
     k::K
-    factorized_kernel_matrix::A
+    factorized_distance_matrix::A
     nodeset::NodeSet{Dim, RealT}
     c::Vector{RealT}
 end
@@ -37,12 +37,12 @@ Obtain the coefficients of the linear combination for the interpolant.
 coefficients(itp::Interpolation) = itp.c
 
 """
-    kernel_matrix(itp)
+    distance_matrix(itp)
 
-Return the kernel matrix, i.e. the matrix with entries ``a_{ij} = K(x_i, x_j)``
+Return the distance matrix, i.e. the matrix with entries ``a_{ij} = K(x_i, x_j)``
 for the kernel function `K` and nodes `x_i`.
 """
-kernel_matrix(itp::Interpolation) = itp.factorized_kernel_matrix
+distance_matrix(itp::Interpolation) = itp.factorized_distance_matrix
 
 """
     interpolate(nodeset, values, k = GaussKernel())
@@ -59,9 +59,9 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
             kernel_matrix[i, j] = k(nodeset[i], nodeset[j])
         end
     end
-    factorized_kernel_matrix = factorize(kernel_matrix)
-    c = factorized_kernel_matrix \ values
-    return Interpolation(k, factorized_kernel_matrix, nodeset, c)
+    factorized_distance_matrix = factorize(kernel_matrix)
+    c = factorized_distance_matrix \ values
+    return Interpolation(k, factorized_distance_matrix, nodeset, c)
 end
 
 function (itp::Interpolation)(x)

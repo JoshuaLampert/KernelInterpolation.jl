@@ -16,7 +16,7 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
 export metric, phi
 export NodeSet, dim, values_along_dim, random_hypercube, homogeneous_hypercube,
        random_hypersphere, random_hypersphere_boundary
-export kernel, nodeset, coefficients, kernel_matrix, interpolate
+export kernel, nodeset, coefficients, distance_matrix, interpolate
 export examples_dir, get_examples, default_example, include_example
 
 end
