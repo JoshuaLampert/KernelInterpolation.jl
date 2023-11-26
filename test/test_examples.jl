@@ -17,7 +17,8 @@ EXAMPLES_DIR = examples_dir()
         @test isapprox(norm(values .- values_test, Inf), 0; atol = 1e-12)
         many_values = f.(many_nodes)
         many_values_test = itp.(many_nodes)
-        @test isapprox(norm(many_values .- many_values_test, Inf), 0.006631451019030288; atol = 1e-12)
+        @test isapprox(norm(many_values .- many_values_test, Inf), 0.006631451019030288;
+                       atol = 1e-12)
     end
 
     @ki_testset "interpolation_2d.jl" begin

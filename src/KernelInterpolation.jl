@@ -15,7 +15,8 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        RadialCharacteristicKernel, PolyharmonicSplineKernel, ThinPlateSplineKernel
 export phi, order
 export NodeSet, separation_distance, dim, values_along_dim, random_hypercube,
-       homogeneous_hypercube, random_hypersphere, random_hypersphere_boundary
+       random_hypercube_boundary, homogeneous_hypercube, homogeneous_hypercube_boundary,
+       random_hypersphere, random_hypersphere_boundary
 export kernel, nodeset, coefficients, kernel_coefficients, polynomial_coefficients,
        polynomial_basis, polyvars, system_matrix, interpolate
 export examples_dir, get_examples, default_example, include_example

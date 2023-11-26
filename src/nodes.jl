@@ -4,7 +4,7 @@
 Set of interpolation nodes.
 """
 mutable struct NodeSet{Dim, RealT}
-    nodes::Vector{SVector{Dim, RealT}}
+    nodes::Vector{MVector{Dim, RealT}}
     q::Float64
 end
 
@@ -34,7 +34,7 @@ function Base.show(io::IO, ::MIME"text/plain", nodeset::NodeSet)
 end
 
 # Constructors
-function NodeSet(nodes::Vector{SVector{Dim, RealT}}) where {Dim, RealT}
+function NodeSet(nodes::Vector{MVector{Dim, RealT}}) where {Dim, RealT}
     q = separation_distance(nodes)
     NodeSet{Dim, RealT}(nodes, q)
 end
@@ -43,7 +43,7 @@ function NodeSet(nodes::AbstractVector{Vector{RealT}}) where {RealT}
     @assert n > 0
     ndims = length(nodes[1])
     @assert ndims > 0
-    data = [SVector{ndims, RealT}(nodes[i]) for i in 1:n]
+    data = [MVector{ndims, RealT}(nodes[i]) for i in 1:n]
     return NodeSet(data)
 end
 function NodeSet(nodes::AbstractMatrix{RealT}) where {RealT}
@@ -54,7 +54,7 @@ function NodeSet(nodes::AbstractVector{RealT}) where {RealT}
     return NodeSet([[node] for node in nodes])
 end
 
-function separation_distance(nodes::Vector{SVector{Dim, RealT}}) where {Dim, RealT}
+function separation_distance(nodes::Vector{MVector{Dim, RealT}}) where {Dim, RealT}
     r = Inf
     for (i, x) in enumerate(nodes)
         for (j, y) in enumerate(nodes)
@@ -76,8 +76,11 @@ Return the separation distance of a node set ``X = \{x_1,\ldots, x_n\}`` defined
 """
 separation_distance(nodeset::NodeSet) = nodeset.q
 function update_separation_distance!(nodeset::NodeSet)
-    q = separation_distance(nodeset.nodes)
-    nodeset.q = q
+    # Update separation distance only if all values are assigned to prevent `UndefRefError`
+    if all(map(i -> isassigned(nodeset, i), 1:length(nodeset)))
+        q = separation_distance(nodeset.nodes)
+        nodeset.q = q
+    end
 end
 dim(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT} = Dim
 # Functions to treat NodeSet as array
@@ -92,18 +95,18 @@ function Base.similar(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT}
     NodeSet{Dim, RealT}(similar(nodeset.nodes), Inf)
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, ::Type{T}) where {Dim, RealT, T}
-    NodeSet{Dim, T}(similar(nodeset.nodes, SVector{Dim, T}), Inf)
+    NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}), Inf)
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, n::Int) where {Dim, RealT}
     NodeSet{Dim, RealT}(similar(nodeset.nodes, n), Inf)
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, ::Type{T}, n::Int) where {Dim, RealT, T}
-    NodeSet{Dim, T}(similar(nodeset.nodes, SVector{Dim, T}, n), Inf)
+    NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}, n), Inf)
 end
 Base.getindex(nodeset::NodeSet, i::Int) = getindex(nodeset.nodes, i)
 Base.getindex(nodeset::NodeSet, is::UnitRange) = nodeset.nodes[is]
 Base.lastindex(nodeset::NodeSet) = lastindex(nodeset.nodes)
-function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::SVector{Dim, RealT},
+function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::MVector{Dim, RealT},
                         i::Int) where {Dim, RealT}
     nodeset.nodes[i] = v
 end
@@ -122,7 +125,7 @@ function Base.setindex!(nodeset::NodeSet{RealT}, v::RealT, i::Int) where {RealT}
     # could be done more efficiently
     update_separation_distance!(nodeset)
 end
-function Base.push!(nodeset::NodeSet{Dim, RealT}, v::SVector{Dim, RealT}) where {Dim, RealT}
+function Base.push!(nodeset::NodeSet{Dim, RealT}, v::MVector{Dim, RealT}) where {Dim, RealT}
     push!(nodeset.nodes, v)
     # update separation distance of nodeset because it possibly changed
     # could be done more efficiently
@@ -168,6 +171,7 @@ function values_along_dim(nodeset::NodeSet, i::Int)
     return x_i
 end
 
+# Some convenience function to create some specific `NodeSet`s
 """
     random_hypercube(n, dim, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim))
 
@@ -191,6 +195,46 @@ function random_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(_ -> 0.0
 end
 
 """
+    random_hypercube_boundary(n, dim, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim))
+
+Create a `NodeSet` with `n` random nodes each of dimension `dim` on the boundary of a hypercube
+defined by the bounds `x_min` and `x_max`. If the bounds are given as single values, they are
+applied for each dimension. If they are `Tuple`s of size `dim` the hypercube has the according bounds.
+"""
+function random_hypercube_boundary(n::Int, dim::Int, x_min, x_max)
+    random_hypercube_boundary(n, dim, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
+end
+
+function project_on_hypercube_boundary!(nodeset::NodeSet{Dim}, x_min::NTuple{Dim},
+                                        x_max::NTuple{Dim}) where {Dim}
+    for i in 1:length(nodeset)
+        #         j = argmin([abs.(nodeset[i] .- x_min); abs.(nodeset[i] .- x_max)])
+        # Project to random axis
+        j = rand(1:Dim)
+        if rand([1, 2]) == 1
+            nodeset[i][j] = x_min[j]
+        else
+            nodeset[i][j] = x_max[j]
+        end
+    end
+end
+
+function random_hypercube_boundary(n::Int, dim::Int,
+                                   x_min::NTuple{Dim} = ntuple(_ -> 0.0, dim),
+                                   x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim)) where {Dim}
+    @assert dim == Dim
+    if dim == 1 && n >= 2
+        @warn "For one dimension the boundary of the hypercube consists only of 2 points"
+        return NodeSet([x_min[1], x_max[1]])
+    end
+    # First, create random nodes *inside* hypercube
+    nodeset = random_hypercube(n, dim, x_min, x_max)
+    # Then, project all the nodes on the boundary
+    project_on_hypercube_boundary!(nodeset, x_min, x_max)
+    return nodeset
+end
+
+"""
     homogeneous_hypercube(n, dim, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim))
 
 Create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
@@ -205,13 +249,79 @@ end
 function homogeneous_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(_ -> 0.0, dim),
                                x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim)) where {Dim}
     @assert dim == Dim
-    nodes = Vector{SVector{dim, Float64}}(undef, n^dim)
-    for (i, indices) in enumerate(Iterators.product(ntuple(i -> 1:n, dim)...))
+    nodes = Vector{MVector{dim, Float64}}(undef, n^dim)
+    for (i, indices) in enumerate(Iterators.product(ntuple(_ -> 1:n, dim)...))
         node = Vector(undef, dim)
         for j in 1:dim
             node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j] - 1) / (n - 1)
         end
         nodes[i] = node
+    end
+    return NodeSet(nodes)
+end
+
+"""
+    homogeneous_hypercube_boundary(n, dim, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim))
+
+Create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
+`dim` on the boundary of a hypercube defined by the bounds `x_min` and `x_max`. If the bounds are
+given as single values, they are applied for each dimension. If they are `Tuple`s of size `dim`
+# the hypercube has the according bounds.
+"""
+function homogeneous_hypercube_boundary(n::Int, dim::Int, x_min, x_max)
+    homogeneous_hypercube_boundary(n, dim, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
+end
+
+# Total number of nodes of on a hypercube of dimension `dim` with `n` nodes in each direction
+function number_of_nodes(n, dim)
+    if dim == 1
+        return 2
+    end
+    return 2 * n^(dim - 1) + (n - 2) * number_of_nodes(n, dim - 1)
+end
+
+# TODO: Is there a better way to create these `NodeSet`s?
+function homogeneous_hypercube_boundary(n::Int, dim::Int,
+                                        x_min::NTuple{Dim} = ntuple(_ -> 0.0, dim),
+                                        x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim)) where {
+                                                                                           Dim
+                                                                                           }
+    if dim == 1 && n >= 2
+        #         @warn "For one dimension the boundary of the hypercube consists only of 2 points"
+        return NodeSet([x_min[1], x_max[1]])
+    end
+    @assert dim == Dim
+    nodes = Vector{MVector{dim, Float64}}(undef, number_of_nodes(n, dim))
+    local i = 1
+    # Left side is like homogeneous hypercube in `dim - 1` hypercube
+    for indices in Iterators.product(ntuple(_ -> 1:n, dim - 1)...)
+        node = Vector(undef, dim)
+        node[1] = x_min[1]
+        for j in 2:dim
+            node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j - 1] - 1) / (n - 1)
+        end
+        nodes[i] = node
+        i += 1
+    end
+
+    # Sides in between by recursion
+    for j in 2:(n - 1)
+        nodeset2 = homogeneous_hypercube_boundary(n, dim - 1, x_min[2:end], x_max[2:end])
+        for node in nodeset2
+            nodes[i] = [x_min[1] + (x_max[1] - x_min[1]) * (j - 1) / (n - 1); node]
+            i += 1
+        end
+    end
+
+    # Right side is like homogeneous hypercube in `dim - 1` hypercube
+    for indices in Iterators.product(ntuple(_ -> 1:n, dim - 1)...)
+        node = Vector(undef, dim)
+        node[1] = x_max[1]
+        for j in 2:dim
+            node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j - 1] - 1) / (n - 1)
+        end
+        nodes[i] = node
+        i += 1
     end
     return NodeSet(nodes)
 end

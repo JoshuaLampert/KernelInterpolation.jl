@@ -29,7 +29,8 @@ polynomials with maximum degree of `polynomial_degree`. The additional condition
 ```
 are enforced.
 """
-struct Interpolation{K, Dim, RealT, A, Monomials, PolyVars} <: AbstractInterpolation{K, Dim, RealT}
+struct Interpolation{K, Dim, RealT, A, Monomials, PolyVars} <:
+       AbstractInterpolation{K, Dim, RealT}
     k::K
     nodeset::NodeSet{Dim, RealT}
     c::Vector{RealT}

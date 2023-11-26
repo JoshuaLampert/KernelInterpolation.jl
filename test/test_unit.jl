@@ -3,7 +3,7 @@ module TestUnit
 using Test
 using KernelInterpolation
 using LinearAlgebra: norm, Cholesky, BunchKaufman
-using StaticArrays: SVector
+using StaticArrays: MVector
 using Plots
 
 @testset "Unit tests" begin
@@ -73,7 +73,7 @@ using Plots
         @test length(nodeset1) == 4
         @test size(nodeset1) == (4, 2)
         for node in nodeset1
-            @test node isa SVector{2, Float64}
+            @test node isa MVector{2, Float64}
         end
         f(x) = x[1] + x[2]
         ff = @test_nowarn f.(nodeset1)
@@ -137,12 +137,27 @@ using Plots
         x_min = (-2, -1, 4)
         x_max = (-1, 4, 6)
         nodeset9 = @test_nowarn random_hypercube(10, 3, x_min, x_max)
+        @test nodeset9 isa NodeSet{3, Float64}
         for node in nodeset9
             for (i, val) in enumerate(node)
                 @test x_min[i] <= val <= x_max[i]
             end
         end
-        nodeset10 = @test_nowarn homogeneous_hypercube(3, 2, (-2, 1), (1, 3))
+
+        nodeset10 = @test_nowarn random_hypercube_boundary(10, 3, x_min, x_max)
+        @test nodeset10 isa NodeSet{3, Float64}
+        for node in nodeset10
+            on_boundary = false
+            for (i, val) in enumerate(node)
+                @test x_min[i] <= val <= x_max[i]
+                if isapprox(val, x_min[i]) || isapprox(val, x_max[i])
+                    on_boundary = true
+                end
+            end
+            @test on_boundary
+        end
+
+        nodeset11 = @test_nowarn homogeneous_hypercube(3, 2, (-2, 1), (1, 3))
         expected_nodes = [
             [-2.0, 1.0],
             [-0.5, 1.0],
@@ -154,22 +169,43 @@ using Plots
             [-0.5, 3.0],
             [1.0, 3.0],
         ]
-        @test nodeset10 isa NodeSet{2, Float64}
-        @test isapprox(separation_distance(nodeset10), 0.5)
-        @test length(nodeset10) == length(expected_nodes)
-        for i in 1:length(nodeset10)
-            @test nodeset10[i] == expected_nodes[i]
+        @test nodeset11 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset11), 0.5)
+        @test length(nodeset11) == length(expected_nodes)
+        for i in 1:length(nodeset11)
+            @test nodeset11[i] == expected_nodes[i]
         end
+
+        nodeset12 = @test_nowarn homogeneous_hypercube_boundary(3, 2, (-2, 1), (1, 3))
+        expected_nodes = [
+            [-2.0, 1.0],
+            [-2.0, 2.0],
+            [-2.0, 3.0],
+            [-0.5, 1.0],
+            [-0.5, 3.0],
+            [1.0, 1.0],
+            [1.0, 2.0],
+            [1.0, 3.0],
+        ]
+        @test nodeset12 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset12), 0.5)
+        @test length(nodeset12) == length(expected_nodes)
+        display(nodeset12)
+        for i in 1:length(nodeset12)
+            @test nodeset12[i] == expected_nodes[i]
+        end
+
         r = 2.0
         center = [-1.0, 3.0, 2.0, -pi]
-        nodeset11 = @test_nowarn random_hypersphere(50, 4, r, center)
-        @test nodeset11 isa NodeSet{4, Float64}
-        for node in nodeset11
+        nodeset13 = @test_nowarn random_hypersphere(50, 4, r, center)
+        @test nodeset13 isa NodeSet{4, Float64}
+        for node in nodeset13
             @test norm(node .- center) <= r
         end
-        nodeset12 = @test_nowarn random_hypersphere_boundary(50, 4, r, center)
-        @test nodeset12 isa NodeSet{4, Float64}
-        for node in nodeset12
+
+        nodeset14 = @test_nowarn random_hypersphere_boundary(50, 4, r, center)
+        @test nodeset14 isa NodeSet{4, Float64}
+        for node in nodeset14
             @test isapprox(norm(node .- center), r)
         end
     end
@@ -226,7 +262,8 @@ using Plots
         @test order(itp) == order(k)
         @test length(kernel_coefficients(itp)) == length(nodes)
         @test length(polynomial_coefficients(itp)) == order(itp) + 1
-        @test length(polynomial_basis(itp)) == binomial(order(itp) - 1 + dim(nodes), dim(nodes))
+        @test length(polynomial_basis(itp)) ==
+              binomial(order(itp) - 1 + dim(nodes), dim(nodes))
         @test system_matrix(itp) isa BunchKaufman
         @test isapprox(itp([0.5, 0.5]), 1.0)
         # TODO: test convergence orders of condition numbers depending on separation distance

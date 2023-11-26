@@ -19,4 +19,4 @@ itp = interpolate(nodeset, values, kernel)
 many_nodes = homogeneous_hypercube(20, 2)
 
 plot(many_nodes, itp)
-plot!(many_nodes, f, st =:surface)
+plot!(many_nodes, f, st = :surface)
