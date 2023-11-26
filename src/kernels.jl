@@ -3,7 +3,14 @@
 
 An abstract supertype of kernels.
 """
-abstract type AbstractKernel end
+abstract type AbstractKernel{Dim} end
+
+"""
+    dim(k)
+
+Return the dimension of a kernel, i.e. the size of the input vector.
+"""
+dim(k::AbstractKernel{Dim}) where {Dim} = Dim
 
 @doc raw"""
     RadialSymmetricKernel
@@ -20,24 +27,18 @@ The kernel is then defined by
     K(x, y) = \Phi(x - y).
 ```
 """
-abstract type RadialSymmetricKernel <: AbstractKernel end
+abstract type RadialSymmetricKernel{Dim} <: AbstractKernel{Dim} end
 
-# TODO: Which norm? Depends on metric
-# Phi(k::RadialSymmetricKernel, x) = phi(k, norm(x))
+Phi(k::RadialSymmetricKernel, x) = phi(k, norm(x))
 
-function (k::RadialSymmetricKernel)(x, y)
-    return phi(k, metric(k)(x, y))
+function (k::RadialSymmetricKernel{Dim})(x, y) where {Dim}
+    @assert length(x) == length(y)
+    @assert length(x) == Dim
+    return Phi(k, x .- y)
 end
 
-"""
-    metric(k::RadialSymmetricKernel)
-
-Return the metric used by the radial symmetric kernel `k`.
-"""
-metric(k::RadialSymmetricKernel) = k.metric
-
 @doc raw"""
-    GaussKernel(; shape_parameter = 1.0, metric = Euclidean())
+    GaussKernel{Dim}(; shape_parameter = 1.0)
 
 Gaussian kernel function with
 ```math
@@ -48,24 +49,23 @@ is always positive definite.
 
 See also [`RadialSymmetricKernel`](@ref).
 """
-struct GaussKernel{RealT, M} <: RadialSymmetricKernel
+struct GaussKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     shape_parameter::RealT
-    metric::M
 end
 
-function GaussKernel(; shape_parameter = 1.0, metric = Euclidean())
-    GaussKernel{typeof(shape_parameter), typeof(metric)}(shape_parameter, metric)
+function GaussKernel{Dim}(; shape_parameter = 1.0) where {Dim}
+    GaussKernel{Dim, typeof(shape_parameter)}(shape_parameter)
 end
 
-function Base.show(io::IO, k::GaussKernel)
-    return print(io, "GaussKernel(shape_parameter = ", k.shape_parameter,
-                 ", metric = ", k.metric, ")")
+function Base.show(io::IO, k::GaussKernel{Dim}) where {Dim}
+    return print(io, "GaussKernel{", Dim, "}(shape_parameter = ", k.shape_parameter, ")")
 end
 
 phi(k::GaussKernel, r::Real) = exp(-(k.shape_parameter * r)^2)
+order(k::GaussKernel) = 0
 
 @doc raw"""
-    MultiquadricKernel(beta = 0.5; shape_parameter = 1.0, metric = Euclidean())
+    MultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0)
 
 Multiquadric kernel function with
 ```math
@@ -76,58 +76,55 @@ is conditionally positive definite of order ``m = \lceil\beta \rceil``.
 
 See also [`RadialSymmetricKernel`](@ref).
 """
-struct MultiquadricKernel{RealT, M} <: RadialSymmetricKernel
+struct MultiquadricKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     beta::RealT
     shape_parameter::RealT
-    metric::M
 end
 
-function MultiquadricKernel(beta = 0.5; shape_parameter = 1.0, metric = Euclidean())
-    MultiquadricKernel{typeof(shape_parameter), typeof(metric)}(beta, shape_parameter,
-                                                                metric)
+function MultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where {Dim}
+    MultiquadricKernel{Dim, typeof(shape_parameter)}(beta, shape_parameter)
 end
 
-function Base.show(io::IO, k::MultiquadricKernel)
-    return print(io, "MultiquadricKernel(shape_parameter = ", k.shape_parameter,
-                 ", metric = ", k.metric, ")")
+function Base.show(io::IO, k::MultiquadricKernel{Dim}) where {Dim}
+    return print(io, "MultiquadricKernel{", Dim, "}(shape_parameter = ", k.shape_parameter,
+                 ")")
 end
 
 phi(k::MultiquadricKernel, r::Real) = (1 + (k.shape_parameter * r)^2)^k.beta
+order(k::MultiquadricKernel) = ceil(k.beta)
 
 @doc raw"""
-    InverseMultiquadricKernel(beta = 0.5; shape_parameter = 1.0, metric = Euclidean())
+    InverseMultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0)
 
 Inverse multiquadric kernel function with
 ```math
     \phi(r) = (1 + (\varepsilon * r)^2)^{-\beta},
 ```
 where ``\varepsilon`` is the shape parameter. The inverse multiquadric kernel
-is positive definite if ``\beta > d/2``.
+is always positive definite.
 
 See also [`RadialSymmetricKernel`](@ref).
 """
-struct InverseMultiquadricKernel{RealT, M} <: RadialSymmetricKernel
+struct InverseMultiquadricKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     beta::RealT
     shape_parameter::RealT
-    metric::M
 end
 
-function InverseMultiquadricKernel(beta = 0.5; shape_parameter = 1.0, metric = Euclidean())
-    InverseMultiquadricKernel{typeof(shape_parameter), typeof(metric)}(beta,
-                                                                       shape_parameter,
-                                                                       metric)
+function InverseMultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where {Dim}
+    InverseMultiquadricKernel{Dim, typeof(shape_parameter)}(beta, shape_parameter)
 end
 
-function Base.show(io::IO, k::InverseMultiquadricKernel)
-    return print(io, "InverseMultiquadricKernel(beta = ", k.beta, ", shape_parameter = ",
-                 k.shape_parameter,
-                 ", metric = ", k.metric, ")")
+function Base.show(io::IO, k::InverseMultiquadricKernel{Dim}) where {Dim}
+    return print(io, "InverseMultiquadricKernel{", Dim, "}(beta = ", k.beta,
+                 ", shape_parameter = ",
+                 k.shape_parameter, ")")
 end
 
 phi(k::InverseMultiquadricKernel, r::Real) = (1 + (k.shape_parameter * r)^2)^(-k.beta)
+order(k::InverseMultiquadricKernel) = 0
 
 @doc raw"""
-    RadialCharacteristicKernel(beta = 2.0; shape_parameter = 1.0, metric = Euclidean())
+    RadialCharacteristicKernel{Dim}(beta = 2.0; shape_parameter = 1.0)
 
 Radial characteristic function kernel function with
 ```math
@@ -138,28 +135,26 @@ positive definite if ``\beta\ge (d + 1)/2``.
 
 See also [`RadialSymmetricKernel`](@ref).
 """
-struct RadialCharacteristicKernel{RealT, M} <: RadialSymmetricKernel
+struct RadialCharacteristicKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     beta::RealT
     shape_parameter::RealT
-    metric::M
 end
 
-function RadialCharacteristicKernel(beta = 2.0; shape_parameter = 1.0, metric = Euclidean())
-    RadialCharacteristicKernel{typeof(shape_parameter), typeof(metric)}(beta,
-                                                                        shape_parameter,
-                                                                        metric)
+function RadialCharacteristicKernel{Dim}(beta = 2.0; shape_parameter = 1.0) where {Dim}
+    RadialCharacteristicKernel{Dim, typeof(shape_parameter)}(beta, shape_parameter)
 end
 
-function Base.show(io::IO, k::RadialCharacteristicKernel)
-    return print(io, "RadialCharacteristicKernel(beta = ", k.beta, ", shape_parameter = ",
-                 k.shape_parameter,
-                 ", metric = ", k.metric, ")")
+function Base.show(io::IO, k::RadialCharacteristicKernel{Dim}) where {Dim}
+    return print(io, "RadialCharacteristicKernel{", Dim, "}(beta = ", k.beta,
+                 ", shape_parameter = ",
+                 k.shape_parameter, ")")
 end
 
 phi(k::RadialCharacteristicKernel, r::Real) = max(0, 1 - k.shape_parameter * r)^k.beta
+order(k::RadialCharacteristicKernel{Dim}) where {Dim} = k.beta > (Dim + 1) / 2 ? 0 : Inf
 
 @doc raw"""
-    PolyharmonicSplineKernel(k; metric = Euclidean())
+    PolyharmonicSplineKernel{Dim}(k)
 
 Polyharmonic spline kernel function with
 ```math
@@ -169,34 +164,32 @@ Polyharmonic spline kernel function with
     \end{cases}.
 ```
 The polyharmonic spline is conditionally positive definite of order ``m = \lceil k/2\rceil``
-for odd `k` and order ``m = \lceil k/2\rceil + 1`` for even `k`.
+for odd `k` and order ``m = k/2 + 1`` for even `k`.
 
 See also [`RadialSymmetricKernel`](@ref).
 """
-struct PolyharmonicSplineKernel{M} <: RadialSymmetricKernel
+struct PolyharmonicSplineKernel{Dim} <: RadialSymmetricKernel{Dim}
     exponent::Int
-    metric::M
 end
 
-function PolyharmonicSplineKernel(k; metric = Euclidean())
-    PolyharmonicSplineKernel{typeof(metric)}(k, metric)
-end
-
-function Base.show(io::IO, k::PolyharmonicSplineKernel)
-    return print(io, "PolyharmonicSplineKernel(k = ", k.exponent, ", metric = ", k.metric,
-                 ")")
+function Base.show(io::IO, k::PolyharmonicSplineKernel{Dim}) where {Dim}
+    return print(io, "PolyharmonicSplineKernel{", Dim, "}(k = ", k.exponent, ")")
 end
 
 function phi(k::PolyharmonicSplineKernel, r::Real)
     if isodd(k.exponent)
         return r^k.exponent
     else
-        return r^k.exponent * log(r)
+        return isapprox(r, 0.0) ? 0.0 : r^k.exponent * log(r)
     end
 end
 
+function order(k::PolyharmonicSplineKernel)
+    isodd(k.exponent) ? ceil(k.exponent / 2) : ceil(k.exponent / 2) + 1
+end
+
 @doc raw"""
-    ThinPlateSplineKernel(; metric = Euclidean())
+    ThinPlateSplineKernel{Dim}()
 
 Thin plate spline kernel function with
 ```math
@@ -207,4 +200,11 @@ The thin plate spline is conditionally positive definite of order ``m = 2``.
 
 See also [`RadialSymmetricKernel`](@ref).
 """
-ThinPlateSplineKernel(; metric = Euclidean()) = PolyharmonicSplineKernel(2; metric = metric)
+struct ThinPlateSplineKernel{Dim} <: RadialSymmetricKernel{Dim} end
+
+function Base.show(io::IO, k::ThinPlateSplineKernel{Dim}) where {Dim}
+    return print(io, "ThinPlateSplineKernel{", Dim, "}()")
+end
+
+phi(k::ThinPlateSplineKernel, r::Real) = isapprox(r, 0.0) ? 0.0 : r^2 * log(r)
+order(k::ThinPlateSplineKernel) = 2

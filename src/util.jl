@@ -83,3 +83,8 @@ function replace_assignments(expr; kwargs...)
 
     return expr
 end
+
+# Create `d` polyvars from `TypedPolynomials.jl`, don't use `@polyvars` because of
+# https://github.com/JuliaAlgebra/TypedPolynomials.jl/issues/51, instead use the
+# workaround from there
+polyvars(d) = ntuple(i -> Variable{Symbol("x[", i, "]")}(), d)

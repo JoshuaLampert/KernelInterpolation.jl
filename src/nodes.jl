@@ -3,13 +3,14 @@
 
 Set of interpolation nodes.
 """
-struct NodeSet{Dim, RealT}
+mutable struct NodeSet{Dim, RealT}
     nodes::Vector{SVector{Dim, RealT}}
+    q::Float64
 end
 
 function Base.show(io::IO, nodeset::NodeSet)
-    print(io, "NodeSet{", dim(nodeset), ", ", eltype(nodeset), "} with ", length(nodeset),
-          " nodes")
+    print(io, "NodeSet{", dim(nodeset), ", ", eltype(nodeset),
+          "} with separation distance q = ", nodeset.q, " and ", length(nodeset), " nodes")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", nodeset::NodeSet)
@@ -17,28 +18,33 @@ function Base.show(io::IO, ::MIME"text/plain", nodeset::NodeSet)
         show(io, semi)
     else
         println(io, "NodeSet{", dim(nodeset), ", ", eltype(nodeset), "} with ",
-                length(nodeset), " nodes:")
-        for i in 1:min(20, length(nodeset))
+                "separation distance q = ", nodeset.q, " and ", length(nodeset), " nodes:")
+        max_nodes = 20
+        for i in 1:min(max_nodes, length(nodeset))
             if isassigned(nodeset, i)
                 println(io, "  ", nodeset[i])
             else
                 println(io, "  ", "#undef")
             end
         end
-        if length(nodeset) > 20
+        if length(nodeset) > max_nodes
             println("  ⋮")
         end
     end
 end
 
 # Constructors
+function NodeSet(nodes::Vector{SVector{Dim, RealT}}) where {Dim, RealT}
+    q = separation_distance(nodes)
+    NodeSet{Dim, RealT}(nodes, q)
+end
 function NodeSet(nodes::AbstractVector{Vector{RealT}}) where {RealT}
     n = length(nodes)
     @assert n > 0
     ndims = length(nodes[1])
     @assert ndims > 0
     data = [SVector{ndims, RealT}(nodes[i]) for i in 1:n]
-    return NodeSet{ndims, RealT}(data)
+    return NodeSet(data)
 end
 function NodeSet(nodes::AbstractMatrix{RealT}) where {RealT}
     NodeSet(Vector{eltype(nodes)}[eachrow(nodes)...])
@@ -48,6 +54,31 @@ function NodeSet(nodes::AbstractVector{RealT}) where {RealT}
     return NodeSet([[node] for node in nodes])
 end
 
+function separation_distance(nodes::Vector{SVector{Dim, RealT}}) where {Dim, RealT}
+    r = Inf
+    for (i, x) in enumerate(nodes)
+        for (j, y) in enumerate(nodes)
+            if i != j && norm(x - y) < r
+                r = norm(x - y)
+            end
+        end
+    end
+    return 0.5 * r
+end
+
+@doc raw"""
+    separation_distance(nodeset::NodeSet)
+
+Return the separation distance of a node set ``X = \{x_1,\ldots, x_n\}`` defined by
+```math
+    q_X = \frac{1}{2}\min_{x_i\neq x_j}\|x_i - x_j\|.
+```
+"""
+separation_distance(nodeset::NodeSet) = nodeset.q
+function update_separation_distance!(nodeset::NodeSet)
+    q = separation_distance(nodeset.nodes)
+    nodeset.q = q
+end
 dim(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT} = Dim
 # Functions to treat NodeSet as array
 Base.eltype(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT} = RealT
@@ -58,16 +89,16 @@ Base.collect(nodeset::NodeSet) = collect(nodeset.nodes)
 Base.axes(nodeset::NodeSet) = axes(nodeset.nodes)
 Base.isassigned(nodeset::NodeSet, i::Int) = isassigned(nodeset.nodes, i)
 function Base.similar(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT}
-    NodeSet{Dim, RealT}(similar(nodeset.nodes))
+    NodeSet{Dim, RealT}(similar(nodeset.nodes), Inf)
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, ::Type{T}) where {Dim, RealT, T}
-    NodeSet{Dim, T}(similar(nodeset.nodes, SVector{Dim, T}))
+    NodeSet{Dim, T}(similar(nodeset.nodes, SVector{Dim, T}), Inf)
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, n::Int) where {Dim, RealT}
-    NodeSet{Dim, RealT}(similar(nodeset.nodes, n))
+    NodeSet{Dim, RealT}(similar(nodeset.nodes, n), Inf)
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, ::Type{T}, n::Int) where {Dim, RealT, T}
-    NodeSet{Dim, T}(similar(nodeset.nodes, SVector{Dim, T}, n))
+    NodeSet{Dim, T}(similar(nodeset.nodes, SVector{Dim, T}, n), Inf)
 end
 Base.getindex(nodeset::NodeSet, i::Int) = getindex(nodeset.nodes, i)
 Base.getindex(nodeset::NodeSet, is::UnitRange) = nodeset.nodes[is]
@@ -80,17 +111,29 @@ function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT},
                         i::Int) where {Dim, RealT}
     @assert length(v) == dim(nodeset)
     nodeset.nodes[i] = v
+    # update separation distance of nodeset because it possibly changed
+    # could be done more efficiently
+    update_separation_distance!(nodeset)
 end
 function Base.setindex!(nodeset::NodeSet{RealT}, v::RealT, i::Int) where {RealT}
     @assert dim(nodeset) == 1
     nodeset.nodes[i] = [v]
+    # update separation distance of nodeset because it possibly changed
+    # could be done more efficiently
+    update_separation_distance!(nodeset)
 end
 function Base.push!(nodeset::NodeSet{Dim, RealT}, v::SVector{Dim, RealT}) where {Dim, RealT}
     push!(nodeset.nodes, v)
+    # update separation distance of nodeset because it possibly changed
+    # could be done more efficiently
+    update_separation_distance!(nodeset)
 end
 function Base.push!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT}) where {Dim, RealT}
     @assert length(v) == dim(nodeset)
     push!(nodeset.nodes, v)
+    # update separation distance of nodeset because it possibly changed
+    # could be done more efficiently
+    update_separation_distance!(nodeset)
 end
 function Base.merge(nodeset::NodeSet{Dim, RealT},
                     others::NodeSet{Dim, RealT}...) where {Dim, RealT}
@@ -101,10 +144,14 @@ end
 function Base.merge!(nodeset::NodeSet{Dim, RealT},
                      others::NodeSet{Dim, RealT}...) where {Dim, RealT}
     foreach(other -> append!(nodeset.nodes, other.nodes), others)
+    update_separation_distance!(nodeset)
     #     return NodeSet(merge(nodeset.nodes, foreach(other -> other.nodes, others)...))
 end
 Base.unique(nodeset::NodeSet) = NodeSet(unique(nodeset.nodes))
-Base.unique!(nodeset::NodeSet) = unique!(nodeset.nodes)
+function Base.unique!(nodeset::NodeSet)
+    unique!(nodeset.nodes)
+    update_separation_distance!(nodeset)
+end
 
 """
     values_along_dim(nodeset::NodeSet, i::Int)

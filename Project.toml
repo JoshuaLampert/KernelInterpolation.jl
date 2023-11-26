@@ -4,13 +4,14 @@ authors = ["Joshua Lampert <joshua.lampert@uni-hamburg.de> and contributors"]
 version = "1.0.0-DEV"
 
 [deps]
-Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+TypedPolynomials = "afbbf031-7a57-5f58-a1b9-b774a0fad08d"
 
 [compat]
-Distances = "0.10.9"
+LinearAlgebra = "1"
 RecipesBase = "1.1"
 StaticArrays = "1"
+TypedPolynomials = "0.4"
 julia = "1.8"

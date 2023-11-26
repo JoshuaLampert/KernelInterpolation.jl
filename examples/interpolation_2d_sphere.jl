@@ -10,7 +10,8 @@ n = 40
 nodeset = random_hypersphere(n, 2, r, center)
 values = f.(nodeset)
 
-itp = interpolate(nodeset, values, InverseMultiquadricKernel())
+kernel = InverseMultiquadricKernel{dim(nodeset)}()
+itp = interpolate(nodeset, values, kernel)
 
 N = 500
 many_nodes = random_hypersphere(N, 2, r, center)

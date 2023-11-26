@@ -10,35 +10,37 @@ end
     if dim(nodeset) == 1
         x = values_along_dim(nodeset, 1)
         seriestype := :scatter
-        label --> "points"
+        label --> "nodes"
         ylim --> (-0.1, 0.1)
         x, zeros(length(x))
     elseif dim(nodeset) == 2
         x = values_along_dim(nodeset, 1)
         y = values_along_dim(nodeset, 2)
         seriestype := :scatter
-        label --> "points"
+        label --> "nodes"
         x, y
     elseif dim(nodeset) == 3
         x = values_along_dim(nodeset, 1)
         y = values_along_dim(nodeset, 2)
         z = values_along_dim(nodeset, 3)
         seriestype := :scatter
-        label --> "points"
+        label --> "nodes"
         x, y, z
     else
         @error("Plotting a NodeSet is only supported for dimension up to 3, but the set has dimension $(dim(nodeset))")
     end
 end
 
-@recipe function f(nodeset::NodeSet, itp::Interpolation)
+@recipe function f(nodeset::NodeSet, itp::Interpolation; training_nodes = true)
     if dim(nodeset) == 1
-        @series begin
-            x = values_along_dim(itp.nodeset, 1)
-            seriestype := :scatter
-            markershape --> :star
-            label --> "training nodes"
-            x, itp.(x)
+        if training_nodes
+            @series begin
+                x = values_along_dim(itp.nodeset, 1)
+                seriestype := :scatter
+                markershape --> :star
+                label --> "training nodes"
+                x, itp.(x)
+            end
         end
         @series begin
             x = values_along_dim(nodeset, 1)
@@ -49,14 +51,16 @@ end
             x[perm], itp.(x[perm])
         end
     elseif dim(nodeset) == 2
-        @series begin
-            x = values_along_dim(itp.nodeset, 1)
-            y = values_along_dim(itp.nodeset, 2)
-            markershape --> :star
-            markersize --> 10
-            seriestype := :scatter
-            label --> "training nodes"
-            x, y, itp.(itp.nodeset)
+        if training_nodes
+            @series begin
+                x = values_along_dim(itp.nodeset, 1)
+                y = values_along_dim(itp.nodeset, 2)
+                markershape --> :star
+                markersize --> 10
+                seriestype := :scatter
+                label --> "training nodes"
+                x, y, itp.(itp.nodeset)
+            end
         end
         @series begin
             x = values_along_dim(nodeset, 1)

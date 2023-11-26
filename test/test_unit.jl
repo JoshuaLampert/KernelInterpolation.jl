@@ -2,8 +2,7 @@ module TestUnit
 
 using Test
 using KernelInterpolation
-using Distances
-using LinearAlgebra: norm, Cholesky
+using LinearAlgebra: norm, Cholesky, BunchKaufman
 using StaticArrays: SVector
 using Plots
 
@@ -17,54 +16,48 @@ using Plots
         x = [3.1, 3.0]
         y = [pi, 2.7]
 
-        k1 = @test_nowarn GaussKernel(shape_parameter = 2.0)
+        k1 = @test_nowarn GaussKernel{2}(shape_parameter = 2.0)
         @test_nowarn println(k1)
         @test_nowarn display(k1)
-        @test metric(k1) isa Euclidean
+        @test dim(k1) == 2
+        @test order(k1) == 0
         @test isapprox(phi(k1, 0.5), 0.36787944117144233)
         @test isapprox(k1(x, y), 0.6928652138413648)
 
-        k2 = @test_nowarn GaussKernel(shape_parameter = 2.0, metric = Cityblock())
+        k2 = @test_nowarn MultiquadricKernel{2}()
         @test_nowarn println(k2)
         @test_nowarn display(k2)
-        @test metric(k2) isa Cityblock
-        @test isapprox(phi(k2, 0.5), 0.36787944117144233)
-        @test isapprox(k2(x, y), 0.6270417435402862)
+        @test order(k2) == 1
+        @test isapprox(phi(k2, 0.5), 1.118033988749895)
+        @test isapprox(k2(x, y), 1.0448588176555913)
 
-        k3 = @test_nowarn MultiquadricKernel()
+        k3 = @test_nowarn InverseMultiquadricKernel{2}()
         @test_nowarn println(k3)
         @test_nowarn display(k3)
-        @test metric(k3) isa Euclidean
-        @test isapprox(phi(k3, 0.5), 1.118033988749895)
-        @test isapprox(k3(x, y), 1.0448588176555913)
+        @test order(k3) == 0
+        @test isapprox(phi(k3, 0.5), 0.8944271909999159)
+        @test isapprox(k3(x, y), 0.9570671014135252)
 
-        k4 = @test_nowarn InverseMultiquadricKernel()
+        k4 = @test_nowarn RadialCharacteristicKernel{2}()
         @test_nowarn println(k4)
         @test_nowarn display(k4)
-        @test metric(k4) isa Euclidean
-        @test isapprox(phi(k4, 0.5), 0.8944271909999159)
-        @test isapprox(k4(x, y), 0.9570671014135252)
+        @test order(k4) == 0
+        @test isapprox(phi(k4, 0.5), 0.25)
+        @test isapprox(k4(x, y), 0.48599089995881917)
 
-        k5 = @test_nowarn RadialCharacteristicKernel()
+        k5 = @test_nowarn PolyharmonicSplineKernel{2}(3)
         @test_nowarn println(k5)
         @test_nowarn display(k5)
-        @test metric(k5) isa Euclidean
-        @test isapprox(phi(k5, 0.5), 0.25)
-        @test isapprox(k5(x, y), 0.48599089995881917)
+        @test order(k5) == 2
+        @test isapprox(phi(k5, 0.5), 0.125)
+        @test isapprox(k5(x, y), 0.02778220597956396)
 
-        k6 = @test_nowarn PolyharmonicSplineKernel(3)
+        k6 = @test_nowarn ThinPlateSplineKernel{2}()
         @test_nowarn println(k6)
         @test_nowarn display(k6)
-        @test metric(k6) isa Euclidean
-        @test isapprox(phi(k6, 0.5), 0.125)
-        @test isapprox(k6(x, y), 0.02778220597956396)
-
-        k7 = @test_nowarn ThinPlateSplineKernel()
-        @test_nowarn println(k7)
-        @test_nowarn display(k7)
-        @test metric(k7) isa Euclidean
-        @test isapprox(phi(k7, 0.5), -0.17328679513998632)
-        @test isapprox(k7(x, y), -0.10956712895893082)
+        @test order(k6) == 2
+        @test isapprox(phi(k6, 0.5), -0.17328679513998632)
+        @test isapprox(k6(x, y), -0.10956712895893082)
     end
 
     @testset "NodeSet" begin
@@ -75,6 +68,7 @@ using Plots
         @test_nowarn println(nodeset1)
         @test_nowarn display(nodeset1)
         @test eltype(nodeset1) == Float64
+        @test isapprox(separation_distance(nodeset1), 0.5)
         @test dim(nodeset1) == 2
         @test length(nodeset1) == 4
         @test size(nodeset1) == (4, 2)
@@ -97,9 +91,10 @@ using Plots
             @test nodeset1[i] == nodeset2[i]
         end
 
-        @test_nowarn push!(nodeset1, [2.0, 2.0])
+        @test_nowarn push!(nodeset1, [1.1, 1.3])
         @test length(nodeset1) == 5
-        @test nodeset1[5] == [2.0, 2.0]
+        @test nodeset1[5] == [1.1, 1.3]
+        @test isapprox(separation_distance(nodeset1), 0.158113883008419)
 
         nodeset3 = @test_nowarn similar(nodeset1)
         @test nodeset3 isa NodeSet{2, Float64}
@@ -121,8 +116,11 @@ using Plots
         @test dim(nodeset7) == 1
         @test length(nodeset7) == 4
         @test size(nodeset7) == (4, 1)
+        @test isapprox(separation_distance(nodeset7), 0.5)
 
         @test_nowarn merge!(nodeset1, nodeset2)
+        @test isapprox(separation_distance(nodeset1), 0.0)
+        @test isapprox(separation_distance(nodeset2), 0.5)
         @test length(nodeset1) == 9
         @test nodeset1[end] == nodeset2[end]
         @test_nowarn merge!(nodeset1, nodeset2, nodeset2)
@@ -133,6 +131,7 @@ using Plots
         @test length(nodeset8) == 9
         @test length(unique(nodeset1)) == 5
         @test_nowarn unique!(nodeset1)
+        @test isapprox(separation_distance(nodeset1), 0.158113883008419)
         @test length(nodeset1) == 5
 
         x_min = (-2, -1, 4)
@@ -156,6 +155,7 @@ using Plots
             [1.0, 3.0],
         ]
         @test nodeset10 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset10), 0.5)
         @test length(nodeset10) == length(expected_nodes)
         for i in 1:length(nodeset10)
             @test nodeset10[i] == expected_nodes[i]
@@ -181,12 +181,14 @@ using Plots
                          1.0 1.0])
         f(x) = x[1] + x[2]
         ff = f.(nodes)
-        k = GaussKernel(shape_parameter = 0.5)
+        k = GaussKernel{dim(nodes)}(shape_parameter = 0.5)
         itp = @test_nowarn interpolate(nodes, ff, k)
         @test_nowarn println(itp)
         @test_nowarn display(itp)
         @test kernel(itp) == k
         @test nodeset(itp) == nodes
+        @test dim(itp) == dim(k)
+        @test dim(itp) == dim(nodes)
         expected_coefficients = [
             -2.225451664388596,
             0.31604241814819756,
@@ -198,8 +200,36 @@ using Plots
         for i in 1:length(coeffs)
             @test isapprox(coeffs[i], expected_coefficients[i])
         end
-        @test distance_matrix(itp) isa Cholesky
+        @test length(kernel_coefficients(itp)) == length(coeffs)
+        @test length(polynomial_coefficients(itp)) == 0
+        @test order(itp) == 0
+        @test length(polynomial_basis(itp)) == 0
+        @test length(polyvars(itp)) == dim(itp)
+        @test system_matrix(itp) isa Cholesky
         @test isapprox(itp([0.5, 0.5]), 1.115625820404527)
+        k = ThinPlateSplineKernel{dim(nodes)}()
+        itp = @test_nowarn interpolate(nodes, ff, k)
+        expected_coefficients = [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+        ]
+        coeffs = coefficients(itp)
+        @test length(coeffs) == length(expected_coefficients)
+        for i in 1:length(coeffs)
+            @test isapprox(coeffs[i], expected_coefficients[i])
+        end
+        @test order(itp) == order(k)
+        @test length(kernel_coefficients(itp)) == length(nodes)
+        @test length(polynomial_coefficients(itp)) == order(itp) + 1
+        @test length(polynomial_basis(itp)) == binomial(order(itp) - 1 + dim(nodes), dim(nodes))
+        @test system_matrix(itp) isa BunchKaufman
+        @test isapprox(itp([0.5, 0.5]), 1.0)
+        # TODO: test convergence orders of condition numbers depending on separation distance
     end
 
     @testset "Visualization" begin
@@ -214,7 +244,7 @@ using Plots
                 @test_nowarn plot(nodes_fine, itp)
             end
         end
-        k = GaussKernel(shape_parameter = 0.5)
+        k = GaussKernel{3}(shape_parameter = 0.5)
         @test_nowarn plot(0.1:0.1:5.0, k)
     end
 end

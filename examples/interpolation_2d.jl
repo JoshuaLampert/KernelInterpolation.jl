@@ -8,7 +8,7 @@ n = 30
 nodeset = random_hypercube(n, 2)
 values = f.(nodeset)
 
-itp = interpolate(nodeset, values, GaussKernel())
+itp = interpolate(nodeset, values)
 
 many_nodes = homogeneous_hypercube(20, 2)
 
