@@ -36,7 +36,8 @@ julia> ff = f.(nodeset)
 ```
 Finally, we obtain the `Interpolation` object by calling `interpolate`, where we specify the kernel function that is used for the reconstruction. Here, we take a Gaussian $\phi(r) = \exp(-(\varepsilon r)^2)$ with shape parameter $\varepsilon = 1/2$ as radial-symmetric basis function:
 ```julia
-julia> itp = interpolate(nodeset, ff, GaussKernel(0.5))
+julia> kernel = GaussKernel{dim(nodeset)}(0.5)
+julia> itp = interpolate(nodeset, ff, kernel)
 ```
 The result `itp` is an object that is callable on any point $x\in\mathbb{R}^d$, e.g.,
 ```julia
