@@ -169,7 +169,7 @@ function values_along_dim(nodeset::NodeSet, i::Int)
 end
 
 """
-    random_hypercube(n, dim, x_min = 0.0, x_max = 1.0)
+    random_hypercube(n, dim, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim))
 
 Create a `NodeSet` with `n` random nodes each of dimension `dim` inside a hypercube defined by
 the bounds `x_min` and `x_max`. If the bounds are given as single values, they are applied for
@@ -180,8 +180,8 @@ function random_hypercube(n::Int, dim::Int, x_min, x_max)
     return NodeSet(nodes)
 end
 
-function random_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(i -> 0.0, dim),
-                          x_max::NTuple{Dim} = ntuple(i -> 1.0, dim)) where {Dim}
+function random_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(_ -> 0.0, dim),
+                          x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim)) where {Dim}
     @assert dim == Dim
     nodes = rand(n, dim)
     for i in 1:dim
@@ -191,7 +191,7 @@ function random_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(i -> 0.0
 end
 
 """
-    homogeneous_hypercube(n, dim, x_min = 0.0, x_max = 1.0)
+    homogeneous_hypercube(n, dim, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim))
 
 Create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
 `dim` inside a hypercube defined by the bounds `x_min` and `x_max`. The resulting `NodeSet` will have
@@ -199,11 +199,11 @@ Create a `NodeSet` with `n` homogeneously distributed nodes in every dimension e
 If they are `Tuple`s of size `dim` the hypercube has the according bounds.
 """
 function homogeneous_hypercube(n::Int, dim::Int, x_min, x_max)
-    return homogeneous_hypercube(n, dim, ntuple(i -> x_min, dim), ntuple(i -> x_max, dim))
+    return homogeneous_hypercube(n, dim, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
 end
 
-function homogeneous_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(i -> 0.0, dim),
-                               x_max::NTuple{Dim} = ntuple(i -> 1.0, dim)) where {Dim}
+function homogeneous_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(_ -> 0.0, dim),
+                               x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim)) where {Dim}
     @assert dim == Dim
     nodes = Vector{SVector{dim, Float64}}(undef, n^dim)
     for (i, indices) in enumerate(Iterators.product(ntuple(i -> 1:n, dim)...))
