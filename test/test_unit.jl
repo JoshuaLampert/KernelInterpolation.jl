@@ -80,6 +80,37 @@ using Plots
         kernel7_1 = @test_nowarn WendlandKernel{2}(0)
         @test isapprox(phi(kernel7, 0.5), phi(kernel7_1, 0.5))
         @test isapprox(kernel7(x, y), kernel7_1(x, y))
+
+        nus = [0.5, 1.5, 2.5, 3.5]
+        kernels = [Matern12Kernel, Matern32Kernel, Matern52Kernel, Matern72Kernel]
+        expected_values = [
+            0.6065306597126335,
+            0.7848876539574506,
+            0.8286491424181255,
+            0.8463080665533403,
+        ]
+        expected_differences = [
+            0.7386954717906608,
+            0.9022506660348356,
+            0.9297353942237024,
+            0.9389666269913006,
+        ]
+        for i in 1:length(nus)
+            kernel8 = @test_nowarn MaternKernel{2}(nus[i])
+            @test_nowarn println(kernel8)
+            @test_nowarn display(kernel8)
+            @test order(kernel8) == 0
+            @test isapprox(phi(kernel8, 0.5), expected_values[i])
+            @test isapprox(kernel8(x, y), expected_differences[i])
+
+            kernel8_1 = @test_nowarn kernels[i]{2}()
+            @test_nowarn println(kernel8_1)
+            @test_nowarn display(kernel8_1)
+            @test order(kernel8_1) == 0
+
+            @test isapprox(phi(kernel8, 0.5), phi(kernel8_1, 0.5))
+            @test isapprox(kernel8(x, y), kernel8_1(x, y))
+        end
     end
 
     @testset "NodeSet" begin

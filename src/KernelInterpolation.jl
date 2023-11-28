@@ -2,6 +2,7 @@ module KernelInterpolation
 
 using LinearAlgebra: norm, factorize
 using RecipesBase
+using SpecialFunctions: besselk, loggamma
 using StaticArrays
 using TypedPolynomials: Variable, monomials, degree
 
@@ -13,7 +14,8 @@ include("util.jl")
 
 export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        PolyharmonicSplineKernel, ThinPlateSplineKernel, WendlandKernel,
-       RadialCharacteristicKernel
+       RadialCharacteristicKernel, MaternKernel, Matern12Kernel, Matern32Kernel,
+       Matern52Kernel, Matern72Kernel
 export phi, Phi, order
 export NodeSet, separation_distance, dim, values_along_dim, random_hypercube,
        random_hypercube_boundary, homogeneous_hypercube, homogeneous_hypercube_boundary,

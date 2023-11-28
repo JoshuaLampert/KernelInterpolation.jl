@@ -6,12 +6,14 @@ version = "1.0.0-DEV"
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 TypedPolynomials = "afbbf031-7a57-5f58-a1b9-b774a0fad08d"
 
 [compat]
 LinearAlgebra = "1"
 RecipesBase = "1.1"
+SpecialFunctions = "2"
 StaticArrays = "1"
 TypedPolynomials = "0.4"
 julia = "1.8"

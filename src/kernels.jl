@@ -212,7 +212,7 @@ function Base.show(io::IO, kernel::ThinPlateSplineKernel{Dim}) where {Dim}
     return print(io, "ThinPlateSplineKernel{", Dim, "}()")
 end
 
-phi(kernel::ThinPlateSplineKernel, r::Real) = isapprox(r, 0.0) ? 0.0 : r^2 * log(r)
+phi(kernel::ThinPlateSplineKernel, r::Real) = iszero(r) ? 0.0 : r^2 * log(r)
 order(kernel::ThinPlateSplineKernel) = 2
 
 @doc raw"""
@@ -314,3 +314,175 @@ end
 function order(kernel::RadialCharacteristicKernel{Dim}) where {Dim}
     kernel.beta > (Dim + 1) / 2 ? 0 : Inf
 end
+
+@doc raw"""
+    MaternKernel{Dim}(nu = 1.5; shape_parameter = 1.0)
+
+Matern kernel with
+```math
+    \phi(r) =  \frac{2^{1-\nu}}{\Gamma(\nu)}\big(\sqrt{2\nu}\varepsilon r\big)^\nu K_\nu\big(\sqrt{2\nu}\varepsilon r\big),
+```
+where ``\varepsilon`` is the shape parameter. The Matern kernel is positive definite.
+
+See [Wikipedia](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)
+
+See also [`RadialSymmetricKernel`](@ref).
+"""
+struct MaternKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
+    nu::RealT
+    shape_parameter::RealT
+end
+
+function MaternKernel{Dim}(nu = 1.5; shape_parameter = 1.0) where {Dim}
+    MaternKernel{Dim, typeof(shape_parameter)}(nu, shape_parameter)
+end
+
+function Base.show(io::IO, kernel::MaternKernel{Dim}) where {Dim}
+    return print(io, "MaternKernel{", Dim, "}(nu = ", kernel.nu,
+                 ", shape_parameter = ",
+                 kernel.shape_parameter, ")")
+end
+
+# See https://github.com/JuliaGaussianProcesses/KernelFunctions.jl/blob/9a2f7bbec515c55e5594feef7928670cb811169c/src/basekernels/matern.jl#L42
+function phi(kernel::MaternKernel, r::Real)
+    nu = kernel.nu
+    a_r = kernel.shape_parameter * r
+    if iszero(r)
+        c = -nu / (nu - 1)
+        return one(a_r) + c * a_r^2 / 2
+    else
+        y = sqrt(2 * nu) * a_r
+        b = log(besselk(nu, y))
+        return exp((one(a_r) - nu) * oftype(y, log(2)) - loggamma(nu) + nu * log(y) + b)
+    end
+end
+order(kernel::MaternKernel) = 0
+
+# Implement special Matern kernels for faster evaluation
+@doc raw"""
+    Matern12Kernel{Dim}(; shape_parameter = 1.0)
+
+Matern kernel with ``\nu = 1/2``, i.e.
+```math
+    \phi(r) = \exp(-\varepsilon r),
+```
+where ``\varepsilon`` is the shape parameter. The Matern kernel is positive definite.
+
+See [Wikipedia](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)
+
+See also [`MaternKernel`](@ref), [`RadialSymmetricKernel`](@ref).
+"""
+struct Matern12Kernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
+    shape_parameter::RealT
+end
+
+function Matern12Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
+    Matern12Kernel{Dim, typeof(shape_parameter)}(shape_parameter)
+end
+
+function Base.show(io::IO, kernel::Matern12Kernel{Dim}) where {Dim}
+    return print(io, "Matern12Kernel{", Dim, "}(shape_parameter = ",
+                 kernel.shape_parameter, ")")
+end
+
+function phi(kernel::Matern12Kernel, r::Real)
+    y = kernel.shape_parameter * r
+    return exp(-y)
+end
+order(kernel::Matern12Kernel) = 0
+
+@doc raw"""
+    Matern32Kernel{Dim}(; shape_parameter = 1.0)
+
+Matern kernel with ``\nu = 3/2``, i.e.
+```math
+    \phi(r) =  (1 + sqrt(3)*\varepsilon r)\exp(-\sqrt(3)\varepsilon r),
+```
+where ``\varepsilon`` is the shape parameter. The Matern kernel is positive definite.
+
+See [Wikipedia](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)
+
+See also [`MaternKernel`](@ref), [`RadialSymmetricKernel`](@ref).
+"""
+struct Matern32Kernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
+    shape_parameter::RealT
+end
+
+function Matern32Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
+    Matern32Kernel{Dim, typeof(shape_parameter)}(shape_parameter)
+end
+
+function Base.show(io::IO, kernel::Matern32Kernel{Dim}) where {Dim}
+    return print(io, "Matern32Kernel{", Dim, "}(shape_parameter = ",
+                 kernel.shape_parameter, ")")
+end
+
+function phi(kernel::Matern32Kernel, r::Real)
+    y = sqrt(3) * kernel.shape_parameter * r
+    return (1 + y) * exp(-y)
+end
+order(kernel::Matern32Kernel) = 0
+
+@doc raw"""
+    Matern52Kernel{Dim}(; shape_parameter = 1.0)
+
+Matern kernel with ``\nu = 5/2``, i.e.
+```math
+    \phi(r) =  (1 + sqrt(5)*\varepsilon r + 5*(\varepsilon r)^2/3)\exp(-\sqrt(5)\varepsilon r),
+```
+where ``\varepsilon`` is the shape parameter. The Matern kernel is positive definite.
+
+See [Wikipedia](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)
+
+See also [`MaternKernel`](@ref), [`RadialSymmetricKernel`](@ref).
+"""
+struct Matern52Kernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
+    shape_parameter::RealT
+end
+
+function Matern52Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
+    Matern52Kernel{Dim, typeof(shape_parameter)}(shape_parameter)
+end
+
+function Base.show(io::IO, kernel::Matern52Kernel{Dim}) where {Dim}
+    return print(io, "Matern52Kernel{", Dim, "}(shape_parameter = ",
+                 kernel.shape_parameter, ")")
+end
+
+function phi(kernel::Matern52Kernel, r::Real)
+    y = sqrt(5) * kernel.shape_parameter * r
+    return (1 + y + y^2 / 3) * exp(-y)
+end
+order(kernel::Matern52Kernel) = 0
+
+@doc raw"""
+    Matern72Kernel{Dim}(; shape_parameter = 1.0)
+
+Matern kernel with ``\nu = 7/2``, i.e.
+```math
+    \phi(r) =  (1 + sqrt(7)*\varepsilon r + 12*(\varepsilon r)^2/5 + 7*(\varepsilon r)^3/15)\exp(-\sqrt(7)\varepsilon r),
+```
+where ``\varepsilon`` is the shape parameter. The Matern kernel is positive definite.
+
+See [Wikipedia](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)
+
+See also [`MaternKernel`](@ref), [`RadialSymmetricKernel`](@ref).
+"""
+struct Matern72Kernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
+    shape_parameter::RealT
+end
+
+function Matern72Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
+    Matern72Kernel{Dim, typeof(shape_parameter)}(shape_parameter)
+end
+
+function Base.show(io::IO, kernel::Matern72Kernel{Dim}) where {Dim}
+    return print(io, "Matern72Kernel{", Dim, "}(shape_parameter = ",
+                 kernel.shape_parameter, ")")
+end
+
+function phi(kernel::Matern72Kernel, r::Real)
+    y = sqrt(7) * kernel.shape_parameter * r
+    return (1 + y + 6 * y^2 / 15 + y^3 / 15) * exp(-y)
+end
+order(kernel::Matern72Kernel) = 0
