@@ -16,48 +16,65 @@ using Plots
         x = [3.1, 3.0]
         y = [pi, 2.7]
 
-        k1 = @test_nowarn GaussKernel{2}(shape_parameter = 2.0)
-        @test_nowarn println(k1)
-        @test_nowarn display(k1)
-        @test dim(k1) == 2
-        @test order(k1) == 0
-        @test isapprox(phi(k1, 0.5), 0.36787944117144233)
-        @test isapprox(k1(x, y), 0.6928652138413648)
+        kernel1 = @test_nowarn GaussKernel{2}(shape_parameter = 2.0)
+        @test_nowarn println(kernel1)
+        @test_nowarn display(kernel1)
+        @test dim(kernel1) == 2
+        @test order(kernel1) == 0
+        @test isapprox(phi(kernel1, 0.5), 0.36787944117144233)
+        @test isapprox(kernel1(x, y), 0.6928652138413648)
 
-        k2 = @test_nowarn MultiquadricKernel{2}()
-        @test_nowarn println(k2)
-        @test_nowarn display(k2)
-        @test order(k2) == 1
-        @test isapprox(phi(k2, 0.5), 1.118033988749895)
-        @test isapprox(k2(x, y), 1.0448588176555913)
+        kernel2 = @test_nowarn MultiquadricKernel{2}()
+        @test_nowarn println(kernel2)
+        @test_nowarn display(kernel2)
+        @test order(kernel2) == 1
+        @test isapprox(phi(kernel2, 0.5), 1.118033988749895)
+        @test isapprox(kernel2(x, y), 1.0448588176555913)
 
-        k3 = @test_nowarn InverseMultiquadricKernel{2}()
-        @test_nowarn println(k3)
-        @test_nowarn display(k3)
-        @test order(k3) == 0
-        @test isapprox(phi(k3, 0.5), 0.8944271909999159)
-        @test isapprox(k3(x, y), 0.9570671014135252)
+        kernel3 = @test_nowarn InverseMultiquadricKernel{2}()
+        @test_nowarn println(kernel3)
+        @test_nowarn display(kernel3)
+        @test order(kernel3) == 0
+        @test isapprox(phi(kernel3, 0.5), 0.8944271909999159)
+        @test isapprox(kernel3(x, y), 0.9570671014135252)
 
-        k4 = @test_nowarn RadialCharacteristicKernel{2}()
-        @test_nowarn println(k4)
-        @test_nowarn display(k4)
-        @test order(k4) == 0
-        @test isapprox(phi(k4, 0.5), 0.25)
-        @test isapprox(k4(x, y), 0.48599089995881917)
+        kernel4 = @test_nowarn PolyharmonicSplineKernel{2}(3)
+        @test_nowarn println(kernel4)
+        @test_nowarn display(kernel4)
+        @test order(kernel4) == 2
+        @test isapprox(phi(kernel4, 0.5), 0.125)
+        @test isapprox(kernel4(x, y), 0.02778220597956396)
 
-        k5 = @test_nowarn PolyharmonicSplineKernel{2}(3)
-        @test_nowarn println(k5)
-        @test_nowarn display(k5)
-        @test order(k5) == 2
-        @test isapprox(phi(k5, 0.5), 0.125)
-        @test isapprox(k5(x, y), 0.02778220597956396)
+        kernel5 = @test_nowarn ThinPlateSplineKernel{2}()
+        @test_nowarn println(kernel5)
+        @test_nowarn display(kernel5)
+        @test order(kernel5) == 2
+        @test isapprox(phi(kernel5, 0.5), -0.17328679513998632)
+        @test isapprox(kernel5(x, y), -0.10956712895893082)
+        kernel5_1 = @test_nowarn PolyharmonicSplineKernel{2}(2)
+        @test isapprox(phi(kernel5, 0.5), phi(kernel5_1, 0.5))
+        @test isapprox(kernel5(x, y), kernel5_1(x, y))
 
-        k6 = @test_nowarn ThinPlateSplineKernel{2}()
-        @test_nowarn println(k6)
-        @test_nowarn display(k6)
-        @test order(k6) == 2
-        @test isapprox(phi(k6, 0.5), -0.17328679513998632)
-        @test isapprox(k6(x, y), -0.10956712895893082)
+        expected_values = [0.25, 0.1875, 0.10807291666666666, 0.0595703125]
+        expected_differences = [0.48599089995881917, 0.5223227199041456, 0.44621444895933693, 0.36846891545136595]
+        for k in 0:3
+            kernel6 = @test_nowarn WendlandKernel{2}(k)
+            @test_nowarn println(kernel6)
+            @test_nowarn display(kernel6)
+            @test order(kernel6) == 0
+            @test isapprox(phi(kernel6, 0.5), expected_values[k + 1])
+            @test isapprox(kernel6(x, y), expected_differences[k + 1])
+        end
+
+        kernel7 = @test_nowarn RadialCharacteristicKernel{2}()
+        @test_nowarn println(kernel7)
+        @test_nowarn display(kernel7)
+        @test order(kernel7) == 0
+        @test isapprox(phi(kernel7, 0.5), 0.25)
+        @test isapprox(kernel7(x, y), 0.48599089995881917)
+        kernel7_1 = @test_nowarn WendlandKernel{2}(0)
+        @test isapprox(phi(kernel7, 0.5), phi(kernel7_1, 0.5))
+        @test isapprox(kernel7(x, y), kernel7_1(x, y))
     end
 
     @testset "NodeSet" begin
@@ -217,13 +234,13 @@ using Plots
                          1.0 1.0])
         f(x) = x[1] + x[2]
         ff = f.(nodes)
-        k = GaussKernel{dim(nodes)}(shape_parameter = 0.5)
-        itp = @test_nowarn interpolate(nodes, ff, k)
+        kernel = GaussKernel{dim(nodes)}(shape_parameter = 0.5)
+        itp = @test_nowarn interpolate(nodes, ff, kernel)
         @test_nowarn println(itp)
         @test_nowarn display(itp)
-        @test kernel(itp) == k
+        @test interpolation_kernel(itp) == kernel
         @test nodeset(itp) == nodes
-        @test dim(itp) == dim(k)
+        @test dim(itp) == dim(kernel)
         @test dim(itp) == dim(nodes)
         expected_coefficients = [
             -2.225451664388596,
@@ -243,8 +260,8 @@ using Plots
         @test length(polyvars(itp)) == dim(itp)
         @test system_matrix(itp) isa Cholesky
         @test isapprox(itp([0.5, 0.5]), 1.115625820404527)
-        k = ThinPlateSplineKernel{dim(nodes)}()
-        itp = @test_nowarn interpolate(nodes, ff, k)
+        kernel = ThinPlateSplineKernel{dim(nodes)}()
+        itp = @test_nowarn interpolate(nodes, ff, kernel)
         expected_coefficients = [
             0.0,
             0.0,
@@ -259,7 +276,7 @@ using Plots
         for i in 1:length(coeffs)
             @test isapprox(coeffs[i], expected_coefficients[i])
         end
-        @test order(itp) == order(k)
+        @test order(itp) == order(kernel)
         @test length(kernel_coefficients(itp)) == length(nodes)
         @test length(polynomial_coefficients(itp)) == order(itp) + 1
         @test length(polynomial_basis(itp)) ==

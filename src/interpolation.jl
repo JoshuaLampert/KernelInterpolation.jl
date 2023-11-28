@@ -1,11 +1,11 @@
-abstract type AbstractInterpolation{K, Dim, RealT} end
+abstract type AbstractInterpolation{Kernel, Dim, RealT} end
 
 """
-    kernel(itp)
+    interpolation_kernel(itp)
 
 Return the kernel from an interpolation object.
 """
-kernel(itp::AbstractInterpolation) = itp.k
+interpolation_kernel(itp::AbstractInterpolation) = itp.kernel
 
 """
     nodeset(itp)
@@ -29,9 +29,9 @@ polynomials with maximum degree of `polynomial_degree`. The additional condition
 ```
 are enforced.
 """
-struct Interpolation{K, Dim, RealT, A, Monomials, PolyVars} <:
-       AbstractInterpolation{K, Dim, RealT}
-    k::K
+struct Interpolation{Kernel, Dim, RealT, A, Monomials, PolyVars} <:
+       AbstractInterpolation{Kernel, Dim, RealT}
+    kernel::Kernel
     nodeset::NodeSet{Dim, RealT}
     c::Vector{RealT}
     factorized_system_matrix::A
@@ -41,7 +41,7 @@ end
 
 function Base.show(io::IO, itp::Interpolation)
     return print(io,
-                 "Interpolation with $(length(nodeset(itp))) nodes, $(kernel(itp)) kernel and polynomial of order $(order(itp)).")
+                 "Interpolation with $(length(nodeset(itp))) nodes, $(interpolation_kernel(itp)) kernel and polynomial of order $(order(itp)).")
 end
 
 """
@@ -49,7 +49,7 @@ end
 
 Return the dimension of the input variables of the interpolation.
 """
-dim(itp::Interpolation{K, Dim, RealT, A}) where {K, Dim, RealT, A} = Dim
+dim(itp::Interpolation{Kernel, Dim, RealT, A}) where {Kernel, Dim, RealT, A} = Dim
 
 """
     coefficients(itp::Interpolation)
@@ -126,9 +126,9 @@ of the space of polynomials up to degree ``m``.
 system_matrix(itp::Interpolation) = itp.factorized_system_matrix
 
 @doc raw"""
-    interpolate(nodeset, values, k = GaussKernel{dim(nodeset)}(), m = order(k))
+    interpolate(nodeset, values, kernel = GaussKernel{dim(nodeset)}(), m = order(kernel))
 
-Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `k`
+Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
 and polynomials up to a degree `polynomial_degree`, i.e. determine the coefficients `c_j` and `d_k` in the expansion
 ```math
     s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^q d_kp_k(x),
@@ -142,8 +142,8 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
 are enforced.
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
-                     k = GaussKernel{dim(nodeset)}(), m = order(k)) where {Dim, RealT}
-    @assert dim(k) == Dim
+                     kernel = GaussKernel{dim(nodeset)}(), m = order(kernel)) where {Dim, RealT}
+    @assert dim(kernel) == Dim
     n = length(nodeset)
     @assert length(values) == n
     xx = polyvars(Dim)
@@ -153,7 +153,7 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
     kernel_matrix = Matrix{RealT}(undef, n, n)
     for i in 1:n
         for j in 1:n
-            kernel_matrix[i, j] = k(nodeset[i], nodeset[j])
+            kernel_matrix[i, j] = kernel(nodeset[i], nodeset[j])
         end
     end
     polynomial_matrix = Matrix{RealT}(undef, n, q)
@@ -167,20 +167,20 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
     b = [values; zeros(q)]
     factorized_system_matrix = factorize(system_matrix)
     c = factorized_system_matrix \ b
-    return Interpolation(k, nodeset, c, factorized_system_matrix, ps, xx)
+    return Interpolation(kernel, nodeset, c, factorized_system_matrix, ps, xx)
 end
 
 # Evaluate interpolant
 function (itp::Interpolation)(x)
     s = 0
-    k = kernel(itp)
+    kernel = interpolation_kernel(itp)
     xs = nodeset(itp)
     c = kernel_coefficients(itp)
     d = polynomial_coefficients(itp)
     ps = polynomial_basis(itp)
     xx = polyvars(itp)
     for i in 1:length(c)
-        s += c[i] * k(x, xs[i])
+        s += c[i] * kernel(x, xs[i])
     end
 
     for j in 1:length(d)
