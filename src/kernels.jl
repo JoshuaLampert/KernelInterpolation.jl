@@ -66,7 +66,8 @@ function GaussKernel{Dim}(; shape_parameter = 1.0) where {Dim}
 end
 
 function Base.show(io::IO, kernel::GaussKernel{Dim}) where {Dim}
-    return print(io, "GaussKernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter, ")")
+    return print(io, "GaussKernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter,
+                 ")")
 end
 
 phi(kernel::GaussKernel, r::Real) = exp(-(kernel.shape_parameter * r)^2)
@@ -100,7 +101,8 @@ function MultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where {Dim}
 end
 
 function Base.show(io::IO, kernel::MultiquadricKernel{Dim}) where {Dim}
-    return print(io, "MultiquadricKernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter,
+    return print(io, "MultiquadricKernel{", Dim, "}(shape_parameter = ",
+                 kernel.shape_parameter,
                  ")")
 end
 
@@ -140,7 +142,9 @@ function Base.show(io::IO, kernel::InverseMultiquadricKernel{Dim}) where {Dim}
                  kernel.shape_parameter, ")")
 end
 
-phi(kernel::InverseMultiquadricKernel, r::Real) = (1 + (kernel.shape_parameter * r)^2)^(-kernel.beta)
+function phi(kernel::InverseMultiquadricKernel, r::Real)
+    (1 + (kernel.shape_parameter * r)^2)^(-kernel.beta)
+end
 order(kernel::InverseMultiquadricKernel) = 0
 
 @doc raw"""
@@ -255,15 +259,18 @@ function phi(kernel::WendlandKernel, r::Real)
     if a_r >= 1
         return 0.0
     end
-    l = floor(kernel.d/2) + kernel.k + 1
+    l = floor(kernel.d / 2) + kernel.k + 1
     if kernel.k == 0
         return (1 - a_r)^l
     elseif kernel.k == 1
-        return (1 - a_r)^(l + 1)*((l + 1)*a_r + 1)
+        return (1 - a_r)^(l + 1) * ((l + 1) * a_r + 1)
     elseif kernel.k == 2
-        return 1/3*(1 - a_r)^(l + 2)*((l^2 + 4*l + 3)*a_r^2 + (3*l + 6)*a_r + 3)
+        return 1 / 3 * (1 - a_r)^(l + 2) *
+               ((l^2 + 4 * l + 3) * a_r^2 + (3 * l + 6) * a_r + 3)
     elseif kernel.k == 3
-        return 1/15*(1 - a_r)^(l + 3)*((l^3 + 9*l^2 + 23*l + 15)*a_r^3 + (6*l^2 + 36*l + 45)*a_r^2 + (15*l + 45)*a_r + 15)
+        return 1 / 15 * (1 - a_r)^(l + 3) *
+               ((l^3 + 9 * l^2 + 23 * l + 15) * a_r^3 + (6 * l^2 + 36 * l + 45) * a_r^2 +
+                (15 * l + 45) * a_r + 15)
     end
 end
 order(kernel::WendlandKernel) = 0
@@ -301,5 +308,9 @@ function Base.show(io::IO, kernel::RadialCharacteristicKernel{Dim}) where {Dim}
                  kernel.shape_parameter, ")")
 end
 
-phi(kernel::RadialCharacteristicKernel, r::Real) = max(0, 1 - kernel.shape_parameter * r)^kernel.beta
-order(kernel::RadialCharacteristicKernel{Dim}) where {Dim} = kernel.beta > (Dim + 1) / 2 ? 0 : Inf
+function phi(kernel::RadialCharacteristicKernel, r::Real)
+    max(0, 1 - kernel.shape_parameter * r)^kernel.beta
+end
+function order(kernel::RadialCharacteristicKernel{Dim}) where {Dim}
+    kernel.beta > (Dim + 1) / 2 ? 0 : Inf
+end

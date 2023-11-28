@@ -56,7 +56,12 @@ using Plots
         @test isapprox(kernel5(x, y), kernel5_1(x, y))
 
         expected_values = [0.25, 0.1875, 0.10807291666666666, 0.0595703125]
-        expected_differences = [0.48599089995881917, 0.5223227199041456, 0.44621444895933693, 0.36846891545136595]
+        expected_differences = [
+            0.48599089995881917,
+            0.5223227199041456,
+            0.44621444895933693,
+            0.36846891545136595,
+        ]
         for k in 0:3
             kernel6 = @test_nowarn WendlandKernel{2}(k)
             @test_nowarn println(kernel6)

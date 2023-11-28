@@ -142,7 +142,8 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
 are enforced.
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
-                     kernel = GaussKernel{dim(nodeset)}(), m = order(kernel)) where {Dim, RealT}
+                     kernel = GaussKernel{dim(nodeset)}(),
+                     m = order(kernel)) where {Dim, RealT}
     @assert dim(kernel) == Dim
     n = length(nodeset)
     @assert length(values) == n
