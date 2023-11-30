@@ -21,6 +21,16 @@ EXAMPLES_DIR = examples_dir()
                        atol = 1e-12)
     end
 
+    @ki_testset "interpolation_1d_discontinuous.jl" begin
+        @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_1d_discontinuous.jl"))
+        values_test = itp.(nodeset)
+        @test isapprox(norm(values .- values_test, Inf), 0; atol = 1e-12)
+        many_values = f.(many_nodes)
+        many_values_test = itp.(many_nodes)
+        @test isapprox(norm(many_values .- many_values_test, Inf), 0.8668905364406964;
+                       atol = 1e-12)
+    end
+
     @ki_testset "interpolation_2d.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d.jl"))
         values_test = itp.(nodeset)
