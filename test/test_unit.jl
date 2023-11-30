@@ -186,6 +186,26 @@ using Plots
         @test_nowarn unique!(nodeset1)
         @test isapprox(separation_distance(nodeset1), 0.158113883008419)
         @test length(nodeset1) == 5
+        @test_nowarn deleteat!(nodeset1, 2)
+        expected_nodes = [
+            [0.0, 0.0],
+            [0.0, 1.0],
+            [1.0, 1.0],
+            [1.1, 1.3]
+        ]
+        @test length(nodeset1) == length(expected_nodes)
+        for i in 1:length(nodeset1)
+            @test nodeset1[i] == expected_nodes[i]
+        end
+        @test_nowarn deleteat!(nodeset1, [2, 4])
+        expected_nodes = [
+            [0.0, 0.0],
+            [1.0, 1.0]
+        ]
+        @test length(nodeset1) == length(expected_nodes)
+        for i in 1:length(nodeset1)
+            @test nodeset1[i] == expected_nodes[i]
+        end
 
         x_min = (-2, -1, 4)
         x_max = (-1, 4, 6)

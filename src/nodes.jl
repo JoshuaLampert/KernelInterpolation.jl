@@ -155,6 +155,10 @@ function Base.unique!(nodeset::NodeSet)
     unique!(nodeset.nodes)
     update_separation_distance!(nodeset)
 end
+function Base.deleteat!(nodeset::NodeSet, i)
+   deleteat!(nodeset.nodes, i)
+   update_separation_distance!(nodeset)
+end
 
 """
     values_along_dim(nodeset::NodeSet, i::Int)

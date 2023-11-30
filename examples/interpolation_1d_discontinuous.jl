@@ -19,7 +19,7 @@ n = 79
 nodeset = NodeSet(LinRange(x_min, x_max, n))
 values = f.(nodeset)
 
-kernel = GaussKernel{dim(nodeset)}()
+kernel = Matern12Kernel{dim(nodeset)}()
 itp = interpolate(nodeset, values, kernel)
 
 N = 1000
