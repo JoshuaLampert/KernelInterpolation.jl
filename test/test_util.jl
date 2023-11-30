@@ -1,13 +1,20 @@
 """
-    test_include_example(example; args...)
+    test_include_example(example; l2=nothing, linf=nothing,
+                         atol=1e-12, rtol=sqrt(eps()),
+                         args...)
 
 Test by calling `include_example(example; parameters...)`.
 By default, only the absence of error output is checked.
 """
 macro test_include_example(example, args...)
+    local l2 = get_kwarg(args, :l2, nothing)
+    local linf = get_kwarg(args, :linf, nothing)
+    local atol = get_kwarg(args, :atol, 1e-12)
+    local rtol = get_kwarg(args, :rtol, sqrt(eps()))
     local kwargs = Pair{Symbol, Any}[]
     for arg in args
-        if arg.head == :(=)
+        if (arg.head == :(=) &&
+            !(arg.args[1] in (:l2, :linf, :atol, :rtol)))
             push!(kwargs, Pair(arg.args...))
         end
     end
@@ -17,8 +24,31 @@ macro test_include_example(example, args...)
 
         # evaluate examples in the scope of the module they're called from
         @test_nowarn include_example(@__MODULE__, $example; $kwargs...)
+        # if present, compare l2 and linf against reference values
+        if !isnothing($l2) || !isnothing($linf)
+            values_test = itp.(nodeset)
+            # Check interpolation at interpolation nodes
+            @test isapprox(norm(values .- values_test, Inf), 0; atol = $atol, rtol = $rtol)
+            many_values = f.(many_nodes)
+            many_values_test = itp.(many_nodes)
+            @test isapprox(norm(many_values .- many_values_test), $l2; atol = $atol, rtol = $rtol)
+            @test isapprox(norm(many_values .- many_values_test, Inf), $linf; atol = $atol, rtol = $rtol)
+        end
         println("═"^100)
     end
+end
+
+# Get the first value assigned to `keyword` in `args` and return `default_value`
+# if there are no assignments to `keyword` in `args`.
+function get_kwarg(args, keyword, default_value)
+    val = default_value
+    for arg in args
+        if arg.head == :(=) && arg.args[1] == keyword
+            val = arg.args[2]
+            break
+        end
+    end
+    return val
 end
 
 """
