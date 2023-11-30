@@ -191,7 +191,7 @@ using Plots
             [0.0, 0.0],
             [0.0, 1.0],
             [1.0, 1.0],
-            [1.1, 1.3]
+            [1.1, 1.3],
         ]
         @test length(nodeset1) == length(expected_nodes)
         for i in 1:length(nodeset1)
@@ -200,7 +200,7 @@ using Plots
         @test_nowarn deleteat!(nodeset1, [2, 4])
         expected_nodes = [
             [0.0, 0.0],
-            [1.0, 1.0]
+            [1.0, 1.0],
         ]
         @test length(nodeset1) == length(expected_nodes)
         for i in 1:length(nodeset1)
