@@ -2,7 +2,7 @@ module TestUnit
 
 using Test
 using KernelInterpolation
-using LinearAlgebra: norm, Cholesky, BunchKaufman
+using LinearAlgebra: norm, Symmetric
 using StaticArrays: MVector
 using Plots
 
@@ -21,6 +21,7 @@ using Plots
         @test_nowarn display(kernel1)
         @test dim(kernel1) == 2
         @test order(kernel1) == 0
+        @test isapprox(phi(kernel1, 0.0), 1.0)
         @test isapprox(phi(kernel1, 0.5), 0.36787944117144233)
         @test isapprox(kernel1(x, y), 0.6928652138413648)
 
@@ -28,6 +29,7 @@ using Plots
         @test_nowarn println(kernel2)
         @test_nowarn display(kernel2)
         @test order(kernel2) == 1
+        @test isapprox(phi(kernel2, 0.0), 1.0)
         @test isapprox(phi(kernel2, 0.5), 1.118033988749895)
         @test isapprox(kernel2(x, y), 1.0448588176555913)
 
@@ -35,6 +37,7 @@ using Plots
         @test_nowarn println(kernel3)
         @test_nowarn display(kernel3)
         @test order(kernel3) == 0
+        @test isapprox(phi(kernel3, 0.0), 1.0)
         @test isapprox(phi(kernel3, 0.5), 0.8944271909999159)
         @test isapprox(kernel3(x, y), 0.9570671014135252)
 
@@ -67,6 +70,7 @@ using Plots
             @test_nowarn println(kernel6)
             @test_nowarn display(kernel6)
             @test order(kernel6) == 0
+            @test isapprox(phi(kernel6, 0.0), 1.0)
             @test isapprox(phi(kernel6, 0.5), expected_values[k + 1])
             @test isapprox(kernel6(x, y), expected_differences[k + 1])
         end
@@ -75,6 +79,7 @@ using Plots
         @test_nowarn println(kernel7)
         @test_nowarn display(kernel7)
         @test order(kernel7) == 0
+        @test isapprox(phi(kernel7, 0.0), 1.0)
         @test isapprox(phi(kernel7, 0.5), 0.25)
         @test isapprox(kernel7(x, y), 0.48599089995881917)
         kernel7_1 = @test_nowarn WendlandKernel{2}(0)
@@ -100,6 +105,7 @@ using Plots
             @test_nowarn println(kernel8)
             @test_nowarn display(kernel8)
             @test order(kernel8) == 0
+            @test isapprox(phi(kernel8, 0.0), 1.0)
             @test isapprox(phi(kernel8, 0.5), expected_values[i])
             @test isapprox(kernel8(x, y), expected_differences[i])
 
@@ -314,8 +320,10 @@ using Plots
         @test order(itp) == 0
         @test length(polynomial_basis(itp)) == 0
         @test length(polyvars(itp)) == dim(itp)
-        @test system_matrix(itp) isa Cholesky
+        @test system_matrix(itp) isa Symmetric
         @test isapprox(itp([0.5, 0.5]), 1.115625820404527)
+        @test isapprox(kernel_norm(itp), 2.5193566316951626)
+
         kernel = ThinPlateSplineKernel{dim(nodes)}()
         itp = @test_nowarn interpolate(nodes, ff, kernel)
         expected_coefficients = [
@@ -337,8 +345,9 @@ using Plots
         @test length(polynomial_coefficients(itp)) == order(itp) + 1
         @test length(polynomial_basis(itp)) ==
               binomial(order(itp) - 1 + dim(nodes), dim(nodes))
-        @test system_matrix(itp) isa BunchKaufman
+        @test system_matrix(itp) isa Symmetric
         @test isapprox(itp([0.5, 0.5]), 1.0)
+        @test isapprox(kernel_norm(itp), 0.0)
         # TODO: test convergence orders of condition numbers depending on separation distance
     end
 

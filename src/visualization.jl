@@ -1,7 +1,7 @@
 @recipe function f(x::AbstractVector, kernel::RadialSymmetricKernel)
     @series begin
         xguide --> "r"
-        title --> string(nameof(typeof(kernel)))
+        title --> get_name(kernel)
         x, phi.(Ref(kernel), abs.(x))
     end
 end
@@ -9,7 +9,7 @@ end
 @recipe function f(nodeset::NodeSet, kernel::RadialSymmetricKernel)
     if dim(nodeset) == 1
         x = values_along_dim(nodeset, 1)
-        title --> string(nameof(typeof(kernel)))
+        title --> get_name(kernel)
         x, phi.(Ref(kernel), norm.(nodeset))
     elseif dim(nodeset) == 2
         x = values_along_dim(nodeset, 1)

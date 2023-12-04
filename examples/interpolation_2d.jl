@@ -2,7 +2,7 @@ using KernelInterpolation
 using Plots
 
 # function to interpolate
-f(x) = sin(2 * pi * x[1])
+f(x) = sinpi(2 * x[1])
 
 n = 30
 nodeset = random_hypercube(n, 2)

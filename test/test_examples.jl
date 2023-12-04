@@ -23,7 +23,7 @@ EXAMPLES_DIR = examples_dir()
 
     @ki_testset "interpolation_2d.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d.jl"),
-                              l2=0.38083927124154865, linf=0.09758629694800813, atol=1e-7)
+                              l2=0.38083912498369643, linf=0.09758611050523225, atol=1e-7)
     end
 
     @ki_testset "interpolation_2d_sphere.jl" begin
@@ -39,6 +39,14 @@ EXAMPLES_DIR = examples_dir()
     @ki_testset "interpolation_2d_polynomials.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_polynomials.jl"),
                               l2=0.05394435588953249, linf=0.028279879132924693)
+    end
+
+    @ki_testset "interpolation_2d_convergence.jl" begin
+        @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_convergence.jl"), ns = 5:10)
+    end
+
+    @ki_testset "interpolation_2d_condition.jl" begin
+        @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_condition.jl"), ns = 5:10)
     end
 end
 

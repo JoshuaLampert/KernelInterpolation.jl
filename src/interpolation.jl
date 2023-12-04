@@ -34,7 +34,7 @@ struct Interpolation{Kernel, Dim, RealT, A, Monomials, PolyVars} <:
     kernel::Kernel
     nodeset::NodeSet{Dim, RealT}
     c::Vector{RealT}
-    factorized_system_matrix::A
+    symmetric_system_matrix::A
     ps::Monomials
     xx::PolyVars
 end
@@ -123,7 +123,7 @@ and ``P\in\mathrm{R}^{n\times q}`` is the matrix with entries
 ``p_{ij} = p_j(x_i)``, where ``p_j`` is the ``j``-th multivariate monomial
 of the space of polynomials up to degree ``m``.
 """
-system_matrix(itp::Interpolation) = itp.factorized_system_matrix
+system_matrix(itp::Interpolation) = itp.symmetric_system_matrix
 
 @doc raw"""
     interpolate(nodeset, values, kernel = GaussKernel{dim(nodeset)}(), m = order(kernel))
@@ -166,9 +166,9 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
     system_matrix = [kernel_matrix polynomial_matrix
                      transpose(polynomial_matrix) zeros(q, q)]
     b = [values; zeros(q)]
-    factorized_system_matrix = factorize(system_matrix)
-    c = factorized_system_matrix \ b
-    return Interpolation(kernel, nodeset, c, factorized_system_matrix, ps, xx)
+    symmetric_system_matrix = Symmetric(system_matrix)
+    c = symmetric_system_matrix \ b
+    return Interpolation(kernel, nodeset, c, symmetric_system_matrix, ps, xx)
 end
 
 # Evaluate interpolant
@@ -180,17 +180,61 @@ function (itp::Interpolation)(x)
     d = polynomial_coefficients(itp)
     ps = polynomial_basis(itp)
     xx = polyvars(itp)
-    for i in 1:length(c)
-        s += c[i] * kernel(x, xs[i])
+    for j in 1:length(c)
+        s += c[j] * kernel(x, xs[j])
     end
 
-    for j in 1:length(d)
+    for k in 1:length(d)
         # Allow scalar input if interpolant is one-dimensional
         if x isa Real
-            s += d[j] * ps[j](xx => [x])
+            s += d[k] * ps[k](xx => [x])
         else
-            s += d[j] * ps[j](xx => x)
+            s += d[k] * ps[k](xx => x)
         end
     end
     return s
 end
+
+# TODO: Does this also make sense for conditionally positive definite kernels?
+@doc raw"""
+    kernel_inner_product(itp1, itp2)
+
+Inner product of the native space for two interpolants `itp1` and `itp2`
+with the same kernel. The inner product is defined as
+```math
+    (f, g)_K = \sum_{j = 1}^n\sum_{k = 1}^mc_jd_kK(x_j, y_k)
+```
+for the interpolants ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)`` and
+``g(x) = \sum_{k = 1}^md_kK(x, y_k)``.
+
+See also [`kernel_norm`](@ref).
+"""
+function kernel_inner_product(itp1, itp2)
+    kernel = interpolation_kernel(itp1)
+    @assert kernel == interpolation_kernel(itp2)
+    c = kernel_coefficients(itp1)
+    d = kernel_coefficients(itp2)
+    xs = nodeset(itp1)
+    ys = nodeset(itp2)
+    s = 0
+    for j in 1:length(c)
+        for k in 1:length(d)
+            s += c[j]*d[k]*kernel(xs[j], ys[k])
+        end
+    end
+    return s
+end
+
+@doc raw"""
+    kernel_norm(itp)
+
+Norm of the native space defined by the kernel of the interpolant `itp`.
+The norm is defined as
+```math
+    \|f\|_K^2 = \sum_{j,k=1}^nc_jc_kK(x_j, x_k)
+```
+for the interpolant ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)``.
+
+See also [`kernel_inner_product`](@ref).
+"""
+kernel_norm(itp) = sqrt(kernel_inner_product(itp, itp))
