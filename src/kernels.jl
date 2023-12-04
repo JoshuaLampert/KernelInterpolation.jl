@@ -17,7 +17,8 @@ dim(kernel::AbstractKernel{Dim}) where {Dim} = Dim
 
 Returns the canonical, human-readable name for the given system of equations.
 """
-get_name(kernel::AbstractKernel) = string(nameof(typeof(kernel))) * "{" * string(dim(kernel)) * "}"
+get_name(kernel::AbstractKernel) = string(nameof(typeof(kernel))) * "{" *
+                                   string(dim(kernel)) * "}"
 
 @doc raw"""
     RadialSymmetricKernel
@@ -179,7 +180,9 @@ struct PolyharmonicSplineKernel{Dim} <: RadialSymmetricKernel{Dim}
     k::Int
 end
 
-get_name(kernel::PolyharmonicSplineKernel) = string(nameof(typeof(kernel))) * string(kernel.k) * "{" * string(dim(kernel)) * "}"
+function get_name(kernel::PolyharmonicSplineKernel)
+    string(nameof(typeof(kernel))) * string(kernel.k) * "{" * string(dim(kernel)) * "}"
+end
 
 function Base.show(io::IO, kernel::PolyharmonicSplineKernel{Dim}) where {Dim}
     return print(io, "PolyharmonicSplineKernel{", Dim, "}(k = ", kernel.k, ")")
@@ -257,7 +260,10 @@ function WendlandKernel{Dim}(k::Int; shape_parameter = 1.0, d::Int = Dim) where 
     WendlandKernel{Dim, typeof(shape_parameter)}(k, shape_parameter, d)
 end
 
-get_name(kernel::WendlandKernel) = string(nameof(typeof(kernel))) * string(kernel.d) * "," * string(kernel.k) * "{" * string(dim(kernel)) * "}"
+function get_name(kernel::WendlandKernel)
+    string(nameof(typeof(kernel))) * string(kernel.d) * "," * string(kernel.k) * "{" *
+    string(dim(kernel)) * "}"
+end
 
 function Base.show(io::IO, kernel::WendlandKernel{Dim}) where {Dim}
     return print(io, "WendlandKernel{", Dim, "}(k = ", kernel.k,

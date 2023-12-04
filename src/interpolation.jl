@@ -219,7 +219,7 @@ function kernel_inner_product(itp1, itp2)
     s = 0
     for j in 1:length(c)
         for k in 1:length(d)
-            s += c[j]*d[k]*kernel(xs[j], ys[k])
+            s += c[j] * d[k] * kernel(xs[j], ys[k])
         end
     end
     return s

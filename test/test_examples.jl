@@ -42,11 +42,13 @@ EXAMPLES_DIR = examples_dir()
     end
 
     @ki_testset "interpolation_2d_convergence.jl" begin
-        @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_convergence.jl"), ns = 5:10)
+        @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_convergence.jl"),
+                              ns=5:10)
     end
 
     @ki_testset "interpolation_2d_condition.jl" begin
-        @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_condition.jl"), ns = 5:10)
+        @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_condition.jl"),
+                              ns=5:10)
     end
 end
 
