@@ -8,6 +8,8 @@ r = 2.0
 center = [-1.0, 2.0]
 n = 40
 nodeset = random_hypersphere(n, 2, r, center)
+nodeset_boundary = random_hypersphere_boundary(20, 2, r, center)
+merge!(nodeset, nodeset_boundary)
 values = f.(nodeset)
 
 kernel = InverseMultiquadricKernel{dim(nodeset)}()
@@ -15,6 +17,7 @@ itp = interpolate(nodeset, values, kernel)
 
 N = 500
 many_nodes = random_hypersphere(N, 2, r, center)
+many_nodes_boundary = random_hypersphere_boundary(100, 2, r, center)
+merge!(many_nodes, many_nodes_boundary)
 
-plot(many_nodes, itp)
-plot!(many_nodes, f, st = :surface)
+plot(many_nodes, zcolor = itp.(many_nodes))

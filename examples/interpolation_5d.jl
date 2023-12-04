@@ -13,4 +13,4 @@ kernel = WendlandKernel{d}(3, shape_parameter = 0.1)
 itp = interpolate(nodeset, values, kernel)
 
 many_nodes = homogeneous_hypercube(5, d)
-print(norm(f.(many_nodes) - itp.(many_nodes), Inf))
+println(norm(f.(many_nodes) - itp.(many_nodes), Inf))

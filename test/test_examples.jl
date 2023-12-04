@@ -28,7 +28,7 @@ EXAMPLES_DIR = examples_dir()
 
     @ki_testset "interpolation_2d_sphere.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_sphere.jl"),
-                              l2=1.5830667022001008, linf=0.3644408775720256)
+                              l2=1.0227617845926844, linf=0.2456367616554671)
     end
 
     @ki_testset "interpolation_2d_L_shape.jl" begin
