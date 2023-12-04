@@ -41,6 +41,11 @@ EXAMPLES_DIR = examples_dir()
                               l2=0.05394435588953249, linf=0.028279879132924693)
     end
 
+    @ki_testset "interpolation_5d.jl" begin
+        @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_5d.jl"),
+                              l2=0.4308925377778874, linf=0.06402624845465965)
+    end
+
     @ki_testset "interpolation_2d_convergence.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_convergence.jl"),
                               ns=5:10)
