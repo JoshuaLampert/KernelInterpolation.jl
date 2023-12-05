@@ -29,7 +29,7 @@ In order to interpolate discrete function values of a (potentially) multivariate
 ```julia
 julia> nodeset = homogeneous_hypercube(5, 2, (-2, -1), (2, 1))
 ```
-Here, we specified that the hypercube has 5 nodes along each of the 2 dimensions (i.e. in total we have $5^2 = 25$) nodes and the boundaries of the cube are given by the lower left corner located at $(-2, -1)$ and the upper right corner at $(2, 1)$. Similarly, `NodeSet`s can be constructed by the functions `random_hypercube`, `random_hypercube_boundary`, `homogeneous_hypercube_boundary`, `random_hypersphere` or `random_hypersphere_boundary` or by directly passing a set of nodes to the constructor of `NodeSet`. Besides the `nodeset`, we need the function values at the nodes. Let's say, we want to reconstruct the function $f(x) = \sin(x_1\cdot x_2)$. Then, we can create the vector of function values by
+Here, we specified that the hypercube has 5 nodes along each of the 2 dimensions (i.e. in total we have $5^2 = 25$ nodes) and that the boundaries of the cube are given by the lower left corner located at $(-2, -1)$ and the upper right corner at $(2, 1)$. Similarly, `NodeSet`s can be constructed by the functions `random_hypercube`, `random_hypercube_boundary`, `homogeneous_hypercube_boundary`, `random_hypersphere` or `random_hypersphere_boundary` or by directly passing a set of nodes to the constructor of `NodeSet`. Besides the `nodeset`, we need the function values at the nodes. Let's say, we want to reconstruct the function $f(x) = \sin(x_1\cdot x_2)$. Then, we can create the vector of function values by
 ```julia
 julia> f(x) = sin(x[1]*x[2])
 julia> ff = f.(nodeset)
@@ -39,7 +39,7 @@ Finally, we obtain the `Interpolation` object by calling `interpolate`, where we
 julia> kernel = GaussKernel{dim(nodeset)}(0.5)
 julia> itp = interpolate(nodeset, ff, kernel)
 ```
-If the `kernel` is only conditionally positive definite, the interpolant will be augmented by a polynomial of the corresponding order of the kernel. Another order can also be passed explicitly with the keyword argument `m` of `intepolate`. The result `itp` is an object that is callable on any point $x\in\mathbb{R}^d$, e.g.,
+If the `kernel` is only conditionally positive definite, the interpolant will be augmented by a polynomial of the corresponding order of the kernel. Another order can also be passed explicitly with the keyword argument `m` of `interpolate`. The result `itp` is an object that is callable on any point $x\in\mathbb{R}^d$, e.g.,
 ```julia
 julia> itp([-1.3, 0.26])
 -0.34096946394940986
