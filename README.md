@@ -1,6 +1,7 @@
 # KernelInterpolation.jl
 
 [![Build Status](https://github.com/JoshuaLampert/KernelInterpolation.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JoshuaLampert/KernelInterpolation.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Coveralls](https://coveralls.io/repos/github/JoshuaLampert/KernelInterpolation.jl/badge.svg?branch=main)](https://coveralls.io/github/JoshuaLampert/KernelInterpolation.jl?branch=main)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
 

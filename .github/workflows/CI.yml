@@ -8,6 +8,7 @@ on:
       - 'LICENSE.md'
       - 'README.md'
       - '.github/workflows/CompatHelper.yml'
+      - '.github/workflows/Format-check.yml'
       - '.github/workflows/TagBot.yml'
       - '.github/workflows/SpellCheck.yml'
       - 'docs/**'
@@ -16,15 +17,18 @@ on:
       - 'LICENSE.md'
       - 'README.md'
       - '.github/workflows/CompatHelper.yml'
+      - '.github/workflows/Format-check.yml'
       - '.github/workflows/TagBot.yml'
       - '.github/workflows/SpellCheck.yml'
       - 'docs/**'
   workflow_dispatch:
+
 concurrency:
   # Skip intermediate builds: always.
   # Cancel intermediate builds: only if it is a pull request build.
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
 jobs:
   test:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
@@ -50,8 +54,24 @@ jobs:
       - run: julia -e 'using InteractiveUtils; versioninfo(verbose=true)'
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
-        env:
-          PYTHON: ""
       - uses: julia-actions/julia-runtest@v1
-        env:
-          PYTHON: ""
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          files: lcov.info
+      - uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          flag-name: run-${{ matrix.os }}-${{ matrix.version }}-${{ matrix.arch }}-${{ github.run_id }}
+          parallel: true
+          path-to-lcov: ./lcov.info
+
+  finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true
