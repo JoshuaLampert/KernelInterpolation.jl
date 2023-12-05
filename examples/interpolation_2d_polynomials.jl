@@ -16,7 +16,14 @@ values = f.(nodeset)
 kernel = ThinPlateSplineKernel{dim(nodeset)}()
 itp = interpolate(nodeset, values, kernel)
 
-many_nodes = homogeneous_hypercube(20, 2)
+N = 20
+many_nodes = homogeneous_hypercube(N, 2)
 
-plot(many_nodes, itp)
-plot!(many_nodes, f, st = :surface)
+p1 = plot(many_nodes, itp)
+plot!(p1, many_nodes, f, st = :surface)
+
+x = unique(values_along_dim(many_nodes, 1))
+y = unique(values_along_dim(many_nodes, 2))
+z = reshape(itp.(many_nodes), (N, N))
+p2 = plot(x, y, z, linetype = :contourf)
+plot(p1, p2, layout = (2, 1))
