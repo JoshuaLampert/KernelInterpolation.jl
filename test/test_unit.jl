@@ -131,6 +131,7 @@ using Plots
         @test dim(nodeset1) == 2
         @test length(nodeset1) == 4
         @test size(nodeset1) == (4, 2)
+        @test axes(nodeset1) == (1:4,)
         for node in nodeset1
             @test node isa MVector{2, Float64}
         end
@@ -149,8 +150,22 @@ using Plots
         for i in 1:length(nodeset1)
             @test nodeset1[i] == nodeset2[i]
         end
+        sub_nodes = nodeset1[1:2]
+        @test length(sub_nodes) == 2
+        @test sub_nodes isa Vector{MVector{2, Float64}}
+        for i in 1:length(sub_nodes)
+            @test nodeset1[i] == sub_nodes[i]
+        end
 
         @test_nowarn push!(nodeset1, [1.1, 1.3])
+        @test length(nodeset1) == 5
+        @test nodeset1[5] == [1.1, 1.3]
+        @test isapprox(separation_distance(nodeset1), 0.158113883008419)
+        @test_nowarn push!(nodeset1, MVector{2}([1.1, 1.4]))
+        @test length(nodeset1) == 6
+        @test nodeset1[6] == [1.1, 1.4]
+        @test isapprox(separation_distance(nodeset1), 0.05)
+        @test_nowarn pop!(nodeset1)
         @test length(nodeset1) == 5
         @test nodeset1[5] == [1.1, 1.3]
         @test isapprox(separation_distance(nodeset1), 0.158113883008419)
@@ -161,6 +176,8 @@ using Plots
         @test length(nodeset3) == 5
         @test_nowarn nodeset3[1] = [1.0, 2.0]
         @test nodeset3[1] == [1.0, 2.0]
+        @test_nowarn nodeset3[1] = MVector{2}([2.0, 3.0])
+        @test_nowarn nodeset3[1] = [2.0, 3.0]
         nodeset4 = @test_nowarn similar(nodeset1, Int64)
         @test nodeset4 isa NodeSet{2, Int64}
         nodeset5 = @test_nowarn similar(nodeset1, 10)
@@ -176,6 +193,9 @@ using Plots
         @test length(nodeset7) == 4
         @test size(nodeset7) == (4, 1)
         @test isapprox(separation_distance(nodeset7), 0.5)
+        @test_nowarn nodeset7[2] = 4
+        @test nodeset7[2] == [4]
+        @test isapprox(separation_distance(nodeset7), 0.0)
 
         @test_nowarn merge!(nodeset1, nodeset2)
         @test isapprox(separation_distance(nodeset1), 0.0)
@@ -213,19 +233,43 @@ using Plots
             @test nodeset1[i] == expected_nodes[i]
         end
 
-        x_min = (-2, -1, 4)
-        x_max = (-1, 4, 6)
+        x_min = -1
+        x_max = 1
         nodeset9 = @test_nowarn random_hypercube(10, 3, x_min, x_max)
         @test nodeset9 isa NodeSet{3, Float64}
         for node in nodeset9
+            for (i, val) in enumerate(node)
+                @test x_min <= val <= x_max
+            end
+        end
+
+        @test length(random_hypercube_boundary(10, 1, x_min, x_max)) == 2
+        nodeset10 = @test_nowarn random_hypercube_boundary(10, 3, x_min, x_max)
+        @test nodeset10 isa NodeSet{3, Float64}
+        for node in nodeset10
+            on_boundary = false
+            for (i, val) in enumerate(node)
+                @test x_min <= val <= x_max
+                if isapprox(val, x_min) || isapprox(val, x_max)
+                    on_boundary = true
+                end
+            end
+            @test on_boundary
+        end
+
+        x_min = (-2, -1, 4)
+        x_max = (-1, 4, 6)
+        nodeset9_1 = @test_nowarn random_hypercube(10, 3, x_min, x_max)
+        @test nodeset9_1 isa NodeSet{3, Float64}
+        for node in nodeset9_1
             for (i, val) in enumerate(node)
                 @test x_min[i] <= val <= x_max[i]
             end
         end
 
-        nodeset10 = @test_nowarn random_hypercube_boundary(10, 3, x_min, x_max)
-        @test nodeset10 isa NodeSet{3, Float64}
-        for node in nodeset10
+        nodeset10_1 = @test_nowarn random_hypercube_boundary(10, 3, x_min, x_max)
+        @test nodeset10_1 isa NodeSet{3, Float64}
+        for node in nodeset10_1
             on_boundary = false
             for (i, val) in enumerate(node)
                 @test x_min[i] <= val <= x_max[i]
@@ -236,7 +280,26 @@ using Plots
             @test on_boundary
         end
 
-        nodeset11 = @test_nowarn homogeneous_hypercube(3, 2, (-2, 1), (1, 3))
+        nodeset11 = @test_nowarn homogeneous_hypercube(3, 2, -2, 1)
+        expected_nodes = [
+            [-2.0, -2.0],
+            [-0.5, -2.0],
+            [1.0, -2.0],
+            [-2.0, -0.5],
+            [-0.5, -0.5],
+            [1.0, -0.5],
+            [-2.0, 1.0],
+            [-0.5, 1.0],
+            [1.0, 1.0],
+        ]
+        @test nodeset11 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset11), 0.75)
+        @test length(nodeset11) == length(expected_nodes)
+        for i in 1:length(nodeset11)
+            @test nodeset11[i] == expected_nodes[i]
+        end
+
+        nodeset11_1 = @test_nowarn homogeneous_hypercube(3, 2, (-2, 1), (1, 3))
         expected_nodes = [
             [-2.0, 1.0],
             [-0.5, 1.0],
@@ -248,11 +311,11 @@ using Plots
             [-0.5, 3.0],
             [1.0, 3.0],
         ]
-        @test nodeset11 isa NodeSet{2, Float64}
-        @test isapprox(separation_distance(nodeset11), 0.5)
-        @test length(nodeset11) == length(expected_nodes)
-        for i in 1:length(nodeset11)
-            @test nodeset11[i] == expected_nodes[i]
+        @test nodeset11_1 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset11_1), 0.5)
+        @test length(nodeset11_1) == length(expected_nodes)
+        for i in 1:length(nodeset11_1)
+            @test nodeset11_1[i] == expected_nodes[i]
         end
 
         nodeset12 = @test_nowarn homogeneous_hypercube_boundary(3, 2, (-2, 1), (1, 3))
@@ -282,6 +345,7 @@ using Plots
             @test norm(node .- center) <= r
         end
 
+        @test length(random_hypersphere_boundary(10, 1, r)) == 2
         nodeset14 = @test_nowarn random_hypersphere_boundary(50, 4, r, center)
         @test nodeset14 isa NodeSet{4, Float64}
         for node in nodeset14
@@ -353,18 +417,24 @@ using Plots
 
     @testset "Visualization" begin
         f = sum
+        kernel = GaussKernel{3}(shape_parameter = 0.5)
+        @test_nowarn plot(-1.0:0.1:1.0, kernel)
         for dim in 1:3
             nodes = homogeneous_hypercube(5, dim)
             @test_nowarn plot(nodes)
             if dim < 3
+                @test_nowarn plot(nodes, kernel)
                 ff = f.(nodes)
                 itp = interpolate(nodes, ff)
                 nodes_fine = homogeneous_hypercube(10, dim)
                 @test_nowarn plot(nodes_fine, itp)
+                if dim == 2
+                    # Test if 2D nodes can be plotted into 3D plot
+                    nodes2d = homogeneous_hypercube(5, 2)
+                    @test_nowarn plot!(nodes2d)
+                end
             end
         end
-        k = GaussKernel{3}(shape_parameter = 0.5)
-        @test_nowarn plot(0.1:0.1:5.0, k)
     end
 end
 
