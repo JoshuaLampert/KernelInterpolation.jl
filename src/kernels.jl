@@ -445,7 +445,7 @@ order(kernel::Matern32Kernel) = 0
 
 Matern kernel with ``\nu = 5/2``, i.e.
 ```math
-    \phi(r) =  (1 + \sqrt{5}*\varepsilon r + 5(\varepsilon r)^2/3)\exp(-\sqrt{5}\varepsilon r),
+    \phi(r) =  (1 + \sqrt{5}\varepsilon r + 5\cdot(\varepsilon r)^2/3)\exp(-\sqrt{5}\varepsilon r),
 ```
 where ``\varepsilon`` is the shape parameter. The Matern kernel is positive definite.
 
@@ -477,7 +477,7 @@ order(kernel::Matern52Kernel) = 0
 
 Matern kernel with ``\nu = 7/2``, i.e.
 ```math
-    \phi(r) =  (1 + \sqrt{7}*\varepsilon r + 12(\varepsilon r)^2/5 + 7(\varepsilon r)^3/15)\exp(-\sqrt{7}\varepsilon r),
+    \phi(r) =  (1 + \sqrt{7}\varepsilon r + 12\cdot(\varepsilon r)^2/5 + 7\cdot(\varepsilon r)^3/15)\exp(-\sqrt{7}\varepsilon r),
 ```
 where ``\varepsilon`` is the shape parameter. The Matern kernel is positive definite.
 
