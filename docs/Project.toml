@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+KernelInterpolation = "95686e15-3c94-4443-8f08-76d06d509f7b"
+
+[compat]
+Documenter = "1"
