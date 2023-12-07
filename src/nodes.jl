@@ -118,7 +118,7 @@ function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT},
     # could be done more efficiently
     update_separation_distance!(nodeset)
 end
-function Base.setindex!(nodeset::NodeSet{RealT}, v::RealT, i::Int) where {RealT}
+function Base.setindex!(nodeset::NodeSet{1, RealT}, v::RealT, i::Int) where {RealT}
     @assert dim(nodeset) == 1
     nodeset.nodes[i] = [v]
     # update separation distance of nodeset because it possibly changed
@@ -134,6 +134,12 @@ end
 function Base.push!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT}) where {Dim, RealT}
     @assert length(v) == dim(nodeset)
     push!(nodeset.nodes, v)
+    # update separation distance of nodeset because it possibly changed
+    # could be done more efficiently
+    update_separation_distance!(nodeset)
+end
+function Base.pop!(nodeset::NodeSet)
+    pop!(nodeset.nodes)
     # update separation distance of nodeset because it possibly changed
     # could be done more efficiently
     update_separation_distance!(nodeset)
