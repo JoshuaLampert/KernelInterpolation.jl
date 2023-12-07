@@ -299,6 +299,24 @@ using Plots
             @test nodeset11[i] == expected_nodes[i]
         end
 
+        nodeset12_1 = @test_nowarn homogeneous_hypercube_boundary(3, 2, -2, 1)
+        expected_nodes = [
+            [-2.0, -2.0],
+            [-2.0, -0.5],
+            [-2.0, 1.0],
+            [-0.5, -2.0],
+            [-0.5, 1.0],
+            [1.0, -2.0],
+            [1.0, -0.5],
+            [1.0, 1.0],
+        ]
+        @test nodeset12_1 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset12_1), 0.75)
+        @test length(nodeset12_1) == length(expected_nodes)
+        for i in 1:length(nodeset12_1)
+            @test nodeset12_1[i] == expected_nodes[i]
+        end
+
         nodeset11_1 = @test_nowarn homogeneous_hypercube(3, 2, (-2, 1), (1, 3))
         expected_nodes = [
             [-2.0, 1.0],
