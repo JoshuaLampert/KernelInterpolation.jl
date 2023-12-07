@@ -249,7 +249,7 @@ end
 
 Create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
 `dim` inside a hypercube defined by the bounds `x_min` and `x_max`. The resulting `NodeSet` will have
-``n^dims`` points. If the bounds are given as single values, they are applied for each dimension.
+``n^{\textrm{dim}}`` points. If the bounds are given as single values, they are applied for each dimension.
 If they are `Tuple`s of size `dim` the hypercube has the according bounds.
 """
 function homogeneous_hypercube(n::Int, dim::Int, x_min, x_max)
@@ -276,7 +276,7 @@ end
 Create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
 `dim` on the boundary of a hypercube defined by the bounds `x_min` and `x_max`. If the bounds are
 given as single values, they are applied for each dimension. If they are `Tuple`s of size `dim`
-# the hypercube has the according bounds.
+the hypercube has the according bounds.
 """
 function homogeneous_hypercube_boundary(n::Int, dim::Int, x_min, x_max)
     homogeneous_hypercube_boundary(n, dim, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
@@ -340,7 +340,7 @@ end
     random_hypersphere(n, dim, r = 1.0, center = zeros(dim))
 
 Create a `NodeSet` with `n` random nodes each of dimension `dim` inside a hypersphere with
-radius `r`.
+radius `r` around the center `center`.
 """
 function random_hypersphere(n::Int, dim::Int, r = 1.0, center = zeros(dim))
     nodes = randn(n, dim)
@@ -354,7 +354,7 @@ end
     random_hypersphere_boundary(n, dim, r = 1.0, center = zeros(dim))
 
 Create a `NodeSet` with `n` random nodes each of dimension `dim` at the boundary of a
-hypersphere with radius `r`.
+hypersphere with radius `r` around the center `center`.
 """
 function random_hypersphere_boundary(n::Int, dim::Int, r = 1.0, center = zeros(dim))
     if dim == 1 && n >= 2

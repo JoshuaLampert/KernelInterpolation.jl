@@ -22,8 +22,8 @@ Interpolation object that can be evaluated at a node and represents a kernel int
     s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^q d_kp_k(x),
 ```
 where ``x_j`` are the nodes in the nodeset and ``s(x)`` the interpolant satisfying ``s(x_j) = f(x_j)``, where
-``f(x_j)`` are given by `values` and ``p_k`` is a basis of the `q`-dimensional space of multivariate
-polynomials with maximum degree of `polynomial_degree`. The additional conditions
+``f(x_j)`` are given by `values` in [`interpolate`](@ref) and ``p_k`` is a basis of the `q`-dimensional space
+of multivariate polynomials of order [`order`](@ref). The additional conditions
 ```math
     \sum_{j = 1}^n c_jp_k(x_j) = 0, \quad k = 1,\ldots, q
 ```
@@ -114,12 +114,12 @@ Return the system matrix, i.e. the matrix
 ```math
 \begin{pmatrix}
 A & P \\
-P^T 0
+P^T & 0
 \end{pmatrix},
 ```
-where ``A\in\mathrm{R}^{n\times n}`` is the matrix with entries
+where ``A\in\mathbb{R}^{n\times n}`` is the matrix with entries
 ``a_{ij} = K(x_i, x_j)`` for the kernel function `K` and nodes `x_i`
-and ``P\in\mathrm{R}^{n\times q}`` is the matrix with entries
+and ``P\in\mathbb{R}^{n\times q}`` is the matrix with entries
 ``p_{ij} = p_j(x_i)``, where ``p_j`` is the ``j``-th multivariate monomial
 of the space of polynomials up to degree ``m``.
 """
@@ -139,7 +139,7 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
 ```math
     \sum_{j = 1}^n c_jp_k(x_j) = 0, \quad k = 1,\ldots, q
 ```
-are enforced.
+are enforced. Returns an [`Interpolation`](@ref) object.
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
                      kernel = GaussKernel{dim(nodeset)}(),
