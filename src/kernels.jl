@@ -505,13 +505,13 @@ end
 order(kernel::Matern72Kernel) = 0
 
 @doc raw"""
-    RieszKernel{Dim}(\beta; shape_parameter = 1.0)
+    RieszKernel{Dim}(beta; shape_parameter = 1.0)
 
 Riesz kernel with
 ```math
-    \phi(r) =  -r^\beta,
+    \phi(r) =  -(\varepsilon r)^\beta,
 ```
-where ``\varepsilon`` is the shape parameter. The Riesz kernel is conditionally positive definite of order 1.
+where ``\varepsilon`` is the shape parameter and ``\beta\in (0,2)``. The Riesz kernel is conditionally positive definite of order 1.
 See Hertrich et al. (2023).
 
 See also [`RadialSymmetricKernel`](@ref).
