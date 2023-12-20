@@ -503,3 +503,40 @@ function phi(kernel::Matern72Kernel, r::Real)
     return (1 + y + 6 * y^2 / 15 + y^3 / 15) * exp(-y)
 end
 order(kernel::Matern72Kernel) = 0
+
+@doc raw"""
+    RieszKernel{Dim}(\beta; shape_parameter = 1.0)
+
+Riesz kernel with
+```math
+    \phi(r) =  -r^\beta,
+```
+where ``\varepsilon`` is the shape parameter. The Riesz kernel is conditionally positive definite of order 1.
+See Hertrich et al. (2023).
+
+See also [`RadialSymmetricKernel`](@ref).
+
+- Johannes Hertrich, Christian Wald, Fabian Altekrüger, Paul Hagemann (2023
+  Generative Sliced MMD Flows with Riesz Kernels
+  [ArXiv: 2305.11463](https://arxiv.org/abs/2305.11463)
+"""
+struct RieszKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
+    beta::RealT
+    shape_parameter::RealT
+end
+
+function RieszKernel{Dim}(beta; shape_parameter = 1.0) where {Dim}
+    @assert beta > 0
+    @assert beta < 2
+    RieszKernel{Dim, typeof(shape_parameter)}(beta, shape_parameter)
+end
+
+function Base.show(io::IO, kernel::RieszKernel{Dim}) where {Dim}
+    return print(io, "RieszKernel{", Dim, "}(beta = ", kernel.beta, ", shape_parameter = ",
+                 kernel.shape_parameter, ")")
+end
+
+function phi(kernel::RieszKernel, r::Real)
+    return -r^kernel.beta
+end
+order(kernel::RieszKernel) = 1

@@ -117,6 +117,14 @@ using Plots
             @test isapprox(phi(kernel8, 0.5), phi(kernel8_1, 0.5))
             @test isapprox(kernel8(x, y), kernel8_1(x, y))
         end
+
+        kernel9 = @test_nowarn RieszKernel{2}(1.1)
+        @test_nowarn println(kernel9)
+        @test_nowarn display(kernel9)
+        @test order(kernel9) == 1
+        @test isapprox(phi(kernel9, 0.0), 0.0)
+        @test isapprox(phi(kernel9, 0.5), -0.4665164957684037)
+        @test isapprox(kernel9(x, y), -0.26877021157823217)
     end
 
     @testset "NodeSet" begin
