@@ -30,7 +30,7 @@ julia> using KernelInterpolation
 ```
 In order to interpolate discrete function values of a (potentially) multivariate function $f: \mathbb{R}^d\to \mathbb{R}$, we first need a set of nodes $X = \\{x_1,\ldots,x_n\\}\subset\mathbb{R}^d$, where the function values of $f$ are known. In KernelInterpolation.jl we can, e.g., construct a homogeneous grid on a hypercube in 2 dimensions by calling
 ```julia
-julia> nodeset = homogeneous_hypercube(5, 2, (-2, -1), (2, 1))
+julia> nodeset = homogeneous_hypercube(5, (-2, -1), (2, 1))
 ```
 Here, we specified that the hypercube has 5 nodes along each of the 2 dimensions (i.e. in total we have $5^2 = 25$ nodes) and that the boundaries of the cube are given by the lower left corner located at $(-2, -1)$ and the upper right corner at $(2, 1)$. Similarly, `NodeSet`s can be constructed by the functions `random_hypercube`, `random_hypercube_boundary`, `homogeneous_hypercube_boundary`, `random_hypersphere` or `random_hypersphere_boundary` or by directly passing a set of nodes to the constructor of `NodeSet`. Besides the `nodeset`, we need the function values at the nodes. Let's say, we want to reconstruct the function $f(x) = \sin(x_1\cdot x_2)$. Then, we can create the vector of function values by
 ```julia

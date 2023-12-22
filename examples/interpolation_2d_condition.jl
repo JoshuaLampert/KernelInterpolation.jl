@@ -10,7 +10,7 @@ x_min = 0.0
 x_max = 2 * pi
 ns = 5:30
 
-many_nodes = homogeneous_hypercube(40, d, x_min, x_max)
+many_nodes = homogeneous_hypercube(40, x_min, x_max; dim = d)
 f_many = f.(many_nodes)
 
 p = plot(xguide = "separation distance", yguide = "condition number", xscale = :log10,
@@ -25,7 +25,7 @@ for kernel in kernels
     local conds = []
 
     for n in ns
-        local nodeset = homogeneous_hypercube(n, d, x_min, x_max)
+        local nodeset = homogeneous_hypercube(n, x_min, x_max; dim = d)
         push!(separation_distances, separation_distance(nodeset))
         local values = f.(nodeset)
 

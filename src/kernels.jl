@@ -516,7 +516,7 @@ See Hertrich et al. (2023).
 
 See also [`RadialSymmetricKernel`](@ref).
 
-- Johannes Hertrich, Christian Wald, Fabian Altekrüger, Paul Hagemann (2023
+- Johannes Hertrich, Christian Wald, Fabian Altekrüger, Paul Hagemann (2023)
   Generative Sliced MMD Flows with Riesz Kernels
   [ArXiv: 2305.11463](https://arxiv.org/abs/2305.11463)
 """

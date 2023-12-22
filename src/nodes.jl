@@ -183,19 +183,20 @@ end
 
 # Some convenience function to create some specific `NodeSet`s
 """
-    random_hypercube(n, dim, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim))
+    random_hypercube(n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
 Create a `NodeSet` with `n` random nodes each of dimension `dim` inside a hypercube defined by
 the bounds `x_min` and `x_max`. If the bounds are given as single values, they are applied for
 each dimension. If they are `Tuple`s of size `dim` the hypercube has the according bounds.
+If `dim` is not given explicitly, it is inferred by the lengths of `x_min` and `x_max` if possible.
 """
-function random_hypercube(n::Int, dim::Int, x_min, x_max)
+function random_hypercube(n::Int, x_min::Real = 0.0, x_max::Real = 1.0; dim = 1)
     nodes = x_min .+ (x_max - x_min) .* rand(n, dim)
     return NodeSet(nodes)
 end
 
-function random_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(_ -> 0.0, dim),
-                          x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim)) where {Dim}
+function random_hypercube(n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
+                          dim = Dim) where {Dim}
     @assert dim == Dim
     nodes = rand(n, dim)
     for i in 1:dim
@@ -205,20 +206,21 @@ function random_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(_ -> 0.0
 end
 
 """
-    random_hypercube_boundary(n, dim, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim))
+    random_hypercube_boundary(n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
 Create a `NodeSet` with `n` random nodes each of dimension `dim` on the boundary of a hypercube
 defined by the bounds `x_min` and `x_max`. If the bounds are given as single values, they are
 applied for each dimension. If they are `Tuple`s of size `dim` the hypercube has the according bounds.
+If `dim` is not given explicitly, it is inferred by the lengths of `x_min` and `x_max` if possible.
 """
-function random_hypercube_boundary(n::Int, dim::Int, x_min, x_max)
-    random_hypercube_boundary(n, dim, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
+function random_hypercube_boundary(n::Int, x_min::Real = 0.0, x_max::Real = 1.0; dim = 1)
+    random_hypercube_boundary(n, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
 end
 
 function project_on_hypercube_boundary!(nodeset::NodeSet{Dim}, x_min::NTuple{Dim},
                                         x_max::NTuple{Dim}) where {Dim}
     for i in 1:length(nodeset)
-        #         j = argmin([abs.(nodeset[i] .- x_min); abs.(nodeset[i] .- x_max)])
+        # j = argmin([abs.(nodeset[i] .- x_min); abs.(nodeset[i] .- x_max)])
         # Project to random axis
         j = rand(1:Dim)
         if rand([1, 2]) == 1
@@ -229,41 +231,56 @@ function project_on_hypercube_boundary!(nodeset::NodeSet{Dim}, x_min::NTuple{Dim
     end
 end
 
-function random_hypercube_boundary(n::Int, dim::Int,
-                                   x_min::NTuple{Dim} = ntuple(_ -> 0.0, dim),
-                                   x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim)) where {Dim}
+function random_hypercube_boundary(n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
+                                   dim = Dim) where {Dim}
     @assert dim == Dim
     if dim == 1 && n >= 2
         @warn "For one dimension the boundary of the hypercube consists only of 2 points"
         return NodeSet([x_min[1], x_max[1]])
     end
     # First, create random nodes *inside* hypercube
-    nodeset = random_hypercube(n, dim, x_min, x_max)
+    nodeset = random_hypercube(n, x_min, x_max)
     # Then, project all the nodes on the boundary
     project_on_hypercube_boundary!(nodeset, x_min, x_max)
     return nodeset
 end
 
-"""
-    homogeneous_hypercube(n, dim, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim))
+@doc raw"""
+    homogeneous_hypercube(n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
-Create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
-`dim` inside a hypercube defined by the bounds `x_min` and `x_max`. The resulting `NodeSet` will have
-``n^{\textrm{dim}}`` points. If the bounds are given as single values, they are applied for each dimension.
-If they are `Tuple`s of size `dim` the hypercube has the according bounds.
+If `n` is integer, create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
+`dim` inside a hypercube defined by the bounds `x_min` and `x_max`. If `n` is a `Tuple` of length `dim`,
+then use as many nodes in each dimension as described by `n`. The resulting `NodeSet` will have
+``n^{\textrm{dim}}`` respectively ``\prod_{j = 1}n_j`` points. If the bounds are given as single values,
+they are applied for each dimension. If they are `Tuple`s of size `dim`, the hypercube has the according bounds.
+If `dim` is not given explicitly, it is inferred by the lengths of `n`, `x_min` and `x_max` if possible.
 """
-function homogeneous_hypercube(n::Int, dim::Int, x_min, x_max)
-    return homogeneous_hypercube(n, dim, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
+function homogeneous_hypercube(n::Int, x_min::Real = 0.0, x_max::Real = 1.0; dim = 1)
+    return homogeneous_hypercube(ntuple(_ -> n, dim), ntuple(_ -> x_min, dim),
+                                 ntuple(_ -> x_max, dim))
 end
 
-function homogeneous_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(_ -> 0.0, dim),
-                               x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim)) where {Dim}
-    @assert dim == Dim
-    nodes = Vector{MVector{dim, Float64}}(undef, n^dim)
-    for (i, indices) in enumerate(Iterators.product(ntuple(_ -> 1:n, dim)...))
+function homogeneous_hypercube(n::NTuple{Dim}, x_min::Real, x_max::Real;
+                               dim = Dim) where {Dim}
+    @assert Dim == dim
+    return homogeneous_hypercube(n, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
+end
+
+function homogeneous_hypercube(n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
+                               dim = Dim) where {Dim}
+    @assert Dim == dim
+    return homogeneous_hypercube(ntuple(_ -> n, dim), x_min, x_max)
+end
+
+function homogeneous_hypercube(n::NTuple{Dim}, x_min::NTuple{Dim} = ntuple(_ -> 0.0, Dim),
+                               x_max::NTuple{Dim} = ntuple(_ -> 1.0, Dim);
+                               dim = Dim) where {Dim}
+    @assert Dim == dim
+    nodes = Vector{MVector{dim, Float64}}(undef, prod(n))
+    for (i, indices) in enumerate(Iterators.product(ntuple(j -> 1:n[j], dim)...))
         node = Vector(undef, dim)
         for j in 1:dim
-            node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j] - 1) / (n - 1)
+            node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j] - 1) / (n[j] - 1)
         end
         nodes[i] = node
     end
@@ -271,15 +288,30 @@ function homogeneous_hypercube(n::Int, dim::Int, x_min::NTuple{Dim} = ntuple(_ -
 end
 
 """
-    homogeneous_hypercube_boundary(n, dim, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim))
+    homogeneous_hypercube_boundary(n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
-Create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
-`dim` on the boundary of a hypercube defined by the bounds `x_min` and `x_max`. If the bounds are
-given as single values, they are applied for each dimension. If they are `Tuple`s of size `dim`
-the hypercube has the according bounds.
+If `n` is integer, create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
+`dim` on the boundary of a hypercube defined by the bounds `x_min` and `x_max`. If `n` is a `Tuple` of length `dim`,
+then use as many nodes in each dimension as described by `n`. If the bounds are given as single values, they
+are applied for each dimension. If they are `Tuple`s of size `dim`, the hypercube has the according bounds.
+If `dim` is not given explicitly, it is inferred by the lengths of `n`, `x_min` and `x_max` if possible.
 """
-function homogeneous_hypercube_boundary(n::Int, dim::Int, x_min, x_max)
-    homogeneous_hypercube_boundary(n, dim, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
+function homogeneous_hypercube_boundary(n::Int, x_min::Real, x_max::Real; dim = 1)
+    homogeneous_hypercube_boundary(ntuple(_ -> n, dim), ntuple(_ -> x_min, dim),
+                                   ntuple(_ -> x_max, dim))
+end
+
+function homogeneous_hypercube_boundary(n::NTuple{Dim}, x_min::Real, x_max::Real;
+                                        dim = Dim) where {Dim}
+    @assert Dim == dim
+    return homogeneous_hypercube_boundary(n, ntuple(_ -> x_min, dim),
+                                          ntuple(_ -> x_max, dim))
+end
+
+function homogeneous_hypercube_boundary(n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
+                                        dim = Dim) where {Dim}
+    @assert Dim == dim
+    return homogeneous_hypercube_boundary(ntuple(_ -> n, dim), x_min, x_max)
 end
 
 # Total number of nodes of on a hypercube of dimension `dim` with `n` nodes in each direction
@@ -287,48 +319,45 @@ function number_of_nodes(n, dim)
     if dim == 1
         return 2
     end
-    return 2 * n^(dim - 1) + (n - 2) * number_of_nodes(n, dim - 1)
+    return 2 * prod(n[2:end]) + (n[1] - 2) * number_of_nodes(n[2:end], dim - 1)
 end
 
 # TODO: Is there a better way to create these `NodeSet`s?
-function homogeneous_hypercube_boundary(n::Int, dim::Int,
+function homogeneous_hypercube_boundary(n::NTuple{Dim},
                                         x_min::NTuple{Dim} = ntuple(_ -> 0.0, dim),
-                                        x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim)) where {
-                                                                                           Dim
-                                                                                           }
-    if dim == 1 && n >= 2
+                                        x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim);
+                                        dim = Dim) where {Dim}
+    if dim == 1 && n[1] >= 2
         #         @warn "For one dimension the boundary of the hypercube consists only of 2 points"
         return NodeSet([x_min[1], x_max[1]])
     end
-    @assert dim == Dim
+    @assert Dim == dim
     nodes = Vector{MVector{dim, Float64}}(undef, number_of_nodes(n, dim))
     local i = 1
     # Left side is like homogeneous hypercube in `dim - 1` hypercube
-    for indices in Iterators.product(ntuple(_ -> 1:n, dim - 1)...)
+    for indices in Iterators.product(ntuple(j -> 1:n[j + 1], dim - 1)...)
         node = Vector(undef, dim)
         node[1] = x_min[1]
         for j in 2:dim
-            node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j - 1] - 1) / (n - 1)
+            node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j - 1] - 1) / (n[j] - 1)
         end
         nodes[i] = node
         i += 1
     end
-
     # Sides in between by recursion
-    for j in 2:(n - 1)
-        nodeset2 = homogeneous_hypercube_boundary(n, dim - 1, x_min[2:end], x_max[2:end])
+    for j in 2:(n[1] - 1)
+        nodeset2 = homogeneous_hypercube_boundary(n[2:end], x_min[2:end], x_max[2:end])
         for node in nodeset2
-            nodes[i] = [x_min[1] + (x_max[1] - x_min[1]) * (j - 1) / (n - 1); node]
+            nodes[i] = [x_min[1] + (x_max[1] - x_min[1]) * (j - 1) / (n[1] - 1); node]
             i += 1
         end
     end
-
     # Right side is like homogeneous hypercube in `dim - 1` hypercube
-    for indices in Iterators.product(ntuple(_ -> 1:n, dim - 1)...)
+    for indices in Iterators.product(ntuple(j -> 1:n[j + 1], dim - 1)...)
         node = Vector(undef, dim)
         node[1] = x_max[1]
         for j in 2:dim
-            node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j - 1] - 1) / (n - 1)
+            node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j - 1] - 1) / (n[j] - 1)
         end
         nodes[i] = node
         i += 1
@@ -337,12 +366,18 @@ function homogeneous_hypercube_boundary(n::Int, dim::Int,
 end
 
 """
-    random_hypersphere(n, dim, r = 1.0, center = zeros(dim))
+    random_hypersphere(n, r = 1.0, center = zeros(dim); [dim])
 
 Create a `NodeSet` with `n` random nodes each of dimension `dim` inside a hypersphere with
 radius `r` around the center `center`.
+If `dim` is not given explicitly, it is inferred by the length of `center` if possible.
 """
-function random_hypersphere(n::Int, dim::Int, r = 1.0, center = zeros(dim))
+function random_hypersphere(n::Int, r = 1.0; dim = 2)
+    random_hypersphere(n, r, zeros(dim))
+end
+
+function random_hypersphere(n::Int, r::Real, center::AbstractVector; dim = length(center))
+    @assert length(center) == dim
     nodes = randn(n, dim)
     for i in 1:n
         nodes[i, :] .= center .+ r .* nodes[i, :] ./ norm(nodes[i, :]) * rand()^(1 / dim)
@@ -351,12 +386,19 @@ function random_hypersphere(n::Int, dim::Int, r = 1.0, center = zeros(dim))
 end
 
 """
-    random_hypersphere_boundary(n, dim, r = 1.0, center = zeros(dim))
+    random_hypersphere_boundary(n, r = 1.0, center = zeros(dim); [dim])
 
 Create a `NodeSet` with `n` random nodes each of dimension `dim` at the boundary of a
 hypersphere with radius `r` around the center `center`.
+If `dim` is not given explicitly, it is inferred by the length of `center` if possible.
 """
-function random_hypersphere_boundary(n::Int, dim::Int, r = 1.0, center = zeros(dim))
+function random_hypersphere_boundary(n::Int, r = 1.0; dim = 2)
+    random_hypersphere_boundary(n, r, zeros(dim))
+end
+
+function random_hypersphere_boundary(n::Int, r::Real, center::AbstractVector;
+                                     dim = length(center))
+    @assert length(center) == dim
     if dim == 1 && n >= 2
         @warn "For one dimension the boundary of the hypersphere consists only of 2 points"
         return NodeSet([-r, r])

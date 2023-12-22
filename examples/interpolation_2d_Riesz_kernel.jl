@@ -10,14 +10,14 @@ function f(x)
 end
 
 n = 300
-nodeset = random_hypercube(n, 2)
+nodeset = random_hypercube(n; dim = 2)
 values = f.(nodeset)
 
 kernel = RieszKernel{dim(nodeset)}(1.0)
 itp = interpolate(nodeset, values, kernel)
 
 N = 20
-many_nodes = homogeneous_hypercube(N, 2)
+many_nodes = homogeneous_hypercube(N; dim = 2)
 
 p1 = plot(many_nodes, itp)
 plot!(p1, many_nodes, f, st = :surface)
