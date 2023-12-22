@@ -243,7 +243,7 @@ using Plots
 
         x_min = -1
         x_max = 1
-        nodeset9 = @test_nowarn random_hypercube(10, 3, x_min, x_max)
+        nodeset9 = @test_nowarn random_hypercube(10, x_min, x_max; dim = 3)
         @test nodeset9 isa NodeSet{3, Float64}
         for node in nodeset9
             for (i, val) in enumerate(node)
@@ -251,8 +251,8 @@ using Plots
             end
         end
 
-        @test length(random_hypercube_boundary(10, 1, x_min, x_max)) == 2
-        nodeset10 = @test_nowarn random_hypercube_boundary(10, 3, x_min, x_max)
+        @test length(random_hypercube_boundary(10, x_min, x_max; dim = 1)) == 2
+        nodeset10 = @test_nowarn random_hypercube_boundary(10, x_min, x_max; dim = 3)
         @test nodeset10 isa NodeSet{3, Float64}
         for node in nodeset10
             on_boundary = false
@@ -267,7 +267,7 @@ using Plots
 
         x_min = (-2, -1, 4)
         x_max = (-1, 4, 6)
-        nodeset9_1 = @test_nowarn random_hypercube(10, 3, x_min, x_max)
+        nodeset9_1 = @test_nowarn random_hypercube(10, x_min, x_max)
         @test nodeset9_1 isa NodeSet{3, Float64}
         for node in nodeset9_1
             for (i, val) in enumerate(node)
@@ -275,7 +275,7 @@ using Plots
             end
         end
 
-        nodeset10_1 = @test_nowarn random_hypercube_boundary(10, 3, x_min, x_max)
+        nodeset10_1 = @test_nowarn random_hypercube_boundary(10, x_min, x_max)
         @test nodeset10_1 isa NodeSet{3, Float64}
         for node in nodeset10_1
             on_boundary = false
@@ -288,7 +288,7 @@ using Plots
             @test on_boundary
         end
 
-        nodeset11 = @test_nowarn homogeneous_hypercube(3, 2, -2, 1)
+        nodeset11 = @test_nowarn homogeneous_hypercube(3, -2, 1; dim = 2)
         expected_nodes = [
             [-2.0, -2.0],
             [-0.5, -2.0],
@@ -307,7 +307,7 @@ using Plots
             @test nodeset11[i] == expected_nodes[i]
         end
 
-        nodeset12_1 = @test_nowarn homogeneous_hypercube_boundary(3, 2, -2, 1)
+        nodeset12 = @test_nowarn homogeneous_hypercube_boundary(3, -2, 1; dim = 2)
         expected_nodes = [
             [-2.0, -2.0],
             [-2.0, -0.5],
@@ -318,14 +318,56 @@ using Plots
             [1.0, -0.5],
             [1.0, 1.0],
         ]
+        @test nodeset12 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset12), 0.75)
+        @test length(nodeset12) == length(expected_nodes)
+        for i in 1:length(nodeset12)
+            @test nodeset12[i] == expected_nodes[i]
+        end
+
+        nodeset11_1 = @test_nowarn homogeneous_hypercube((3, 4), -2, 1)
+        expected_nodes = [
+            [-2.0, -2.0],
+            [-0.5, -2.0],
+            [1.0, -2.0],
+            [-2.0, -1.0],
+            [-0.5, -1.0],
+            [1.0, -1.0],
+            [-2.0, 0.0],
+            [-0.5, 0.0],
+            [1.0, 0.0],
+            [-2.0, 1.0],
+            [-0.5, 1.0],
+            [1.0, 1.0],
+        ]
+        @test nodeset11_1 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset11_1), 0.5)
+        @test length(nodeset11_1) == length(expected_nodes)
+        for i in 1:length(nodeset11_1)
+            @test nodeset11_1[i] == expected_nodes[i]
+        end
+
+        nodeset12_1 = @test_nowarn homogeneous_hypercube_boundary((3, 4), -2, 1)
+        expected_nodes = [
+            [-2.0, -2.0],
+            [-2.0, -1.0],
+            [-2.0, 0.0],
+            [-2.0, 1.0],
+            [-0.5, -2.0],
+            [-0.5, 1.0],
+            [1.0, -2.0],
+            [1.0, -1.0],
+            [1.0, 0.0],
+            [1.0, 1.0],
+        ]
         @test nodeset12_1 isa NodeSet{2, Float64}
-        @test isapprox(separation_distance(nodeset12_1), 0.75)
+        @test isapprox(separation_distance(nodeset12_1), 0.5)
         @test length(nodeset12_1) == length(expected_nodes)
         for i in 1:length(nodeset12_1)
             @test nodeset12_1[i] == expected_nodes[i]
         end
 
-        nodeset11_1 = @test_nowarn homogeneous_hypercube(3, 2, (-2, 1), (1, 3))
+        nodeset11_2 = @test_nowarn homogeneous_hypercube(3, (-2, 1), (1, 3))
         expected_nodes = [
             [-2.0, 1.0],
             [-0.5, 1.0],
@@ -337,14 +379,14 @@ using Plots
             [-0.5, 3.0],
             [1.0, 3.0],
         ]
-        @test nodeset11_1 isa NodeSet{2, Float64}
-        @test isapprox(separation_distance(nodeset11_1), 0.5)
-        @test length(nodeset11_1) == length(expected_nodes)
-        for i in 1:length(nodeset11_1)
-            @test nodeset11_1[i] == expected_nodes[i]
+        @test nodeset11_2 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset11_2), 0.5)
+        @test length(nodeset11_2) == length(expected_nodes)
+        for i in 1:length(nodeset11_2)
+            @test nodeset11_2[i] == expected_nodes[i]
         end
 
-        nodeset12 = @test_nowarn homogeneous_hypercube_boundary(3, 2, (-2, 1), (1, 3))
+        nodeset12_2 = @test_nowarn homogeneous_hypercube_boundary(3, (-2, 1), (1, 3))
         expected_nodes = [
             [-2.0, 1.0],
             [-2.0, 2.0],
@@ -355,27 +397,83 @@ using Plots
             [1.0, 2.0],
             [1.0, 3.0],
         ]
-        @test nodeset12 isa NodeSet{2, Float64}
-        @test isapprox(separation_distance(nodeset12), 0.5)
-        @test length(nodeset12) == length(expected_nodes)
-        display(nodeset12)
-        for i in 1:length(nodeset12)
-            @test nodeset12[i] == expected_nodes[i]
+        @test nodeset12_2 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset12_2), 0.5)
+        @test length(nodeset12_2) == length(expected_nodes)
+        display(nodeset12_2)
+        for i in 1:length(nodeset12_2)
+            @test nodeset12_2[i] == expected_nodes[i]
+        end
+
+        nodeset11_3 = @test_nowarn homogeneous_hypercube((4, 3), (-2, 1), (1, 3))
+        expected_nodes = [
+            [-2.0, 1.0],
+            [-1.0, 1.0],
+            [0.0, 1.0],
+            [1.0, 1.0],
+            [-2.0, 2.0],
+            [-1.0, 2.0],
+            [0.0, 2.0],
+            [1.0, 2.0],
+            [-2.0, 3.0],
+            [-1.0, 3.0],
+            [0.0, 3.0],
+            [1.0, 3.0],
+        ]
+        @test nodeset11_3 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset11_3), 0.5)
+        @test length(nodeset11_3) == length(expected_nodes)
+        for i in 1:length(nodeset11_3)
+            @test nodeset11_3[i] == expected_nodes[i]
+        end
+
+        nodeset12_3 = @test_nowarn homogeneous_hypercube_boundary((4, 3), (-2, 1), (1, 3))
+        expected_nodes = [
+            [-2.0, 1.0],
+            [-2.0, 2.0],
+            [-2.0, 3.0],
+            [-1.0, 1.0],
+            [-1.0, 3.0],
+            [0.0, 1.0],
+            [0.0, 3.0],
+            [1.0, 1.0],
+            [1.0, 2.0],
+            [1.0, 3.0],
+        ]
+        @test nodeset12_3 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset12_3), 0.5)
+        @test length(nodeset12_3) == length(expected_nodes)
+        display(nodeset12_3)
+        for i in 1:length(nodeset12_3)
+            @test nodeset12_3[i] == expected_nodes[i]
         end
 
         r = 2.0
         center = [-1.0, 3.0, 2.0, -pi]
-        nodeset13 = @test_nowarn random_hypersphere(50, 4, r, center)
+        nodeset13 = @test_nowarn random_hypersphere(50, r, center)
         @test nodeset13 isa NodeSet{4, Float64}
         for node in nodeset13
             @test norm(node .- center) <= r
         end
 
-        @test length(random_hypersphere_boundary(10, 1, r)) == 2
-        nodeset14 = @test_nowarn random_hypersphere_boundary(50, 4, r, center)
+        nodeset13_1 = @test_nowarn random_hypersphere(50; dim = 4)
+        @test nodeset13_1 isa NodeSet{4, Float64}
+        for node in nodeset13_1
+            @test norm(node) <= 1.0
+        end
+
+        @test length(random_hypersphere_boundary(10, r; dim = 1)) == 2
+
+        nodeset14 = @test_nowarn random_hypersphere_boundary(50, r, center)
         @test nodeset14 isa NodeSet{4, Float64}
         for node in nodeset14
             @test isapprox(norm(node .- center), r)
+        end
+
+        nodeset14_1 = @test_nowarn random_hypersphere_boundary(50; dim = 4)
+        @test nodeset14_1 isa NodeSet{4, Float64}
+        for node in nodeset14_1
+            @test isapprox(norm(node), 1.0)
         end
     end
 
@@ -446,17 +544,17 @@ using Plots
         kernel = GaussKernel{3}(shape_parameter = 0.5)
         @test_nowarn plot(-1.0:0.1:1.0, kernel)
         for dim in 1:3
-            nodes = homogeneous_hypercube(5, dim)
+            nodes = homogeneous_hypercube(5; dim = dim)
             @test_nowarn plot(nodes)
             if dim < 3
                 @test_nowarn plot(nodes, kernel)
                 ff = f.(nodes)
                 itp = interpolate(nodes, ff)
-                nodes_fine = homogeneous_hypercube(10, dim)
+                nodes_fine = homogeneous_hypercube(10; dim = dim)
                 @test_nowarn plot(nodes_fine, itp)
                 if dim == 2
                     # Test if 2D nodes can be plotted into 3D plot
-                    nodes2d = homogeneous_hypercube(5, 2)
+                    nodes2d = homogeneous_hypercube(5; dim = 2)
                     @test_nowarn plot!(nodes2d)
                 end
             end
