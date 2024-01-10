@@ -126,12 +126,12 @@ using Plots
         @test isapprox(phi(kernel9, 0.5), -0.4665164957684037)
         @test isapprox(kernel9(x, y), -0.26877021157823217)
 
-        trafo(x) = [x[1] + x[2]^2 + 2*x[3]*x[2], x[3] - x[1]]
+        trafo(x) = [x[1] + x[2]^2 + 2 * x[3] * x[2], x[3] - x[1]]
         kernel10 = @test_nowarn TransformationKernel{3}(kernel1, trafo)
         @test_nowarn println(kernel10)
         @test_nowarn display(kernel10)
         @test order(kernel10) == 0
-        x3 = [-1.0, 2.0, pi/8]
+        x3 = [-1.0, 2.0, pi / 8]
         y3 = [2.3, 4.2, -12.3]
         @test isapprox(kernel10(x3, y3), kernel1(trafo(x3), trafo(y3)))
     end

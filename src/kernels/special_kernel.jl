@@ -15,7 +15,8 @@ struct TransformationKernel{Dim, Kernel, Transformation} <: AbstractKernel{Dim}
 end
 
 function TransformationKernel{Dim}(kernel, transformation) where {Dim}
-   return TransformationKernel{Dim, typeof(kernel), typeof(transformation)}(kernel, transformation)
+    return TransformationKernel{Dim, typeof(kernel), typeof(transformation)}(kernel,
+                                                                             transformation)
 end
 
 function (kernel::TransformationKernel)(x, y)

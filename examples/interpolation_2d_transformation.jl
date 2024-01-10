@@ -2,7 +2,7 @@ using KernelInterpolation
 using Plots
 
 # function to interpolate
-f(x) = (x[1] + x[2]^2 < 0.0 ? 1.0 : 0.1)
+f(x) = x[1] + x[2]^2 < 0.0 ? 1.0 : 0.1
 
 x_min = -1.0
 x_max = 1.0
