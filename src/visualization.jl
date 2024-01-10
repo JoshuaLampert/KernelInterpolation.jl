@@ -1,22 +1,20 @@
-@recipe function f(x::AbstractVector, kernel::RadialSymmetricKernel)
-    @series begin
-        xguide --> "r"
-        title --> get_name(kernel)
-        x, phi.(Ref(kernel), abs.(x))
-    end
+@recipe function f(x::AbstractVector, kernel::AbstractKernel)
+    xguide --> "r"
+    title --> get_name(kernel)
+    x, kernel.(Ref(0.0), x)
 end
 
-@recipe function f(nodeset::NodeSet, kernel::RadialSymmetricKernel)
+@recipe function f(nodeset::NodeSet, kernel::AbstractKernel)
     if dim(nodeset) == 1
         x = values_along_dim(nodeset, 1)
         title --> get_name(kernel)
-        x, phi.(Ref(kernel), norm.(nodeset))
+        x, kernel.(Ref(0.0), x)
     elseif dim(nodeset) == 2
         x = values_along_dim(nodeset, 1)
         y = values_along_dim(nodeset, 2)
         seriestype --> :scatter
         label --> "nodes"
-        x, y, phi.(Ref(kernel), norm.(nodeset))
+        x, y, kernel.(Ref([0.0, 0.0]), nodeset)
     else
         @error("Plotting a kernel is only supported for dimension up to 2, but the set has dimension $(dim(nodeset))")
     end

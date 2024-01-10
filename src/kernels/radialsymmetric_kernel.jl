@@ -1,25 +1,3 @@
-"""
-    AbstractKernel
-
-An abstract supertype of kernels.
-"""
-abstract type AbstractKernel{Dim} end
-
-"""
-    dim(kernel)
-
-Return the dimension of a kernel, i.e. the size of the input vector.
-"""
-dim(kernel::AbstractKernel{Dim}) where {Dim} = Dim
-
-"""
-    get_name(kernel::AbstractKernel)
-
-Returns the canonical, human-readable name for the given system of equations.
-"""
-get_name(kernel::AbstractKernel) = string(nameof(typeof(kernel))) * "{" *
-                                   string(dim(kernel)) * "}"
-
 @doc raw"""
     RadialSymmetricKernel
 
@@ -38,14 +16,20 @@ The kernel is then defined by
 abstract type RadialSymmetricKernel{Dim} <: AbstractKernel{Dim} end
 
 function Phi(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
-    @assert length(x) == Dim
     return phi(kernel, norm(x))
 end
 
-function (kernel::RadialSymmetricKernel{Dim})(x, y) where {Dim}
+function (kernel::RadialSymmetricKernel)(x, y)
     @assert length(x) == length(y)
     return Phi(kernel, x .- y)
 end
+
+"""
+    order(kernel)
+
+Return order of kernel.
+"""
+function order end
 
 @doc raw"""
     GaussKernel{Dim}(; shape_parameter = 1.0)
