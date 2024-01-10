@@ -1,9 +1,7 @@
 @recipe function f(x::AbstractVector, kernel::AbstractKernel)
-    begin
-        xguide --> "r"
-        title --> get_name(kernel)
-        x, kernel.(Ref(0.0), x)
-    end
+    xguide --> "r"
+    title --> get_name(kernel)
+    x, kernel.(Ref(0.0), x)
 end
 
 @recipe function f(nodeset::NodeSet, kernel::AbstractKernel)
