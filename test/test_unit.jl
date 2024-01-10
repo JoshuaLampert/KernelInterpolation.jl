@@ -125,6 +125,15 @@ using Plots
         @test isapprox(phi(kernel9, 0.0), 0.0)
         @test isapprox(phi(kernel9, 0.5), -0.4665164957684037)
         @test isapprox(kernel9(x, y), -0.26877021157823217)
+
+        trafo(x) = [x[1] + x[2]^2 + 2*x[3]*x[2], x[3] - x[1]]
+        kernel10 = @test_nowarn TransformationKernel{3}(kernel1, trafo)
+        @test_nowarn println(kernel10)
+        @test_nowarn display(kernel10)
+        @test order(kernel10) == 0
+        x3 = [-1.0, 2.0, pi/8]
+        y3 = [2.3, 4.2, -12.3]
+        @test isapprox(kernel10(x3, y3), kernel1(trafo(x3), trafo(y3)))
     end
 
     @testset "NodeSet" begin
@@ -542,12 +551,17 @@ using Plots
     @testset "Visualization" begin
         f = sum
         kernel = GaussKernel{3}(shape_parameter = 0.5)
+        trafo_kernel = TransformationKernel{2}(kernel, x -> [x[1] + x[2]^2, x[1]])
         @test_nowarn plot(-1.0:0.1:1.0, kernel)
         for dim in 1:3
             nodes = homogeneous_hypercube(5; dim = dim)
             @test_nowarn plot(nodes)
             if dim < 3
                 @test_nowarn plot(nodes, kernel)
+                # Transformtion kernel can only be plotted in the dimension of the input of the trafo
+                if dim == 2
+                    @test_nowarn plot(nodes, trafo_kernel)
+                end
                 ff = f.(nodes)
                 itp = interpolate(nodes, ff)
                 nodes_fine = homogeneous_hypercube(10; dim = dim)

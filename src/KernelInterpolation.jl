@@ -6,7 +6,7 @@ using SpecialFunctions: besselk, loggamma
 using StaticArrays
 using TypedPolynomials: Variable, monomials, degree
 
-include("kernels.jl")
+include("kernels/kernels.jl")
 include("nodes.jl")
 include("interpolation.jl")
 include("visualization.jl")
@@ -16,7 +16,8 @@ export get_name
 export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        PolyharmonicSplineKernel, ThinPlateSplineKernel, WendlandKernel,
        RadialCharacteristicKernel, MaternKernel, Matern12Kernel, Matern32Kernel,
-       Matern52Kernel, Matern72Kernel, RieszKernel
+       Matern52Kernel, Matern72Kernel, RieszKernel,
+       TransformationKernel
 export phi, Phi, order
 export NodeSet, separation_distance, dim, values_along_dim, random_hypercube,
        random_hypercube_boundary, homogeneous_hypercube, homogeneous_hypercube_boundary,
