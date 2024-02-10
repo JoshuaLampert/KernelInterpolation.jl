@@ -59,12 +59,10 @@ using Plots
         @test isapprox(kernel5(x, y), kernel5_1(x, y))
 
         expected_values = [0.25, 0.1875, 0.10807291666666666, 0.0595703125]
-        expected_differences = [
-            0.48599089995881917,
-            0.5223227199041456,
-            0.44621444895933693,
-            0.36846891545136595,
-        ]
+        expected_differences = [0.48599089995881917,
+                                0.5223227199041456,
+                                0.44621444895933693,
+                                0.36846891545136595]
         for k in 0:3
             kernel6 = @test_nowarn WendlandKernel{2}(k)
             @test_nowarn println(kernel6)
@@ -88,18 +86,14 @@ using Plots
 
         nus = [0.5, 1.5, 2.5, 3.5]
         kernels = [Matern12Kernel, Matern32Kernel, Matern52Kernel, Matern72Kernel]
-        expected_values = [
-            0.6065306597126335,
-            0.7848876539574506,
-            0.8286491424181255,
-            0.8463080665533403,
-        ]
-        expected_differences = [
-            0.7386954717906608,
-            0.9022506660348356,
-            0.9297353942237024,
-            0.9389666269913006,
-        ]
+        expected_values = [0.6065306597126335,
+                           0.7848876539574506,
+                           0.8286491424181255,
+                           0.8463080665533403]
+        expected_differences = [0.7386954717906608,
+                                0.9022506660348356,
+                                0.9297353942237024,
+                                0.9389666269913006]
         for i in 1:length(nus)
             kernel8 = @test_nowarn MaternKernel{2}(nus[i])
             @test_nowarn println(kernel8)
@@ -230,21 +224,17 @@ using Plots
         @test isapprox(separation_distance(nodeset1), 0.158113883008419)
         @test length(nodeset1) == 5
         @test_nowarn deleteat!(nodeset1, 2)
-        expected_nodes = [
-            [0.0, 0.0],
-            [0.0, 1.0],
-            [1.0, 1.0],
-            [1.1, 1.3],
-        ]
+        expected_nodes = [[0.0, 0.0],
+                          [0.0, 1.0],
+                          [1.0, 1.0],
+                          [1.1, 1.3]]
         @test length(nodeset1) == length(expected_nodes)
         for i in 1:length(nodeset1)
             @test nodeset1[i] == expected_nodes[i]
         end
         @test_nowarn deleteat!(nodeset1, [2, 4])
-        expected_nodes = [
-            [0.0, 0.0],
-            [1.0, 1.0],
-        ]
+        expected_nodes = [[0.0, 0.0],
+                          [1.0, 1.0]]
         @test length(nodeset1) == length(expected_nodes)
         for i in 1:length(nodeset1)
             @test nodeset1[i] == expected_nodes[i]
@@ -298,17 +288,15 @@ using Plots
         end
 
         nodeset11 = @test_nowarn homogeneous_hypercube(3, -2, 1; dim = 2)
-        expected_nodes = [
-            [-2.0, -2.0],
-            [-0.5, -2.0],
-            [1.0, -2.0],
-            [-2.0, -0.5],
-            [-0.5, -0.5],
-            [1.0, -0.5],
-            [-2.0, 1.0],
-            [-0.5, 1.0],
-            [1.0, 1.0],
-        ]
+        expected_nodes = [[-2.0, -2.0],
+                          [-0.5, -2.0],
+                          [1.0, -2.0],
+                          [-2.0, -0.5],
+                          [-0.5, -0.5],
+                          [1.0, -0.5],
+                          [-2.0, 1.0],
+                          [-0.5, 1.0],
+                          [1.0, 1.0]]
         @test nodeset11 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset11), 0.75)
         @test length(nodeset11) == length(expected_nodes)
@@ -317,16 +305,14 @@ using Plots
         end
 
         nodeset12 = @test_nowarn homogeneous_hypercube_boundary(3, -2, 1; dim = 2)
-        expected_nodes = [
-            [-2.0, -2.0],
-            [-2.0, -0.5],
-            [-2.0, 1.0],
-            [-0.5, -2.0],
-            [-0.5, 1.0],
-            [1.0, -2.0],
-            [1.0, -0.5],
-            [1.0, 1.0],
-        ]
+        expected_nodes = [[-2.0, -2.0],
+                          [-2.0, -0.5],
+                          [-2.0, 1.0],
+                          [-0.5, -2.0],
+                          [-0.5, 1.0],
+                          [1.0, -2.0],
+                          [1.0, -0.5],
+                          [1.0, 1.0]]
         @test nodeset12 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset12), 0.75)
         @test length(nodeset12) == length(expected_nodes)
@@ -335,20 +321,18 @@ using Plots
         end
 
         nodeset11_1 = @test_nowarn homogeneous_hypercube((3, 4), -2, 1)
-        expected_nodes = [
-            [-2.0, -2.0],
-            [-0.5, -2.0],
-            [1.0, -2.0],
-            [-2.0, -1.0],
-            [-0.5, -1.0],
-            [1.0, -1.0],
-            [-2.0, 0.0],
-            [-0.5, 0.0],
-            [1.0, 0.0],
-            [-2.0, 1.0],
-            [-0.5, 1.0],
-            [1.0, 1.0],
-        ]
+        expected_nodes = [[-2.0, -2.0],
+                          [-0.5, -2.0],
+                          [1.0, -2.0],
+                          [-2.0, -1.0],
+                          [-0.5, -1.0],
+                          [1.0, -1.0],
+                          [-2.0, 0.0],
+                          [-0.5, 0.0],
+                          [1.0, 0.0],
+                          [-2.0, 1.0],
+                          [-0.5, 1.0],
+                          [1.0, 1.0]]
         @test nodeset11_1 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset11_1), 0.5)
         @test length(nodeset11_1) == length(expected_nodes)
@@ -357,18 +341,16 @@ using Plots
         end
 
         nodeset12_1 = @test_nowarn homogeneous_hypercube_boundary((3, 4), -2, 1)
-        expected_nodes = [
-            [-2.0, -2.0],
-            [-2.0, -1.0],
-            [-2.0, 0.0],
-            [-2.0, 1.0],
-            [-0.5, -2.0],
-            [-0.5, 1.0],
-            [1.0, -2.0],
-            [1.0, -1.0],
-            [1.0, 0.0],
-            [1.0, 1.0],
-        ]
+        expected_nodes = [[-2.0, -2.0],
+                          [-2.0, -1.0],
+                          [-2.0, 0.0],
+                          [-2.0, 1.0],
+                          [-0.5, -2.0],
+                          [-0.5, 1.0],
+                          [1.0, -2.0],
+                          [1.0, -1.0],
+                          [1.0, 0.0],
+                          [1.0, 1.0]]
         @test nodeset12_1 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset12_1), 0.5)
         @test length(nodeset12_1) == length(expected_nodes)
@@ -377,17 +359,15 @@ using Plots
         end
 
         nodeset11_2 = @test_nowarn homogeneous_hypercube(3, (-2, 1), (1, 3))
-        expected_nodes = [
-            [-2.0, 1.0],
-            [-0.5, 1.0],
-            [1.0, 1.0],
-            [-2.0, 2.0],
-            [-0.5, 2.0],
-            [1.0, 2.0],
-            [-2.0, 3.0],
-            [-0.5, 3.0],
-            [1.0, 3.0],
-        ]
+        expected_nodes = [[-2.0, 1.0],
+                          [-0.5, 1.0],
+                          [1.0, 1.0],
+                          [-2.0, 2.0],
+                          [-0.5, 2.0],
+                          [1.0, 2.0],
+                          [-2.0, 3.0],
+                          [-0.5, 3.0],
+                          [1.0, 3.0]]
         @test nodeset11_2 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset11_2), 0.5)
         @test length(nodeset11_2) == length(expected_nodes)
@@ -396,16 +376,14 @@ using Plots
         end
 
         nodeset12_2 = @test_nowarn homogeneous_hypercube_boundary(3, (-2, 1), (1, 3))
-        expected_nodes = [
-            [-2.0, 1.0],
-            [-2.0, 2.0],
-            [-2.0, 3.0],
-            [-0.5, 1.0],
-            [-0.5, 3.0],
-            [1.0, 1.0],
-            [1.0, 2.0],
-            [1.0, 3.0],
-        ]
+        expected_nodes = [[-2.0, 1.0],
+                          [-2.0, 2.0],
+                          [-2.0, 3.0],
+                          [-0.5, 1.0],
+                          [-0.5, 3.0],
+                          [1.0, 1.0],
+                          [1.0, 2.0],
+                          [1.0, 3.0]]
         @test nodeset12_2 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset12_2), 0.5)
         @test length(nodeset12_2) == length(expected_nodes)
@@ -415,20 +393,18 @@ using Plots
         end
 
         nodeset11_3 = @test_nowarn homogeneous_hypercube((4, 3), (-2, 1), (1, 3))
-        expected_nodes = [
-            [-2.0, 1.0],
-            [-1.0, 1.0],
-            [0.0, 1.0],
-            [1.0, 1.0],
-            [-2.0, 2.0],
-            [-1.0, 2.0],
-            [0.0, 2.0],
-            [1.0, 2.0],
-            [-2.0, 3.0],
-            [-1.0, 3.0],
-            [0.0, 3.0],
-            [1.0, 3.0],
-        ]
+        expected_nodes = [[-2.0, 1.0],
+                          [-1.0, 1.0],
+                          [0.0, 1.0],
+                          [1.0, 1.0],
+                          [-2.0, 2.0],
+                          [-1.0, 2.0],
+                          [0.0, 2.0],
+                          [1.0, 2.0],
+                          [-2.0, 3.0],
+                          [-1.0, 3.0],
+                          [0.0, 3.0],
+                          [1.0, 3.0]]
         @test nodeset11_3 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset11_3), 0.5)
         @test length(nodeset11_3) == length(expected_nodes)
@@ -437,18 +413,16 @@ using Plots
         end
 
         nodeset12_3 = @test_nowarn homogeneous_hypercube_boundary((4, 3), (-2, 1), (1, 3))
-        expected_nodes = [
-            [-2.0, 1.0],
-            [-2.0, 2.0],
-            [-2.0, 3.0],
-            [-1.0, 1.0],
-            [-1.0, 3.0],
-            [0.0, 1.0],
-            [0.0, 3.0],
-            [1.0, 1.0],
-            [1.0, 2.0],
-            [1.0, 3.0],
-        ]
+        expected_nodes = [[-2.0, 1.0],
+                          [-2.0, 2.0],
+                          [-2.0, 3.0],
+                          [-1.0, 1.0],
+                          [-1.0, 3.0],
+                          [0.0, 1.0],
+                          [0.0, 3.0],
+                          [1.0, 1.0],
+                          [1.0, 2.0],
+                          [1.0, 3.0]]
         @test nodeset12_3 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset12_3), 0.5)
         @test length(nodeset12_3) == length(expected_nodes)
@@ -501,12 +475,10 @@ using Plots
         @test nodeset(itp) == nodes
         @test dim(itp) == dim(kernel)
         @test dim(itp) == dim(nodes)
-        expected_coefficients = [
-            -2.225451664388596,
-            0.31604241814819756,
-            0.31604241814819745,
-            2.857536500685,
-        ]
+        expected_coefficients = [-2.225451664388596,
+                                 0.31604241814819756,
+                                 0.31604241814819745,
+                                 2.857536500685]
         coeffs = coefficients(itp)
         @test length(coeffs) == length(expected_coefficients)
         for i in 1:length(coeffs)
@@ -523,15 +495,13 @@ using Plots
 
         kernel = ThinPlateSplineKernel{dim(nodes)}()
         itp = @test_nowarn interpolate(nodes, ff, kernel)
-        expected_coefficients = [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            1.0,
-        ]
+        expected_coefficients = [0.0,
+                                 0.0,
+                                 0.0,
+                                 0.0,
+                                 0.0,
+                                 1.0,
+                                 1.0]
         coeffs = coefficients(itp)
         @test length(coeffs) == length(expected_coefficients)
         for i in 1:length(coeffs)

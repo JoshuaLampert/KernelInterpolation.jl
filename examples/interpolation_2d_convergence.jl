@@ -17,9 +17,11 @@ p = plot(xguide = "fill distance", yguide = "max error", xscale = :log10, yscale
          legend = :bottomleft, xaxis = :flip)
 
 kernels = [GaussKernel{d}(), MultiquadricKernel{d}(), InverseMultiquadricKernel{d}(),
-    ThinPlateSplineKernel{d}(), PolyharmonicSplineKernel{d}(3), WendlandKernel{d}(0),
-    WendlandKernel{d}(1), WendlandKernel{d}(2), WendlandKernel{d}(3), Matern12Kernel{d}(),
-    Matern32Kernel{d}(), Matern52Kernel{d}(), Matern72Kernel{d}(), RieszKernel{d}(1.0)]
+           ThinPlateSplineKernel{d}(), PolyharmonicSplineKernel{d}(3), WendlandKernel{d}(0),
+           WendlandKernel{d}(1), WendlandKernel{d}(2), WendlandKernel{d}(3),
+           Matern12Kernel{d}(),
+           Matern32Kernel{d}(), Matern52Kernel{d}(), Matern72Kernel{d}(),
+           RieszKernel{d}(1.0)]
 for kernel in kernels
     local fill_distances = []
     local errors = []
