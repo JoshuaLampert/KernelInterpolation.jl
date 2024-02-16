@@ -6,7 +6,7 @@ x1 = rand(2)
 x2 = rand(2)
 # function to interpolate
 # here linear combination of kernel to verify it's reconstructed exactly
-f(x) = -3*exp(-norm(x .- x1)^2) + 4*exp(-norm(x .- x2)^2)
+f(x) = -3 * exp(-norm(x .- x1)^2) + 4 * exp(-norm(x .- x2)^2)
 
 nodeset = NodeSet([x1, x2])
 values = f.(nodeset)
@@ -22,4 +22,3 @@ many_nodes = homogeneous_hypercube(20; dim = 2)
 
 plot(many_nodes, itp)
 plot!(many_nodes, f)
-
