@@ -7,9 +7,9 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-Aqua = "0.8"
+Aqua = "0.8.3"
 LinearAlgebra = "1"
-Plots = "1"
+Plots = "1.23"
 Random = "1"
 StaticArrays = "1"
 Test = "1"
