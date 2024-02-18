@@ -50,7 +50,7 @@ jobs:
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-downgrade-compat@v1.1.0
         with:
-          skip: LinearAlgebra
+          skip: LinearAlgebra, Random, Test
           projects: ., test
       - uses: julia-actions/julia-buildpkg@v1
         env:
