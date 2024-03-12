@@ -1,9 +1,9 @@
 module KernelInterpolation
 
 using LinearAlgebra: norm, Symmetric
-using RecipesBase
+using RecipesBase: RecipesBase, @recipe, @series
 using SpecialFunctions: besselk, loggamma
-using StaticArrays
+using StaticArrays: StaticArrays, MVector
 using TypedPolynomials: Variable, monomials, degree
 
 include("kernels/kernels.jl")
