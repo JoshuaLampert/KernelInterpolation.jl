@@ -9,6 +9,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 Aqua = "0.8.3"
+ExplicitImports = "1.0.1"
 LinearAlgebra = "1"
 Plots = "1.23"
 Random = "1"
