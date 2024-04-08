@@ -266,8 +266,8 @@ function homogeneous_hypercube(n::NTuple{Dim}, x_min::RealT, x_max::RealT;
     return homogeneous_hypercube(n, ntuple(_ -> x_min, Dim), ntuple(_ -> x_max, Dim))
 end
 
-function homogeneous_hypercube(n::Int, x_min::NTuple{Dim, RealT}, x_max::NTuple{Dim, RealT};
-                               dim = Dim) where {Dim, RealT}
+function homogeneous_hypercube(n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
+                               dim = Dim) where {Dim}
     @assert Dim == dim
     return homogeneous_hypercube(ntuple(_ -> n, Dim), x_min, x_max)
 end
