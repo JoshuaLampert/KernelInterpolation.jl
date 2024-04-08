@@ -255,7 +255,8 @@ then use as many nodes in each dimension as described by `n`. The resulting `Nod
 they are applied for each dimension. If they are `Tuple`s of size `dim`, the hypercube has the according bounds.
 If `dim` is not given explicitly, it is inferred by the lengths of `n`, `x_min` and `x_max` if possible.
 """
-function homogeneous_hypercube(n::Int, x_min::RealT = 0.0, x_max::RealT = 1.0; dim = 1) where {RealT}
+function homogeneous_hypercube(n::Int, x_min::RealT = 0.0, x_max::RealT = 1.0;
+                               dim = 1) where {RealT}
     return homogeneous_hypercube(ntuple(_ -> n, dim), ntuple(_ -> x_min, dim),
                                  ntuple(_ -> x_max, dim))
 end
@@ -272,7 +273,8 @@ function homogeneous_hypercube(n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
     return homogeneous_hypercube(ntuple(_ -> n, Dim), x_min, x_max)
 end
 
-function homogeneous_hypercube(n::NTuple{Dim, Int}, x_min::NTuple{Dim, RealT} = ntuple(_ -> 0.0, Dim),
+function homogeneous_hypercube(n::NTuple{Dim, Int},
+                               x_min::NTuple{Dim, RealT} = ntuple(_ -> 0.0, Dim),
                                x_max::NTuple{Dim, RealT} = ntuple(_ -> 1.0, Dim);
                                dim = Dim) where {Dim, RealT}
     @assert Dim == dim
@@ -328,7 +330,7 @@ function homogeneous_hypercube_boundary(n::NTuple{Dim},
                                         x_max::NTuple{Dim} = ntuple(_ -> 1.0, Dim);
                                         dim = Dim) where {Dim}
     if dim == 1 && n[1] >= 2
-#         @warn "For one dimension the boundary of the hypercube consists only of 2 points"
+        #         @warn "For one dimension the boundary of the hypercube consists only of 2 points"
         return NodeSet([x_min[1], x_max[1]])
     end
     @assert Dim == dim
