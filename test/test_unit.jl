@@ -424,7 +424,7 @@ using Plots
             @test nodeset11_3[i] == expected_nodes[i]
         end
 
-        nodeset11_4 = @test_nowarn homogeneous_hypercube((4, 3))
+        nodeset11_4 = @test_nowarn homogeneous_hypercube((3, 3))
         expected_nodes = [
             [0.0, 0.0],
             [0.5, 0.0],
