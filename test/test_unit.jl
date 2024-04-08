@@ -426,15 +426,15 @@ using Plots
 
         nodeset11_4 = @test_nowarn homogeneous_hypercube((4, 3))
         expected_nodes = [
-              [0.0, 0.0],
-              [0.5, 0.0],
-              [1.0, 0.0],
-              [0.0, 0.5],
-              [0.5, 0.5],
-              [1.0, 0.5],
-              [0.0, 1.0],
-              [0.5, 1.0],
-              [1.0, 1.0]]
+            [0.0, 0.0],
+            [0.5, 0.0],
+            [1.0, 0.0],
+            [0.0, 0.5],
+            [0.5, 0.5],
+            [1.0, 0.5],
+            [0.0, 1.0],
+            [0.5, 1.0],
+            [1.0, 1.0]]
         @test nodeset11_4 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset11_4), 0.25)
         @test length(nodeset11_4) == length(expected_nodes)
