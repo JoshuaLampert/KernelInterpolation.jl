@@ -15,7 +15,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", nodeset::NodeSet)
     if get(io, :compact, false)
-        show(io, semi)
+        show(io, nodeset)
     else
         println(io, "NodeSet{", dim(nodeset), ", ", eltype(nodeset), "} with ",
                 "separation distance q = ", nodeset.q, " and ", length(nodeset), " nodes:")
@@ -324,8 +324,8 @@ end
 
 # TODO: Is there a better way to create these `NodeSet`s?
 function homogeneous_hypercube_boundary(n::NTuple{Dim},
-                                        x_min::NTuple{Dim} = ntuple(_ -> 0.0, dim),
-                                        x_max::NTuple{Dim} = ntuple(_ -> 1.0, dim);
+                                        x_min::NTuple{Dim} = ntuple(_ -> 0.0, Dim),
+                                        x_max::NTuple{Dim} = ntuple(_ -> 1.0, Dim);
                                         dim = Dim) where {Dim}
     if dim == 1 && n[1] >= 2
         #         @warn "For one dimension the boundary of the hypercube consists only of 2 points"
