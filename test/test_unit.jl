@@ -462,6 +462,23 @@ using Plots
             @test nodeset12_3[i] == expected_nodes[i]
         end
 
+        nodeset12_4 = @test_nowarn homogeneous_hypercube_boundary((3, 3))
+        expected_nodes = [
+            [0.0, 0.0],
+            [0.0, 0.5],
+            [0.0, 1.0],
+            [0.5, 0.0],
+            [0.5, 1.0],
+            [1.0, 0.0],
+            [1.0, 0.5],
+            [1.0, 1.0]]
+        @test nodeset12_4 isa NodeSet{2, Float64}
+        @test isapprox(separation_distance(nodeset12_4), 0.25)
+        @test length(nodeset12_4) == length(expected_nodes)
+        for i in 1:length(nodeset12_4)
+            @test nodeset12_4[i] == expected_nodes[i]
+        end
+
         r = 2.0
         center = [-1.0, 3.0, 2.0, -pi]
         nodeset13 = @test_nowarn random_hypersphere(50, r, center)
