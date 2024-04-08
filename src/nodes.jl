@@ -15,7 +15,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", nodeset::NodeSet)
     if get(io, :compact, false)
-        show(io, semi)
+        show(io, nodeset)
     else
         println(io, "NodeSet{", dim(nodeset), ", ", eltype(nodeset), "} with ",
                 "separation distance q = ", nodeset.q, " and ", length(nodeset), " nodes:")
