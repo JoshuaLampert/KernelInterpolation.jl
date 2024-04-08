@@ -255,14 +255,14 @@ then use as many nodes in each dimension as described by `n`. The resulting `Nod
 they are applied for each dimension. If they are `Tuple`s of size `dim`, the hypercube has the according bounds.
 If `dim` is not given explicitly, it is inferred by the lengths of `n`, `x_min` and `x_max` if possible.
 """
-function homogeneous_hypercube(n::Int, x_min::RealT = 0.0, x_max::RealT = 1.0;
-                               dim = 1) where {RealT}
+function homogeneous_hypercube(n::Int, x_min = 0.0, x_max = 1.0;
+                               dim = 1)
     return homogeneous_hypercube(ntuple(_ -> n, dim), ntuple(_ -> x_min, dim),
                                  ntuple(_ -> x_max, dim))
 end
 
-function homogeneous_hypercube(n::NTuple{Dim}, x_min::RealT, x_max::RealT;
-                               dim = Dim) where {Dim, RealT}
+function homogeneous_hypercube(n::NTuple{Dim}, x_min, x_max;
+                               dim = Dim) where {Dim}
     @assert Dim == dim
     return homogeneous_hypercube(n, ntuple(_ -> x_min, Dim), ntuple(_ -> x_max, Dim))
 end
