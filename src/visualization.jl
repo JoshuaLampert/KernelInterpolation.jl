@@ -1,4 +1,5 @@
-@recipe function f(kernel::AbstractKernel{Dim}; x_min = -1.0, x_max = 1.0, N = 50) where {Dim}
+@recipe function f(kernel::AbstractKernel{Dim}; x_min = -1.0, x_max = 1.0,
+                   N = 50) where {Dim}
     if Dim == 1
         x = LinRange(x_min, x_max, N)
         title --> get_name(kernel)
