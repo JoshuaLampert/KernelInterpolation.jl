@@ -3,7 +3,7 @@
 
 Given a base `kernel` and a bijective `transformation` function, construct
 a new kernel that applies the transformation to both arguments ``x`` and ``y``,
-i.e. the new kernel ``K_T`` is given by
+i.e., the new kernel ``K_T`` is given by
 ```math
     K_T(x, y) = K(Tx, Ty),
 ```
@@ -27,7 +27,51 @@ function (kernel::TransformationKernel)(x, y)
 end
 
 function Base.show(io::IO, kernel::TransformationKernel{Dim}) where {Dim}
-    return print(io, "TransformationKernel{", Dim, "}(kernel = ", kernel.kernel, ")")
+    print(io, "TransformationKernel{", Dim, "}(kernel = ", kernel.kernel, ")")
 end
 
 order(kernel::TransformationKernel) = order(kernel.kernel)
+
+@doc raw"""
+    ProductKernel(kernels)
+
+Given a vector of `kernels`, construct a new kernel that multiplies the
+results of the component kernels, i.e., the new kernel ``K`` is given by
+```math
+    K(x, y) = \prod_{i = 1}^n K_i(x, y),
+```
+where ``K_i`` are the component kernels and ``n`` the number of kernels.
+Note that all component kernels need to have the same `dim`(@ref).
+"""
+struct ProductKernel{Dim} <: AbstractKernel{Dim}
+    kernels::Vector{AbstractKernel}
+
+    function ProductKernel{Dim}(kernels) where {Dim}
+        @assert all(dim.(kernels) .== Dim)
+        new(kernels)
+    end
+end
+
+function (kernel::ProductKernel)(x, y)
+    @assert length(x) == length(y)
+    res = 1.0
+    for k in kernel.kernels
+        res *= k(x, y)
+    end
+    return res
+end
+
+function Base.show(io::IO, kernel::ProductKernel{Dim}) where {Dim}
+    print(io, "ProductKernel{", Dim, "}(kernels = [")
+    for (i, k) in enumerate(kernel.kernels)
+        if i < length(kernel.kernels)
+            print(io, k, ", ")
+        else
+            print(io, k)
+        end
+    end
+    print("])")
+end
+
+# TODO: Is that correct in general?
+order(kernel::ProductKernel) = maximum(order.(kernel.kernels))

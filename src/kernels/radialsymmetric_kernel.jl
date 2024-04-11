@@ -58,8 +58,7 @@ function GaussKernel{Dim}(; shape_parameter = 1.0) where {Dim}
 end
 
 function Base.show(io::IO, kernel::GaussKernel{Dim}) where {Dim}
-    return print(io, "GaussKernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter,
-                 ")")
+    print(io, "GaussKernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter, ")")
 end
 
 phi(kernel::GaussKernel, r::Real) = exp(-(kernel.shape_parameter * r)^2)
@@ -93,9 +92,8 @@ function MultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where {Dim}
 end
 
 function Base.show(io::IO, kernel::MultiquadricKernel{Dim}) where {Dim}
-    return print(io, "MultiquadricKernel{", Dim, "}(shape_parameter = ",
-                 kernel.shape_parameter,
-                 ")")
+    print(io, "MultiquadricKernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter,
+          ")")
 end
 
 phi(kernel::MultiquadricKernel, r::Real) = (1 + (kernel.shape_parameter * r)^2)^kernel.beta
@@ -129,9 +127,8 @@ function InverseMultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where
 end
 
 function Base.show(io::IO, kernel::InverseMultiquadricKernel{Dim}) where {Dim}
-    return print(io, "InverseMultiquadricKernel{", Dim, "}(beta = ", kernel.beta,
-                 ", shape_parameter = ",
-                 kernel.shape_parameter, ")")
+    print(io, "InverseMultiquadricKernel{", Dim, "}(beta = ", kernel.beta,
+          ", shape_parameter = ", kernel.shape_parameter, ")")
 end
 
 function phi(kernel::InverseMultiquadricKernel, r::Real)
@@ -169,7 +166,7 @@ function get_name(kernel::PolyharmonicSplineKernel)
 end
 
 function Base.show(io::IO, kernel::PolyharmonicSplineKernel{Dim}) where {Dim}
-    return print(io, "PolyharmonicSplineKernel{", Dim, "}(k = ", kernel.k, ")")
+    print(io, "PolyharmonicSplineKernel{", Dim, "}(k = ", kernel.k, ")")
 end
 
 function phi(kernel::PolyharmonicSplineKernel, r::Real)
@@ -205,7 +202,7 @@ See also [`RadialSymmetricKernel`](@ref).
 struct ThinPlateSplineKernel{Dim} <: RadialSymmetricKernel{Dim} end
 
 function Base.show(io::IO, kernel::ThinPlateSplineKernel{Dim}) where {Dim}
-    return print(io, "ThinPlateSplineKernel{", Dim, "}()")
+    print(io, "ThinPlateSplineKernel{", Dim, "}()")
 end
 
 phi(kernel::ThinPlateSplineKernel, r::Real) = iszero(r) ? 0.0 : r^2 * log(r)
@@ -250,9 +247,8 @@ function get_name(kernel::WendlandKernel)
 end
 
 function Base.show(io::IO, kernel::WendlandKernel{Dim}) where {Dim}
-    return print(io, "WendlandKernel{", Dim, "}(k = ", kernel.k,
-                 ", shape_parameter = ",
-                 kernel.shape_parameter, ", d = ", kernel.d, ")")
+    print(io, "WendlandKernel{", Dim, "}(k = ", kernel.k, ", shape_parameter = ",
+          kernel.shape_parameter, ", d = ", kernel.d, ")")
 end
 
 function phi(kernel::WendlandKernel, r::Real)
@@ -304,9 +300,8 @@ function RadialCharacteristicKernel{Dim}(beta = 2.0; shape_parameter = 1.0) wher
 end
 
 function Base.show(io::IO, kernel::RadialCharacteristicKernel{Dim}) where {Dim}
-    return print(io, "RadialCharacteristicKernel{", Dim, "}(beta = ", kernel.beta,
-                 ", shape_parameter = ",
-                 kernel.shape_parameter, ")")
+    print(io, "RadialCharacteristicKernel{", Dim, "}(beta = ", kernel.beta,
+          ", shape_parameter = ", kernel.shape_parameter, ")")
 end
 
 function phi(kernel::RadialCharacteristicKernel, r::Real)
@@ -339,9 +334,8 @@ function MaternKernel{Dim}(nu = 1.5; shape_parameter = 1.0) where {Dim}
 end
 
 function Base.show(io::IO, kernel::MaternKernel{Dim}) where {Dim}
-    return print(io, "MaternKernel{", Dim, "}(nu = ", kernel.nu,
-                 ", shape_parameter = ",
-                 kernel.shape_parameter, ")")
+    print(io, "MaternKernel{", Dim, "}(nu = ", kernel.nu, ", shape_parameter = ",
+          kernel.shape_parameter, ")")
 end
 
 # See https://github.com/JuliaGaussianProcesses/KernelFunctions.jl/blob/9a2f7bbec515c55e5594feef7928670cb811169c/src/basekernels/matern.jl#L42
@@ -382,8 +376,7 @@ function Matern12Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
 end
 
 function Base.show(io::IO, kernel::Matern12Kernel{Dim}) where {Dim}
-    return print(io, "Matern12Kernel{", Dim, "}(shape_parameter = ",
-                 kernel.shape_parameter, ")")
+    print(io, "Matern12Kernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter, ")")
 end
 
 function phi(kernel::Matern12Kernel, r::Real)
@@ -446,8 +439,7 @@ function Matern52Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
 end
 
 function Base.show(io::IO, kernel::Matern52Kernel{Dim}) where {Dim}
-    return print(io, "Matern52Kernel{", Dim, "}(shape_parameter = ",
-                 kernel.shape_parameter, ")")
+    print(io, "Matern52Kernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter, ")")
 end
 
 function phi(kernel::Matern52Kernel, r::Real)
@@ -478,8 +470,7 @@ function Matern72Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
 end
 
 function Base.show(io::IO, kernel::Matern72Kernel{Dim}) where {Dim}
-    return print(io, "Matern72Kernel{", Dim, "}(shape_parameter = ",
-                 kernel.shape_parameter, ")")
+    print(io, "Matern72Kernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter, ")")
 end
 
 function phi(kernel::Matern72Kernel, r::Real)
@@ -516,8 +507,8 @@ function RieszKernel{Dim}(beta; shape_parameter = 1.0) where {Dim}
 end
 
 function Base.show(io::IO, kernel::RieszKernel{Dim}) where {Dim}
-    return print(io, "RieszKernel{", Dim, "}(beta = ", kernel.beta, ", shape_parameter = ",
-                 kernel.shape_parameter, ")")
+    print(io, "RieszKernel{", Dim, "}(beta = ", kernel.beta, ", shape_parameter = ",
+          kernel.shape_parameter, ")")
 end
 
 function phi(kernel::RieszKernel, r::Real)
