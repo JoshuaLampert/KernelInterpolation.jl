@@ -185,14 +185,15 @@ function (itp::Interpolation)(x)
     end
 
     for k in 1:length(d)
-        # Allow scalar input if interpolant is one-dimensional
-        if x isa Real
-            s += d[k] * ps[k](xx => [x])
-        else
-            s += d[k] * ps[k](xx => x)
-        end
+        s += d[k] * ps[k](xx => x)
     end
     return s
+end
+
+# Allow scalar input if interpolant is one-dimensional
+function (itp::Interpolation)(x::RealT) where {RealT <: Real}
+    @assert dim(itp) == 1
+    return itp([x])
 end
 
 # TODO: Does this also make sense for conditionally positive definite kernels?

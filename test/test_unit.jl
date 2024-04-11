@@ -548,6 +548,7 @@ using Plots
         @test isapprox(itp([0.5, 0.5]), 1.115625820404527)
         @test isapprox(kernel_norm(itp), 2.5193566316951626)
 
+        # Conditionally positive definite kernel
         kernel = ThinPlateSplineKernel{dim(nodes)}()
         itp = @test_nowarn interpolate(nodes, ff, kernel)
         expected_coefficients = [
@@ -571,6 +572,15 @@ using Plots
         @test system_matrix(itp) isa Symmetric
         @test isapprox(itp([0.5, 0.5]), 1.0)
         @test isapprox(kernel_norm(itp), 0.0)
+
+        # 1D interpolation and evaluation
+        nodes = NodeSet(LinRange(0.0, 1.0, 10))
+        f(x) = sinpi.(x[1])
+        ff = f.(nodes)
+        kernel = Matern12Kernel{1}()
+        itp = @test_nowarn interpolate(nodes, ff, kernel)
+        @test isapprox(itp([0.12345]), 0.3751444089323994)
+        @test isapprox(itp(0.12345), 0.3751444089323994) # Evaluate at scalar input
         # TODO: test convergence orders of condition numbers depending on separation distance
     end
 

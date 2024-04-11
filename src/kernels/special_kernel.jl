@@ -41,7 +41,7 @@ results of the component kernels, i.e., the new kernel ``K`` is given by
     K(x, y) = \prod_{i = 1}^n K_i(x, y),
 ```
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
-Note that all component kernels need to have the same `dim`(@ref).
+Note that all component kernels need to have the same [`dim`](@ref).
 """
 struct ProductKernel{Dim} <: AbstractKernel{Dim}
     kernels::Vector{AbstractKernel}
