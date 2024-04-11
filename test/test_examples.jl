@@ -56,6 +56,11 @@ EXAMPLES_DIR = examples_dir()
                               l2=1.6308820716679489, linf=0.4234550933525697)
     end
 
+    @ki_testset "interpolation_2d_sum_kernel.jl" begin
+        @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_sum_kernel.jl"),
+                              l2=0.684013657976209, linf=0.16498541680450884)
+    end
+
     @ki_testset "interpolation_5d.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_5d.jl"),
                               l2=0.4308925377778874, linf=0.06402624845465965)

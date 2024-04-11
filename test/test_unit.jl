@@ -137,6 +137,12 @@ using Plots
         @test_nowarn display(kernel11)
         @test order(kernel11) == 1
         @test isapprox(kernel11(x, y), kernel1(x, y) * kernel2(x, y))
+
+        kernel12 = @test_nowarn SumKernel{2}([kernel1, kernel2])
+        @test_nowarn println(kernel12)
+        @test_nowarn display(kernel12)
+        @test order(kernel12) == 0
+        @test isapprox(kernel12(x, y), kernel1(x, y) + kernel2(x, y))
     end
 
     @testset "NodeSet" begin

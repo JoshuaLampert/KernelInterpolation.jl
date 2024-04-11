@@ -54,7 +54,7 @@ dim(itp::Interpolation{Kernel, Dim, RealT, A}) where {Kernel, Dim, RealT, A} = D
 """
     coefficients(itp::Interpolation)
 
-Obtain all the coefficients of the linear combination for the interpolant, i.e. both
+Obtain all the coefficients of the linear combination for the interpolant, i.e., both
 the coefficients for the kernel part and for the polynomial part.
 
 See also [`kernel_coefficients`](@ref) and [`polynomial_coefficients`](@ref).
@@ -102,7 +102,7 @@ polyvars(itp::Interpolation) = itp.xx
 """
     order(itp)
 
-Return the order ``m`` of the polynomial used for the interpolation, i.e.
+Return the order ``m`` of the polynomial used for the interpolation, i.e.,
 the polynomial degree plus 1. If ``m = 0``, no polynomial is added.
 """
 order(itp::Interpolation) = maximum(degree.(itp.ps), init = -1) + 1
@@ -110,7 +110,7 @@ order(itp::Interpolation) = maximum(degree.(itp.ps), init = -1) + 1
 @doc raw"""
     system_matrix(itp::Interpolation)
 
-Return the system matrix, i.e. the matrix
+Return the system matrix, i.e., the matrix
 ```math
 \begin{pmatrix}
 A & P \\
@@ -129,7 +129,7 @@ system_matrix(itp::Interpolation) = itp.symmetric_system_matrix
     interpolate(nodeset, values, kernel = GaussKernel{dim(nodeset)}(), m = order(kernel))
 
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
-and polynomials up to a degree `polynomial_degree`, i.e. determine the coefficients `c_j` and `d_k` in the expansion
+and polynomials up to a degree `polynomial_degree`, i.e., determine the coefficients `c_j` and `d_k` in the expansion
 ```math
     s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^q d_kp_k(x),
 ```
