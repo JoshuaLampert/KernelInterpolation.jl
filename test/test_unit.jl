@@ -131,6 +131,12 @@ using Plots
         x3 = [-1.0, 2.0, pi / 8]
         y3 = [2.3, 4.2, -12.3]
         @test isapprox(kernel10(x3, y3), kernel1(trafo(x3), trafo(y3)))
+
+        kernel11 = @test_nowarn ProductKernel{2}([kernel1, kernel2])
+        @test_nowarn println(kernel11)
+        @test_nowarn display(kernel11)
+        @test order(kernel11) == 1
+        @test isapprox(kernel11(x, y), kernel1(x, y) * kernel2(x, y))
     end
 
     @testset "NodeSet" begin
