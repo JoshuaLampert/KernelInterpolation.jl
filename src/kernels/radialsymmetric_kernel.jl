@@ -188,7 +188,7 @@ Thin plate spline kernel function with
 ```math
     \phi(r) = r^2\log(r),
 ```
-i.e. [`PolyharmonicSplineKernel`](@ref) with ``k = 2``.
+i.e., [`PolyharmonicSplineKernel`](@ref) with ``k = 2``.
 The thin plate spline is conditionally positive definite of order ``m = 2``.
 See Wendland (2004), p. 112.
 
@@ -357,7 +357,7 @@ order(kernel::MaternKernel) = 0
 @doc raw"""
     Matern12Kernel{Dim}(; shape_parameter = 1.0)
 
-Matern kernel with ``\nu = 1/2``, i.e.
+Matern kernel with ``\nu = 1/2``, i.e.,
 ```math
     \phi(r) = \exp(-\varepsilon r),
 ```
@@ -388,7 +388,7 @@ order(kernel::Matern12Kernel) = 0
 @doc raw"""
     Matern32Kernel{Dim}(; shape_parameter = 1.0)
 
-Matern kernel with ``\nu = 3/2``, i.e.
+Matern kernel with ``\nu = 3/2``, i.e.,
 ```math
     \phi(r) =  (1 + \sqrt{3}\varepsilon r)\exp(-\sqrt{3}\varepsilon r),
 ```
@@ -420,7 +420,7 @@ order(kernel::Matern32Kernel) = 0
 @doc raw"""
     Matern52Kernel{Dim}(; shape_parameter = 1.0)
 
-Matern kernel with ``\nu = 5/2``, i.e.
+Matern kernel with ``\nu = 5/2``, i.e.,
 ```math
     \phi(r) =  (1 + \sqrt{5}\varepsilon r + 5\cdot(\varepsilon r)^2/3)\exp(-\sqrt{5}\varepsilon r),
 ```
@@ -451,7 +451,7 @@ order(kernel::Matern52Kernel) = 0
 @doc raw"""
     Matern72Kernel{Dim}(; shape_parameter = 1.0)
 
-Matern kernel with ``\nu = 7/2``, i.e.
+Matern kernel with ``\nu = 7/2``, i.e.,
 ```math
     \phi(r) =  (1 + \sqrt{7}\varepsilon r + 12\cdot(\varepsilon r)^2/5 + 7\cdot(\varepsilon r)^3/15)\exp(-\sqrt{7}\varepsilon r),
 ```

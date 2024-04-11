@@ -75,3 +75,47 @@ end
 
 # TODO: Is that correct in general?
 order(kernel::ProductKernel) = maximum(order.(kernel.kernels))
+
+@doc raw"""
+    SumKernel(kernels)
+
+Given a vector of `kernels`, construct a new kernel that sums the
+results of the component kernels, i.e., the new kernel ``K`` is given by
+```math
+    K(x, y) = \sum_{i = 1}^n K_i(x, y),
+```
+where ``K_i`` are the component kernels and ``n`` the number of kernels.
+Note that all component kernels need to have the same [`dim`](@ref).
+"""
+struct SumKernel{Dim} <: AbstractKernel{Dim}
+    kernels::Vector{AbstractKernel}
+
+    function SumKernel{Dim}(kernels) where {Dim}
+        @assert all(dim.(kernels) .== Dim)
+        new(kernels)
+    end
+end
+
+function (kernel::SumKernel)(x, y)
+    @assert length(x) == length(y)
+    res = 0.0
+    for k in kernel.kernels
+        res += k(x, y)
+    end
+    return res
+end
+
+function Base.show(io::IO, kernel::SumKernel{Dim}) where {Dim}
+    print(io, "SumKernel{", Dim, "}(kernels = [")
+    for (i, k) in enumerate(kernel.kernels)
+        if i < length(kernel.kernels)
+            print(io, k, ", ")
+        else
+            print(io, k)
+        end
+    end
+    print("])")
+end
+
+# TODO: Is that correct in general?
+order(kernel::SumKernel) = minimum(order.(kernel.kernels))
