@@ -611,6 +611,7 @@ using Plots
                 itp = interpolate(nodes, ff)
                 nodes_fine = homogeneous_hypercube(10; dim = dim)
                 @test_nowarn plot(nodes_fine, itp)
+                @test_nowarn plot(itp)
                 if dim == 2
                     # Test if 2D nodes can be plotted into 3D plot
                     nodes2d = homogeneous_hypercube(5; dim = 2)
