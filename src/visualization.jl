@@ -125,14 +125,14 @@ end
 end
 
 @recipe function f(itp::Interpolation; x_min = 0.0, x_max = 1.0, N = 50)
-        nodeset = homogeneous_hypercube(N, x_min, x_max; dim = 2)
-        x = unique(values_along_dim(nodeset, 1))
-        y = unique(values_along_dim(nodeset, 2))
-        z = reshape(itp.(nodeset), (N, N))'
-        xguide --> "x"
-        yguide --> "y"
-        seriestype --> :heatmap # :contourf
-        x, y, z
+    nodeset = homogeneous_hypercube(N, x_min, x_max; dim = 2)
+    x = unique(values_along_dim(nodeset, 1))
+    y = unique(values_along_dim(nodeset, 2))
+    z = reshape(itp.(nodeset), (N, N))'
+    xguide --> "x"
+    yguide --> "y"
+    seriestype --> :heatmap # :contourf
+    x, y, z
 end
 
 @recipe function f(nodeset::NodeSet, vals::AbstractVector)
