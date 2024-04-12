@@ -125,14 +125,21 @@ end
 end
 
 @recipe function f(itp::Interpolation; x_min = 0.0, x_max = 1.0, N = 50)
-    nodeset = homogeneous_hypercube(N, x_min, x_max; dim = 2)
-    x = unique(values_along_dim(nodeset, 1))
-    y = unique(values_along_dim(nodeset, 2))
-    z = reshape(itp.(nodeset), (N, N))'
-    xguide --> "x"
-    yguide --> "y"
-    seriestype --> :heatmap # :contourf
-    x, y, z
+    if dim(itp) == 1
+        x = LinRange(x_min, x_max, N)
+        x, itp.(x)
+    elseif dim(itp) == 2
+        nodeset = homogeneous_hypercube(N, x_min, x_max; dim = 2)
+        x = unique(values_along_dim(nodeset, 1))
+        y = unique(values_along_dim(nodeset, 2))
+        z = reshape(itp.(nodeset), (N, N))'
+        xguide --> "x"
+        yguide --> "y"
+        seriestype --> :heatmap # :contourf
+        x, y, z
+    else
+        @error("Plotting an interpolation is only supported for dimension up to 2, but the interpolation has dimension $(dim(itp))")
+    end
 end
 
 @recipe function f(nodeset::NodeSet, vals::AbstractVector)
