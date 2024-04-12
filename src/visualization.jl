@@ -128,12 +128,7 @@ end
         nodeset = homogeneous_hypercube(N, x_min, x_max; dim = 2)
         x = unique(values_along_dim(nodeset, 1))
         y = unique(values_along_dim(nodeset, 2))
-        z = zeros((N, N))
-        for i in 1:length(x)
-            for j in 1:length(y)
-                z[j, i] = itp([x[i], y[j]])
-            end
-        end
+        z = reshape(itp.(nodeset), (N, N))'
         xguide --> "x"
         yguide --> "y"
         seriestype --> :heatmap # :contourf
