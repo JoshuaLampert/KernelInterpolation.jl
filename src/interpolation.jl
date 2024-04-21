@@ -108,25 +108,20 @@ the polynomial degree plus 1. If ``m = 0``, no polynomial is added.
 order(itp::Interpolation) = maximum(degree.(itp.ps), init = -1) + 1
 
 @doc raw"""
-	system_matrix(itp::Interpolation)
+    system_matrix(itp::Interpolation)
 
-Return the system matrix, i.e., the matrix
+Return the system matrix, i.e. the matrix ``A`` in the linear system
 ```math
-    \begin{pmatrix}
-    A & P \\
-    P^T & 0
-    \end{pmatrix},
+    Ac = f,
 ```
-where ``A\in\mathbb{R}^{n\times n}`` is the matrix with entries
-``a_{ij} = K(x_i, x_j)`` for the kernel function `K` and nodes `x_i`
-and ``P\in\mathbb{R}^{n\times q}`` is the matrix with entries
-``p_{ij} = p_j(x_i)``, where ``p_j`` is the ``j``-th multivariate monomial
-of the space of polynomials up to degree ``m``.
+where ``c`` are the coefficients of the kernel interpolant and ``f`` the vector
+of known values. The exact form of ``A`` differs depends on  whether classical interpolation
+or collocation is used.
 """
 system_matrix(itp::Interpolation) = itp.system_matrix
 
 @doc raw"""
-	interpolate(nodeset, values, kernel = GaussKernel{dim(nodeset)}(), m = order(kernel))
+    interpolate(nodeset, values, kernel = GaussKernel{dim(nodeset)}(), m = order(kernel))
 
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
 and polynomials up to a degree `polynomial_degree`, i.e., determine the coefficients `c_j` and `d_k` in the expansion
