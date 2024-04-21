@@ -25,16 +25,6 @@ See also [`RadialSymmetricKernel`](@ref), [`Phi`](@ref).
 """
 function phi end
 
-# @doc raw"""
-# 	phi_deriv(kernel, r, k = 1)
-
-# For a [`RadialSymmetricKernel`](@ref) `kernel` return value of the `k`-th derivative
-# of the univariate function ``\phi`` defining the kernel.
-
-# See also [`RadialSymmetricKernel`](@ref), [`phi`](@ref).
-# """
-# function phi_deriv end
-
 @doc raw"""
 	Phi(kernel, x)
 
@@ -48,26 +38,6 @@ function Phi(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
     return phi(kernel, r)
 end
 
-# @doc raw"""
-# 	Phi_deriv(kernel, x, i, k = 1)
-
-# For a [`RadialSymmetricKernel`](@ref) `kernel` return value of the `k`-th partial derivative
-# with respect to the `i`-th component of the multivariate function ``Phi`` evaluated at `x`.
-
-# See also [`Phi`](@ref), [`phi_deriv`](@ref).
-# """
-# function Phi_deriv(kernel::RadialSymmetricKernel, x, i, k = 1)
-# 	r = norm(x)
-# 	if k == 1
-# 		iszero(r) && return zero(eltype(x))
-# 		return x[i] / r * phi_deriv(kernel, r, 1)
-# 	elseif k == 2
-# 		return (r^2 - x[i]^2) / r^3 * phi_deriv(kernel, r, 1) + x[i]^2 / r^2 * phi_deriv(kernel, r, 2)
-# 	else
-# 		error("Only first and second derivative are implemented")
-# 	end
-# end
-
 function (kernel::RadialSymmetricKernel)(x, y)
     @assert length(x) == length(y)
     return Phi(kernel, x .- y)
@@ -79,13 +49,6 @@ end
 Return order of kernel.
 """
 function order end
-
-# """
-# 	smoothness(kernel)
-
-# Return smoothness of kernel, i.e., how many times the kernel is differentiable.
-# """
-# function smoothness end
 
 @doc raw"""
 	GaussKernel{Dim}(; shape_parameter = 1.0)
