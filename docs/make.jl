@@ -16,6 +16,7 @@ makedocs(;
                                   edit_link = "main",
                                   assets = String[]),
          pages = ["Home" => "index.md",
+             "Solving PDEs" => "pde.md",
              "Reference" => "ref.md",
              "License" => "license.md"])
 

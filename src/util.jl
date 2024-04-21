@@ -36,7 +36,7 @@ Return the path to an example that can be used to quickly see KernelInterpolatio
 See also [`examples_dir`](@ref) and [`get_examples`](@ref).
 """
 function default_example()
-    joinpath(examples_dir(), "interpolation_2d.jl")
+    joinpath(examples_dir(), "interpolation", "interpolation_2d.jl")
 end
 
 # Note: We can't call the method below `KernelInterpolation.include` since that is created automatically

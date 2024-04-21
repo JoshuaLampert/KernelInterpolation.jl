@@ -590,6 +590,98 @@ using Plots
         # TODO: test convergence orders of condition numbers depending on separation distance
     end
 
+    @testset "Differential operators" begin
+        l = @test_nowarn Laplacian()
+        @test_nowarn println(l)
+        @test_nowarn display(l)
+        # Test if automatic differentiation gives same results as analytical derivatives
+        # Define derivatives of Gauss kernel analytically and use them in the solver
+        # instead of automatic differentiation
+        function phi_deriv(kernel::GaussKernel, r::Real, k = 1)
+            eps2 = kernel.shape_parameter^2
+            if k == 0
+                return phi(kernel, r)
+            elseif k == 1
+                return -2 * eps2 * r * phi(kernel, r)
+            elseif k == 2
+                return 2 * eps2 * (2 * eps2 * r^2 - 1) * phi(kernel, r)
+            else
+                error("Only first and second derivative are implemented for GaussKernel")
+            end
+        end
+        function phi_deriv_over_r(kernel::GaussKernel, r::Real, k = 1)
+            if k == 1
+                eps2 = kernel.shape_parameter^2
+                return -2 * eps2 * phi(kernel, r)
+            else
+                error("Only first derivative is implemented for GaussKernel")
+            end
+        end
+
+        struct AnalyticalLaplacian <: KernelInterpolation.AbstractDifferentialOperator
+        end
+
+        function (::AnalyticalLaplacian)(kernel::KernelInterpolation.AbstractKernel{Dim}, x) where {Dim}
+            r = norm(x)
+            return (Dim - 1) * phi_deriv_over_r(kernel, r, 1) + phi_deriv(kernel, r, 2)
+        end
+        kernel = GaussKernel{2}(shape_parameter = 0.5)
+        x1 = [0.4, 0.6]
+        @test isapprox(AnalyticalLaplacian()(kernel, x1), Laplacian()(kernel, x1))
+        kernel = GaussKernel{3}(shape_parameter = 0.5)
+        x2 = [0.1, 0.2, 0.3]
+        @test isapprox(AnalyticalLaplacian()(kernel, x2), Laplacian()(kernel, x2))
+        kernel = GaussKernel{4}(shape_parameter = 0.5)
+        x3 = rand(4)
+        @test isapprox(AnalyticalLaplacian()(kernel, x3, x3), Laplacian()(kernel, x3, x3))
+    end
+
+    @testset "PDEs" begin
+        # Passing a function
+        f(x) = x[1] + x[2]
+        poisson = @test_nowarn PoissonEquation(f)
+        @test_nowarn println(poisson)
+        @test_nowarn display(poisson)
+        nodeset = NodeSet([0.0 0.0
+                           1.0 0.0
+                           0.0 1.0
+                           1.0 1.0])
+        @test KernelInterpolation.rhs(poisson, nodeset) == [0.0, 1.0, 1.0, 2.0]
+        # Passing a vector
+        @test_nowarn poisson = PoissonEquation([0.0, 1.0, 1.0, 3.0])
+        @test KernelInterpolation.rhs(poisson, nodeset) == [0.0, 1.0, 1.0, 3.0]
+    end
+
+    @testset "solving PDEs" begin
+        nodeset_inner = NodeSet([0.25 0.25
+                                 0.75 0.25
+                                 0.25 0.75
+                                 0.75 0.75])
+        u(x) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2]
+        f(x) = -4.0 # -Laplacian of u
+        nodeset_boundary = NodeSet([0.0 0.0
+                                    1.0 0.0
+                                    0.0 1.0
+                                    1.0 1.0])
+        values_boundary = u.(nodeset_boundary)
+        kernel = Matern52Kernel{2}(shape_parameter = 0.5)
+        pde = PoissonEquation(f)
+        itp = @test_nowarn solve(pde, nodeset_inner, nodeset_boundary, values_boundary, kernel)
+
+        # Test if the solution satisfies the PDE in the inner nodes
+        for node in nodeset_inner
+            @test isapprox(pde(itp, node), f(node), atol = 1e-14)
+            @test isapprox(Laplacian()(itp, node), -f(node), atol = 1e-14)
+        end
+        # Test if the solution satisfies the boundary conditions
+        for (node, value) in zip(nodeset_boundary, values_boundary)
+            @test isapprox(itp(node), value, atol = 1e-14)
+        end
+        # Test if the solution is close to the analytical solution in other points
+        x = [0.1, 0.08]
+        @test isapprox(itp(x), u(x), atol = 0.12)
+    end
+
     @testset "Visualization" begin
         f = sum
         kernel = GaussKernel{3}(shape_parameter = 0.5)
