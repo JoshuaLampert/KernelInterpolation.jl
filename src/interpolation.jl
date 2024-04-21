@@ -1,7 +1,7 @@
 abstract type AbstractInterpolation{Kernel, Dim, RealT} end
 
 """
-	interpolation_kernel(itp)
+    interpolation_kernel(itp)
 
 Return the kernel from an interpolation object.
 """
@@ -15,17 +15,17 @@ Return the node set from an interpolation object.
 nodeset(itp::AbstractInterpolation) = itp.nodeset
 
 @doc raw"""
-	Interpolation
+    Interpolation
 
 Interpolation object that can be evaluated at a node and represents a kernel interpolation of the form
 ```math
-	s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^q d_kp_k(x),
+    s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^q d_kp_k(x),
 ```
 where ``x_j`` are the nodes in the nodeset and ``s(x)`` the interpolant satisfying ``s(x_j) = f(x_j)``, where
 ``f(x_j)`` are given by `values` in [`interpolate`](@ref) and ``p_k`` is a basis of the `q`-dimensional space
 of multivariate polynomials of order [`order`](@ref). The additional conditions
 ```math
-	\sum_{j = 1}^n c_jp_k(x_j) = 0, \quad k = 1,\ldots, q
+    \sum_{j = 1}^n c_jp_k(x_j) = 0, \quad k = 1,\ldots, q
 ```
 are enforced.
 """
@@ -45,14 +45,14 @@ function Base.show(io::IO, itp::Interpolation)
 end
 
 """
-	dim(itp::Interpolation)
+    dim(itp::Interpolation)
 
 Return the dimension of the input variables of the interpolation.
 """
 dim(itp::Interpolation{Kernel, Dim, RealT, A}) where {Kernel, Dim, RealT, A} = Dim
 
 """
-	coefficients(itp::Interpolation)
+    coefficients(itp::Interpolation)
 
 Obtain all the coefficients of the linear combination for the interpolant, i.e., both
 the coefficients for the kernel part and for the polynomial part.
@@ -62,7 +62,7 @@ See also [`kernel_coefficients`](@ref) and [`polynomial_coefficients`](@ref).
 coefficients(itp::Interpolation) = itp.c
 
 """
-	kernel_coefficients(itp::Interpolation)
+    kernel_coefficients(itp::Interpolation)
 
 Obtain the coefficients of the kernel part of the linear combination for the
 interpolant.
@@ -72,7 +72,7 @@ See also [`coefficients`](@ref) and [`polynomial_coefficients`](@ref).
 kernel_coefficients(itp::Interpolation) = itp.c[1:length(nodeset(itp))]
 
 """
-	polynomial_coefficients(itp::Interpolation)
+    polynomial_coefficients(itp::Interpolation)
 
 Obtain the coefficients of the polynomial part of the linear combination for the
 interpolant.
@@ -82,7 +82,7 @@ See also [`coefficients`](@ref) and [`kernel_coefficients`](@ref).
 polynomial_coefficients(itp::Interpolation) = itp.c[(length(nodeset(itp)) + 1):end]
 
 """
-	polynomial_basis(itp::Interpolation)
+    polynomial_basis(itp::Interpolation)
 
 Return a vector of the polynomial basis functions used for the interpolation.
 
@@ -91,7 +91,7 @@ See also [`polyvars`](@ref).
 polynomial_basis(itp::Interpolation) = itp.ps
 
 """
-	polyvars(itp::Interpolation)
+    polyvars(itp::Interpolation)
 
 Return a vector of the polynomial variables.
 
@@ -100,7 +100,7 @@ See also [`polynomial_basis`](@ref).
 polyvars(itp::Interpolation) = itp.xx
 
 """
-	order(itp)
+    order(itp)
 
 Return the order ``m`` of the polynomial used for the interpolation, i.e.,
 the polynomial degree plus 1. If ``m = 0``, no polynomial is added.
@@ -112,10 +112,10 @@ order(itp::Interpolation) = maximum(degree.(itp.ps), init = -1) + 1
 
 Return the system matrix, i.e., the matrix
 ```math
-\begin{pmatrix}
-A & P \\
-P^T & 0
-\end{pmatrix},
+    \begin{pmatrix}
+    A & P \\
+    P^T & 0
+    \end{pmatrix},
 ```
 where ``A\in\mathbb{R}^{n\times n}`` is the matrix with entries
 ``a_{ij} = K(x_i, x_j)`` for the kernel function `K` and nodes `x_i`
@@ -131,13 +131,13 @@ system_matrix(itp::Interpolation) = itp.system_matrix
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
 and polynomials up to a degree `polynomial_degree`, i.e., determine the coefficients `c_j` and `d_k` in the expansion
 ```math
-	s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^q d_kp_k(x),
+    s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^q d_kp_k(x),
 ```
 where ``x_j`` are the nodes in the nodeset and ``s(x)`` the interpolant ``s(x_j) = f(x_j)``, where ``f(x_j)``
 are given by `values` and ``p_k`` is a basis of the `q`-dimensional space of multivariate polynomials with
 maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional conditions
 ```math
-	\sum_{j = 1}^n c_jp_k(x_j) = 0, \quad k = 1,\ldots, q
+    \sum_{j = 1}^n c_jp_k(x_j) = 0, \quad k = 1,\ldots, q
 ```
 are enforced. Returns an [`Interpolation`](@ref) object.
 """
@@ -262,12 +262,12 @@ end
 
 # TODO: Does this also make sense for conditionally positive definite kernels?
 @doc raw"""
-	kernel_inner_product(itp1, itp2)
+    kernel_inner_product(itp1, itp2)
 
 Inner product of the native space for two interpolants `itp1` and `itp2`
 with the same kernel. The inner product is defined as
 ```math
-	(f, g)_K = \sum_{j = 1}^n\sum_{k = 1}^mc_jd_kK(x_j, y_k)
+    (f, g)_K = \sum_{j = 1}^n\sum_{k = 1}^mc_jd_kK(x_j, y_k)
 ```
 for the interpolants ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)`` and
 ``g(x) = \sum_{k = 1}^md_kK(x, y_k)``.
@@ -291,12 +291,12 @@ function kernel_inner_product(itp1, itp2)
 end
 
 @doc raw"""
-	kernel_norm(itp)
+    kernel_norm(itp)
 
 Norm of the native space defined by the kernel of the interpolant `itp`.
 The norm is defined as
 ```math
-	\|f\|_K^2 = \sum_{j,k=1}^nc_jc_kK(x_j, x_k)
+    \|f\|_K^2 = \sum_{j,k=1}^nc_jc_kK(x_j, x_k)
 ```
 for the interpolant ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)``.
 
