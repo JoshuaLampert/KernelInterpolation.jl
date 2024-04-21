@@ -2,7 +2,7 @@ using KernelInterpolation
 using Plots
 
 # right-hand-side of Poisson equation
-f(x) = 5/4 * pi^2 * sin(pi * x[1]) * cos(pi * x[2] / 2)
+f(x) = 5 / 4 * pi^2 * sin(pi * x[1]) * cos(pi * x[2] / 2)
 pde = PoissonEquation(f)
 
 # analytical solution of equation

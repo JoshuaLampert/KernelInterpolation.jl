@@ -621,7 +621,8 @@ using Plots
         struct AnalyticalLaplacian <: KernelInterpolation.AbstractDifferentialOperator
         end
 
-        function (::AnalyticalLaplacian)(kernel::KernelInterpolation.AbstractKernel{Dim}, x) where {Dim}
+        function (::AnalyticalLaplacian)(kernel::KernelInterpolation.AbstractKernel{Dim},
+                                         x) where {Dim}
             r = norm(x)
             return (Dim - 1) * phi_deriv_over_r(kernel, r, 1) + phi_deriv(kernel, r, 2)
         end
@@ -666,7 +667,8 @@ using Plots
         values_boundary = u.(nodeset_boundary)
         kernel = Matern52Kernel{2}(shape_parameter = 0.5)
         pde = PoissonEquation(f)
-        itp = @test_nowarn solve(pde, nodeset_inner, nodeset_boundary, values_boundary, kernel)
+        itp = @test_nowarn solve(pde, nodeset_inner, nodeset_boundary, values_boundary,
+                                 kernel)
 
         # Test if the solution satisfies the PDE in the inner nodes
         for node in nodeset_inner

@@ -30,27 +30,29 @@ macro test_include_example(example, args...)
             if !$pde_test
                 values_test = itp.(nodeset)
                 # Check interpolation at interpolation nodes
-                @test isapprox(norm(values .- values_test, Inf), 0; atol = $atol, rtol = $rtol)
+                @test isapprox(norm(values .- values_test, Inf), 0;
+                               atol = $atol, rtol = $rtol)
                 many_values = f.(many_nodes)
                 many_values_test = itp.(many_nodes)
-                @test isapprox(norm(many_values .- many_values_test), $l2; atol = $atol,
-                            rtol = $rtol)
-                @test isapprox(norm(many_values .- many_values_test, Inf), $linf; atol = $atol,
-                            rtol = $rtol)
+                @test isapprox(norm(many_values .- many_values_test), $l2;
+                               atol = $atol, rtol = $rtol)
+                @test isapprox(norm(many_values .- many_values_test, Inf), $linf;
+                               atol = $atol, rtol = $rtol)
             else
                 rhs_values = KernelInterpolation.rhs(pde, nodeset_inner)
                 for i in 1:length(nodeset_inner)
-                    @test isapprox(pde(itp, nodeset_inner[i]), rhs_values[i], atol = $atol, rtol = $rtol)
+                    @test isapprox(pde(itp, nodeset_inner[i]), rhs_values[i],
+                                   atol = $atol, rtol = $rtol)
                 end
                 for (node, value) in zip(nodeset_boundary, values_boundary)
                     @test isapprox(itp(node), value, atol = $atol, rtol = $rtol)
                 end
                 many_values = u.(many_nodes)
                 many_values_test = itp.(many_nodes)
-                @test isapprox(norm(many_values .- many_values_test), $l2; atol = $atol,
-                               rtol = $rtol)
-                @test isapprox(norm(many_values .- many_values_test, Inf), $linf; atol = $atol,
-                               rtol = $rtol)
+                @test isapprox(norm(many_values .- many_values_test), $l2;
+                               atol = $atol, rtol = $rtol)
+                @test isapprox(norm(many_values .- many_values_test, Inf), $linf;
+                               atol = $atol, rtol = $rtol)
             end
         end
         println("═"^100)
