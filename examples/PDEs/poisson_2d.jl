@@ -17,7 +17,7 @@ values = f.(nodeset_inner)
 g(x) = u(x)
 values_boundary = g.(nodeset_boundary)
 
-kernel = GaussKernel{2}()
+kernel = WendlandKernel{2}(3, shape_parameter = 0.3)
 itp = solve(pde, nodeset_inner, nodeset_boundary, values_boundary, kernel)
 
 many_nodes = homogeneous_hypercube(20; dim = 2)
