@@ -8,7 +8,7 @@ Random.seed!(1)
 
 include("test_util.jl")
 
-EXAMPLES_DIR = examples_dir()
+EXAMPLES_DIR = joinpath(examples_dir(), "interpolation")
 
 @testset "Examples" begin
     @ki_testset "interpolation_1d.jl" begin

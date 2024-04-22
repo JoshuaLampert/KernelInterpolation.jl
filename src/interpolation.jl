@@ -8,7 +8,7 @@ Return the kernel from an interpolation object.
 interpolation_kernel(itp::AbstractInterpolation) = itp.kernel
 
 """
-    nodeset(itp)
+	nodeset(itp)
 
 Return the node set from an interpolation object.
 """
@@ -34,7 +34,7 @@ struct Interpolation{Kernel, Dim, RealT, A, Monomials, PolyVars} <:
     kernel::Kernel
     nodeset::NodeSet{Dim, RealT}
     c::Vector{RealT}
-    symmetric_system_matrix::A
+    system_matrix::A
     ps::Monomials
     xx::PolyVars
 end
@@ -110,20 +110,15 @@ order(itp::Interpolation) = maximum(degree.(itp.ps), init = -1) + 1
 @doc raw"""
     system_matrix(itp::Interpolation)
 
-Return the system matrix, i.e., the matrix
+Return the system matrix, i.e., the matrix ``A`` in the linear system
 ```math
-\begin{pmatrix}
-A & P \\
-P^T & 0
-\end{pmatrix},
+    Ac = f,
 ```
-where ``A\in\mathbb{R}^{n\times n}`` is the matrix with entries
-``a_{ij} = K(x_i, x_j)`` for the kernel function `K` and nodes `x_i`
-and ``P\in\mathbb{R}^{n\times q}`` is the matrix with entries
-``p_{ij} = p_j(x_i)``, where ``p_j`` is the ``j``-th multivariate monomial
-of the space of polynomials up to degree ``m``.
+where ``c`` are the coefficients of the kernel interpolant and ``f`` the vector
+of known values. The exact form of ``A`` differs depending on  whether classical interpolation
+or collocation is used.
 """
-system_matrix(itp::Interpolation) = itp.symmetric_system_matrix
+system_matrix(itp::Interpolation) = itp.system_matrix
 
 @doc raw"""
     interpolate(nodeset, values, kernel = GaussKernel{dim(nodeset)}(), m = order(kernel))
@@ -142,7 +137,7 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
 are enforced. Returns an [`Interpolation`](@ref) object.
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
-                     kernel = GaussKernel{dim(nodeset)}(),
+                     kernel = GaussKernel{Dim}(),
                      m = order(kernel)) where {Dim, RealT}
     @assert dim(kernel) == Dim
     n = length(nodeset)
@@ -171,6 +166,48 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
     return Interpolation(kernel, nodeset, c, symmetric_system_matrix, ps, xx)
 end
 
+"""
+    solve(pde, nodeset_inner, nodeset_boundary, values_boundary, kernel = GaussKernel{dim(nodeset_inner)})
+
+Solve a partial differential equation `pde` with Dirichlet boundary conditions by non-symmetric collocation
+(Kansa method) using the kernel `kernel`. The `nodeset_inner` are the nodes in the domain and `nodeset_boundary`
+are the nodes on the boundary. The `values_boundary` are the values of the boundary condition at the nodes given
+by Dirichlet boundary conditions. Returns an [`Interpolation`](@ref) object.
+"""
+function solve(pde, nodeset_inner::NodeSet{Dim, RealT},
+               nodeset_boundary::NodeSet{Dim, RealT},
+               values_boundary::Vector{RealT},
+               kernel = GaussKernel{Dim}()) where {Dim, RealT}
+    @assert dim(kernel) == Dim
+    n_i = length(nodeset_inner)
+    n_b = length(nodeset_boundary)
+    nodeset = merge(nodeset_inner, nodeset_boundary)
+    n = n_i + n_b
+
+    pde_matrix = Matrix{RealT}(undef, n_i, n)
+    for i in 1:n_i
+        for j in 1:n
+            pde_matrix[i, j] = pde(kernel, nodeset_inner[i], nodeset[j])
+        end
+    end
+    boundary_matrix = Matrix{RealT}(undef, n_b, n)
+    for i in 1:n_b
+        for j in 1:n
+            # Dirichlet boundary condition
+            boundary_matrix[i, j] = kernel(nodeset_boundary[i], nodeset[j])
+        end
+    end
+    system_matrix = [pde_matrix
+                     boundary_matrix]
+    b = [rhs(pde, nodeset_inner); values_boundary]
+    c = system_matrix \ b
+
+    # Do not support additional polynomial basis for now
+    xx = polyvars(Dim)
+    ps = monomials(xx, 0:-1)
+    return Interpolation(kernel, nodeset, c, system_matrix, ps, xx)
+end
+
 # Evaluate interpolant
 function (itp::Interpolation)(x)
     s = 0
@@ -194,6 +231,28 @@ end
 function (itp::Interpolation)(x::RealT) where {RealT <: Real}
     @assert dim(itp) == 1
     return itp([x])
+end
+
+function (diff_op::AbstractDifferentialOperator)(itp::Interpolation, x)
+    kernel = interpolation_kernel(itp)
+    xs = nodeset(itp)
+    c = kernel_coefficients(itp)
+    s = 0
+    for j in 1:length(c)
+        s += c[j] * diff_op(kernel, x, xs[j])
+    end
+    return s
+end
+
+function (pde::AbstractPDE)(itp::Interpolation, x)
+    kernel = interpolation_kernel(itp)
+    xs = nodeset(itp)
+    c = kernel_coefficients(itp)
+    s = 0
+    for j in 1:length(c)
+        s += c[j] * pde(kernel, x, xs[j])
+    end
+    return s
 end
 
 # TODO: Does this also make sense for conditionally positive definite kernels?
