@@ -77,7 +77,7 @@ Return the separation distance of a node set ``X = \{x_1,\ldots, x_n\}`` defined
 separation_distance(nodeset::NodeSet) = nodeset.q
 function update_separation_distance!(nodeset::NodeSet)
     # Update separation distance only if all values are assigned to prevent `UndefRefError`
-    if all(map(i -> isassigned(nodeset, i), 1:length(nodeset)))
+    if all(map(i -> isassigned(nodeset, i), eachindex(nodeset)))
         q = separation_distance(nodeset.nodes)
         nodeset.q = q
     end
@@ -90,6 +90,7 @@ Base.size(nodeset::NodeSet) = (length(nodeset), dim(nodeset))
 Base.iterate(nodeset::NodeSet, state = 1) = iterate(nodeset.nodes, state)
 Base.collect(nodeset::NodeSet) = collect(nodeset.nodes)
 Base.axes(nodeset::NodeSet) = axes(nodeset.nodes)
+Base.eachindex(nodeset::NodeSet) = eachindex(nodeset.nodes)
 Base.isassigned(nodeset::NodeSet, i::Int) = isassigned(nodeset.nodes, i)
 function Base.similar(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT}
     NodeSet{Dim, RealT}(similar(nodeset.nodes), Inf)
@@ -219,7 +220,7 @@ end
 
 function project_on_hypercube_boundary!(nodeset::NodeSet{Dim}, x_min::NTuple{Dim},
                                         x_max::NTuple{Dim}) where {Dim}
-    for i in 1:length(nodeset)
+    for i in eachindex(nodeset)
         # j = argmin([abs.(nodeset[i] .- x_min); abs.(nodeset[i] .- x_max)])
         # Project to random axis
         j = rand(1:Dim)

@@ -40,7 +40,7 @@ macro test_include_example(example, args...)
                                atol = $atol, rtol = $rtol)
             else
                 rhs_values = KernelInterpolation.rhs(pde, nodeset_inner)
-                for i in 1:length(nodeset_inner)
+                for i in eachindex(nodeset_inner)
                     @test isapprox(pde(itp, nodeset_inner[i]), rhs_values[i],
                                    atol = $atol, rtol = $rtol)
                 end

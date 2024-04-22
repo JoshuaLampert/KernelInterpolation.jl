@@ -97,7 +97,7 @@ using Plots
             0.9022506660348356,
             0.9297353942237024,
             0.9389666269913006]
-        for i in 1:length(nus)
+        for i in eachindex(nus)
             kernel8 = @test_nowarn MaternKernel{2}(nus[i])
             @test_nowarn println(kernel8)
             @test_nowarn display(kernel8)
@@ -158,6 +158,7 @@ using Plots
         @test length(nodeset1) == 4
         @test size(nodeset1) == (4, 2)
         @test axes(nodeset1) == (1:4,)
+        @test eachindex(nodeset1) == 1:4
         for node in nodeset1
             @test node isa MVector{2, Float64}
         end
@@ -173,13 +174,13 @@ using Plots
         @test dim(nodeset2) == 2
         @test length(nodeset2) == 4
         @test size(nodeset2) == (4, 2)
-        for i in 1:length(nodeset1)
+        for i in eachindex(nodeset1)
             @test nodeset1[i] == nodeset2[i]
         end
         sub_nodes = nodeset1[1:2]
         @test length(sub_nodes) == 2
         @test sub_nodes isa Vector{MVector{2, Float64}}
-        for i in 1:length(sub_nodes)
+        for i in eachindex(sub_nodes)
             @test nodeset1[i] == sub_nodes[i]
         end
 
@@ -245,7 +246,7 @@ using Plots
             [1.0, 1.0],
             [1.1, 1.3]]
         @test length(nodeset1) == length(expected_nodes)
-        for i in 1:length(nodeset1)
+        for i in eachindex(nodeset1)
             @test nodeset1[i] == expected_nodes[i]
         end
         @test_nowarn deleteat!(nodeset1, [2, 4])
@@ -253,7 +254,7 @@ using Plots
             [0.0, 0.0],
             [1.0, 1.0]]
         @test length(nodeset1) == length(expected_nodes)
-        for i in 1:length(nodeset1)
+        for i in eachindex(nodeset1)
             @test nodeset1[i] == expected_nodes[i]
         end
 
@@ -318,7 +319,7 @@ using Plots
         @test nodeset11 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset11), 0.75)
         @test length(nodeset11) == length(expected_nodes)
-        for i in 1:length(nodeset11)
+        for i in eachindex(nodeset11)
             @test nodeset11[i] == expected_nodes[i]
         end
 
@@ -335,7 +336,7 @@ using Plots
         @test nodeset12 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset12), 0.75)
         @test length(nodeset12) == length(expected_nodes)
-        for i in 1:length(nodeset12)
+        for i in eachindex(nodeset12)
             @test nodeset12[i] == expected_nodes[i]
         end
 
@@ -356,7 +357,7 @@ using Plots
         @test nodeset11_1 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset11_1), 0.5)
         @test length(nodeset11_1) == length(expected_nodes)
-        for i in 1:length(nodeset11_1)
+        for i in eachindex(nodeset11_1)
             @test nodeset11_1[i] == expected_nodes[i]
         end
 
@@ -375,7 +376,7 @@ using Plots
         @test nodeset12_1 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset12_1), 0.5)
         @test length(nodeset12_1) == length(expected_nodes)
-        for i in 1:length(nodeset12_1)
+        for i in eachindex(nodeset12_1)
             @test nodeset12_1[i] == expected_nodes[i]
         end
 
@@ -393,7 +394,7 @@ using Plots
         @test nodeset11_2 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset11_2), 0.5)
         @test length(nodeset11_2) == length(expected_nodes)
-        for i in 1:length(nodeset11_2)
+        for i in eachindex(nodeset11_2)
             @test nodeset11_2[i] == expected_nodes[i]
         end
 
@@ -411,7 +412,7 @@ using Plots
         @test isapprox(separation_distance(nodeset12_2), 0.5)
         @test length(nodeset12_2) == length(expected_nodes)
         display(nodeset12_2)
-        for i in 1:length(nodeset12_2)
+        for i in eachindex(nodeset12_2)
             @test nodeset12_2[i] == expected_nodes[i]
         end
 
@@ -432,7 +433,7 @@ using Plots
         @test nodeset11_3 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset11_3), 0.5)
         @test length(nodeset11_3) == length(expected_nodes)
-        for i in 1:length(nodeset11_3)
+        for i in eachindex(nodeset11_3)
             @test nodeset11_3[i] == expected_nodes[i]
         end
 
@@ -450,7 +451,7 @@ using Plots
         @test nodeset11_4 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset11_4), 0.25)
         @test length(nodeset11_4) == length(expected_nodes)
-        for i in 1:length(nodeset11_4)
+        for i in eachindex(nodeset11_4)
             @test nodeset11_4[i] == expected_nodes[i]
         end
 
@@ -470,7 +471,7 @@ using Plots
         @test isapprox(separation_distance(nodeset12_3), 0.5)
         @test length(nodeset12_3) == length(expected_nodes)
         display(nodeset12_3)
-        for i in 1:length(nodeset12_3)
+        for i in eachindex(nodeset12_3)
             @test nodeset12_3[i] == expected_nodes[i]
         end
 
@@ -487,7 +488,7 @@ using Plots
         @test nodeset12_4 isa NodeSet{2, Float64}
         @test isapprox(separation_distance(nodeset12_4), 0.25)
         @test length(nodeset12_4) == length(expected_nodes)
-        for i in 1:length(nodeset12_4)
+        for i in eachindex(nodeset12_4)
             @test nodeset12_4[i] == expected_nodes[i]
         end
 
@@ -542,7 +543,7 @@ using Plots
             2.857536500685]
         coeffs = coefficients(itp)
         @test length(coeffs) == length(expected_coefficients)
-        for i in 1:length(coeffs)
+        for i in eachindex(coeffs)
             @test isapprox(coeffs[i], expected_coefficients[i])
         end
         @test length(kernel_coefficients(itp)) == length(coeffs)
@@ -567,7 +568,7 @@ using Plots
             1.0]
         coeffs = coefficients(itp)
         @test length(coeffs) == length(expected_coefficients)
-        for i in 1:length(coeffs)
+        for i in eachindex(coeffs)
             @test isapprox(coeffs[i], expected_coefficients[i])
         end
         @test order(itp) == order(kernel)
