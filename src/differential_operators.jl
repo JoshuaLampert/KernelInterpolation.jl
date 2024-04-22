@@ -29,7 +29,7 @@ function Base.show(io::IO, ::Laplacian)
     print(io, "Δ")
 end
 
-function (::Laplacian)(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
+function (::Laplacian)(kernel::RadialSymmetricKernel, x)
     H = ForwardDiff.hessian(x -> Phi(kernel, x), x)
     return tr(H)
 end
