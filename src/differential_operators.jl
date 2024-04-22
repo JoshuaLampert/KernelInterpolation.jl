@@ -1,6 +1,6 @@
 abstract type AbstractDifferentialOperator end
 
-function (D::AbstractDifferentialOperator)(kernel::AbstractKernel, x, y)
+function (D::AbstractDifferentialOperator)(kernel::RadialSymmetricKernel, x, y)
     @assert length(x) == length(y)
     return save_call(D, kernel, x .- y)
 end
@@ -8,7 +8,7 @@ end
 # Workaround to avoid evaluating the derivative at zeros to allow automatic differentiation,
 # see https://github.com/JuliaDiff/ForwardDiff.jl/issues/303
 # the same issue appears with Zygote.jl
-function save_call(D::AbstractDifferentialOperator, kernel::AbstractKernel, x)
+function save_call(D::AbstractDifferentialOperator, kernel::RadialSymmetricKernel, x)
     if all(iszero, x)
         x[1] = eps(typeof(x[1]))
     end
@@ -19,7 +19,7 @@ end
 """
     Laplacian()
 
-The Laplacian operator. It can be called with an `AbstractKernel` and points
+The Laplacian operator. It can be called with an `RadialSymmetricKernel` and points
 `x` and `y` to evaluate the Laplacian of the `kernel` at `x - y`.
 """
 struct Laplacian <: AbstractDifferentialOperator
@@ -29,7 +29,7 @@ function Base.show(io::IO, ::Laplacian)
     print(io, "Δ")
 end
 
-function (::Laplacian)(kernel::AbstractKernel{Dim}, x) where {Dim}
+function (::Laplacian)(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
     H = ForwardDiff.hessian(x -> Phi(kernel, x), x)
     return tr(H)
 end

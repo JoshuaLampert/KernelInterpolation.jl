@@ -22,7 +22,7 @@ function Base.show(io::IO, ::PoissonEquation)
     print(io, "-Δu = f")
 end
 
-function (pde::PoissonEquation)(kernel::AbstractKernel, x, y)
+function (pde::PoissonEquation)(kernel::RadialSymmetricKernel, x, y)
     return -Laplacian()(kernel, x, y)
 end
 
