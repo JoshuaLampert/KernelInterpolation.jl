@@ -110,12 +110,12 @@ order(itp::Interpolation) = maximum(degree.(itp.ps), init = -1) + 1
 @doc raw"""
     system_matrix(itp::Interpolation)
 
-Return the system matrix, i.e. the matrix ``A`` in the linear system
+Return the system matrix, i.e., the matrix ``A`` in the linear system
 ```math
     Ac = f,
 ```
 where ``c`` are the coefficients of the kernel interpolant and ``f`` the vector
-of known values. The exact form of ``A`` differs depends on  whether classical interpolation
+of known values. The exact form of ``A`` differs depending on  whether classical interpolation
 or collocation is used.
 """
 system_matrix(itp::Interpolation) = itp.system_matrix
