@@ -69,7 +69,7 @@ interpolant.
 
 See also [`coefficients`](@ref) and [`polynomial_coefficients`](@ref).
 """
-kernel_coefficients(itp::Interpolation) = itp.c[1:length(nodeset(itp))]
+kernel_coefficients(itp::Interpolation) = itp.c[eachindex(nodeset(itp))]
 
 """
     polynomial_coefficients(itp::Interpolation)
@@ -217,11 +217,11 @@ function (itp::Interpolation)(x)
     d = polynomial_coefficients(itp)
     ps = polynomial_basis(itp)
     xx = polyvars(itp)
-    for j in 1:length(c)
+    for j in eachindex(c)
         s += c[j] * kernel(x, xs[j])
     end
 
-    for k in 1:length(d)
+    for k in eachindex(d)
         s += d[k] * ps[k](xx => x)
     end
     return s
@@ -238,7 +238,7 @@ function (diff_op::AbstractDifferentialOperator)(itp::Interpolation, x)
     xs = nodeset(itp)
     c = kernel_coefficients(itp)
     s = 0
-    for j in 1:length(c)
+    for j in eachindex(c)
         s += c[j] * diff_op(kernel, x, xs[j])
     end
     return s
@@ -249,7 +249,7 @@ function (pde::AbstractPDE)(itp::Interpolation, x)
     xs = nodeset(itp)
     c = kernel_coefficients(itp)
     s = 0
-    for j in 1:length(c)
+    for j in eachindex(c)
         s += c[j] * pde(kernel, x, xs[j])
     end
     return s
@@ -277,8 +277,8 @@ function kernel_inner_product(itp1, itp2)
     xs = nodeset(itp1)
     ys = nodeset(itp2)
     s = 0
-    for j in 1:length(c)
-        for k in 1:length(d)
+    for j in eachindex(c)
+        for k in eachindex(d)
             s += c[j] * d[k] * kernel(xs[j], ys[k])
         end
     end
