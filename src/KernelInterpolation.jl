@@ -2,6 +2,7 @@ module KernelInterpolation
 
 using ForwardDiff: ForwardDiff
 using LinearAlgebra: norm, Symmetric, tr
+using ReadVTK: VTKFile, get_points, get_point_data, get_data
 using RecipesBase: RecipesBase, @recipe, @series
 using SpecialFunctions: besselk, loggamma
 using StaticArrays: StaticArrays, MVector
@@ -32,7 +33,7 @@ export NodeSet, separation_distance, dim, eachdim, values_along_dim, random_hype
 export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
        polynomial_coefficients, polynomial_basis, polyvars, system_matrix,
        interpolate, solve, kernel_inner_product, kernel_norm
-export vtk_save
+export vtk_save, vtk_read
 export examples_dir, get_examples, default_example, include_example
 
 end
