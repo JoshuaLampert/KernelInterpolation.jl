@@ -162,6 +162,7 @@ using Plots
         for node in nodeset1
             @test node isa MVector{2, Float64}
         end
+
         f(x) = x[1] + x[2]
         ff = @test_nowarn f.(nodeset1)
         @test ff == [0.0, 1.0, 1.0, 2.0]
@@ -169,6 +170,11 @@ using Plots
         @test dim1 == [0.0, 1.0, 0.0, 1.0]
         dim2 = @test_nowarn values_along_dim(nodeset1, 2)
         @test dim2 == [0.0, 0.0, 1.0, 1.0]
+
+        # Saving the nodeset to a VTK file
+        @test_nowarn vtk_save("nodeset1", nodeset1)
+        # TODO: Check the VTK file after implementing a vtk_read function
+        @test_nowarn rm("nodeset1.vtu", force = true)
 
         nodeset2 = @test_nowarn NodeSet([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]])
         @test dim(nodeset2) == 2
@@ -536,6 +542,11 @@ using Plots
         @test nodeset(itp) == nodes
         @test dim(itp) == dim(kernel)
         @test dim(itp) == dim(nodes)
+        # Saving the interpolation and the function to a VTK file
+        @test_nowarn vtk_save("itp", nodes, f, itp; keys = ["f", "itp"])
+        # TODO: Check the VTK file after implementing a vtk_read function
+        @test_nowarn rm("itp.vtu", force = true)
+
         expected_coefficients = [
             -2.225451664388596,
             0.31604241814819756,
