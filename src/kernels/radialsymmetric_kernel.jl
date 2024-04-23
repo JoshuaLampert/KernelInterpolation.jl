@@ -412,7 +412,7 @@ function phi(kernel::Matern12Kernel, r::Real)
     y = kernel.shape_parameter * r
     return exp(-y)
 end
-order(kernel::Matern12Kernel) = 0
+order(::Matern12Kernel) = 0
 
 @doc raw"""
     Matern32Kernel{Dim}(; shape_parameter = 1.0)

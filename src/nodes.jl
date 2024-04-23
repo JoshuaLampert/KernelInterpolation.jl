@@ -82,15 +82,16 @@ function update_separation_distance!(nodeset::NodeSet)
         nodeset.q = q
     end
 end
-dim(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT} = Dim
+dim(::NodeSet{Dim, RealT}) where {Dim, RealT} = Dim
 # Functions to treat NodeSet as array
-Base.eltype(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT} = RealT
+Base.eltype(::NodeSet{Dim, RealT}) where {Dim, RealT} = RealT
 Base.length(nodeset::NodeSet) = length(nodeset.nodes)
 Base.size(nodeset::NodeSet) = (length(nodeset), dim(nodeset))
 Base.iterate(nodeset::NodeSet, state = 1) = iterate(nodeset.nodes, state)
 Base.collect(nodeset::NodeSet) = collect(nodeset.nodes)
 Base.axes(nodeset::NodeSet) = axes(nodeset.nodes)
 Base.eachindex(nodeset::NodeSet) = eachindex(nodeset.nodes)
+eachdim(nodeset::NodeSet) = Base.OneTo(dim(nodeset))
 Base.isassigned(nodeset::NodeSet, i::Int) = isassigned(nodeset.nodes, i)
 function Base.similar(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT}
     NodeSet{Dim, RealT}(similar(nodeset.nodes), Inf)
