@@ -2,8 +2,8 @@
     vtk_save(filename, nodeset::NodeSet, functions...;
              keys = "value_" .* string.(eachindex(functions)))
 
-Save a `NodeSet` to a VTK file. You can optionally pass a list of functions to save
-the values of the functions at the nodes. The functions can also be passed as `Interpolation`.
+Save a [`NodeSet`](@ref) to a VTK file. You can optionally pass a list of functions to save
+the values of the functions at the nodes. The functions can also be passed as [`Interpolation`](@ref).
 The optional keyword argument `keys` is used to specify the names of the data arrays in the VTK file.
 """
 function vtk_save(filename, nodeset::NodeSet, functions...;
@@ -21,8 +21,8 @@ end
 """
     vtk_read(filename)
 
-Read a set of nodes from a VTK file and return them as a `NodeSet`. Note that the data
-will always be returned as a 3D `NodeSet`, even if the data is 1D or 2D. The point data
+Read a set of nodes from a VTK file and return them as a [`NodeSet`](@ref). Note that the data
+will always be returned as a 3D [`NodeSet`](@ref), even if the data is 1D or 2D. The point data
 will be returned as a dictionary with the keys being the names of the data arrays in the VTK file.
 """
 function vtk_read(filename)
