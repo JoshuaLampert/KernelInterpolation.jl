@@ -173,7 +173,12 @@ using Plots
 
         # Saving the nodeset to a VTK file
         @test_nowarn vtk_save("nodeset1", nodeset1)
-        # TODO: Check the VTK file after implementing a vtk_read function
+        nodeset1_2, point_data = @test_nowarn vtk_read("nodeset1.vtu")
+        @test length(nodeset1_2) == length(nodeset1)
+        for i in eachindex(nodeset1)
+            @test [nodeset1[i]; 0.0] == nodeset1_2[i]
+        end
+        @test length(point_data) == 0
         @test_nowarn rm("nodeset1.vtu", force = true)
 
         nodeset2 = @test_nowarn NodeSet([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]])
@@ -544,7 +549,13 @@ using Plots
         @test dim(itp) == dim(nodes)
         # Saving the interpolation and the function to a VTK file
         @test_nowarn vtk_save("itp", nodes, f, itp; keys = ["f", "itp"])
-        # TODO: Check the VTK file after implementing a vtk_read function
+        nodes2, point_data = @test_nowarn vtk_read("itp.vtu")
+        @test length(nodes) == length(nodes2)
+        for i in eachindex(nodes)
+            @test [nodes[i]; 0.0] == nodes2[i]
+        end
+        @test point_data["f"] == ff
+        @test point_data["itp"] == itp.(nodes)
         @test_nowarn rm("itp.vtu", force = true)
 
         expected_coefficients = [
