@@ -49,7 +49,7 @@ end
 
 Return the dimension of the input variables of the interpolation.
 """
-dim(itp::Interpolation{Kernel, Dim, RealT, A}) where {Kernel, Dim, RealT, A} = Dim
+dim(::Interpolation{Kernel, Dim, RealT, A}) where {Kernel, Dim, RealT, A} = Dim
 
 """
     coefficients(itp::Interpolation)

@@ -28,7 +28,7 @@ function Base.show(io::IO, ::MIME"text/plain", nodeset::NodeSet)
             end
         end
         if length(nodeset) > max_nodes
-            println("  ⋮")
+            println(io, "  ⋮")
         end
     end
 end
@@ -166,6 +166,25 @@ end
 function Base.deleteat!(nodeset::NodeSet, i)
     deleteat!(nodeset.nodes, i)
     update_separation_distance!(nodeset)
+end
+
+@doc raw"""
+    distance_matrix(nodeset1::NodeSet, nodeset2::NodeSet)
+
+Compute the distance matrix between two sets of nodes, which is a matrix ``D`` with
+``D_{ij} = \|x_i - \xi_j\|`` for all ``i`` and ``j``, where ``x_i`` are the nodes in
+`nodeset1` and ``\xi_j`` are the nodes on `nodeset2`.
+"""
+function distance_matrix(nodeset1::NodeSet, nodeset2::NodeSet)
+    n1 = length(nodeset1)
+    n2 = length(nodeset2)
+    D = zeros(n1, n2)
+    for i in 1:n1
+        for j in 1:n2
+            D[i, j] = norm(nodeset1[i] - nodeset2[j])
+        end
+    end
+    return D
 end
 
 """

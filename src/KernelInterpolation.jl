@@ -27,9 +27,9 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
 export phi, Phi, order
 export Laplacian
 export PoissonEquation
-export NodeSet, separation_distance, dim, eachdim, values_along_dim, random_hypercube,
-       random_hypercube_boundary, homogeneous_hypercube, homogeneous_hypercube_boundary,
-       random_hypersphere, random_hypersphere_boundary
+export NodeSet, separation_distance, dim, eachdim, values_along_dim, distance_matrix,
+       random_hypercube, random_hypercube_boundary, homogeneous_hypercube,
+       homogeneous_hypercube_boundary, random_hypersphere, random_hypersphere_boundary
 export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
        polynomial_coefficients, polynomial_basis, polyvars, system_matrix,
        interpolate, solve, kernel_inner_product, kernel_norm

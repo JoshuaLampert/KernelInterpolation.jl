@@ -1,3 +1,5 @@
 /docs/build/
 **/Manifest.toml
 **/*.vtu
+run
+run/*
