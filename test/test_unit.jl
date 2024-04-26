@@ -170,6 +170,11 @@ using Plots
         @test dim1 == [0.0, 1.0, 0.0, 1.0]
         dim2 = @test_nowarn values_along_dim(nodeset1, 2)
         @test dim2 == [0.0, 0.0, 1.0, 1.0]
+        @test distance_matrix(nodeset1, nodeset1) == [
+            0.0 1.0 1.0 1.4142135623730951
+            1.0 0.0 1.4142135623730951 1.0
+            1.0 1.4142135623730951 0.0 1.0
+            1.4142135623730951 1.0 1.0 0.0]
 
         # Saving the nodeset to a VTK file
         @test_nowarn vtk_save("nodeset1", nodeset1)
@@ -207,6 +212,12 @@ using Plots
         @test length(nodeset1) == 5
         @test nodeset1[5] == [1.1, 1.3]
         @test isapprox(separation_distance(nodeset1), 0.158113883008419)
+        @test distance_matrix(nodeset1, nodeset2) == [
+            0.0 1.0 1.0 1.4142135623730951
+            1.0 0.0 1.4142135623730951 1.0
+            1.0 1.4142135623730951 0.0 1.0
+            1.4142135623730951 1.0 1.0 0.0
+            1.7029386365926402 1.3038404810405297 1.140175425099138 0.316227766016838]
 
         nodeset3 = @test_nowarn similar(nodeset1)
         @test nodeset3 isa NodeSet{2, Float64}

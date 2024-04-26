@@ -16,7 +16,10 @@ makedocs(;
                                   edit_link = "main",
                                   assets = String[]),
          pages = ["Home" => "index.md",
+             "Sets of nodes" => "nodesets.md",
+             "Interpolation" => "interpolation.md",
              "Solving PDEs" => "pde.md",
+             "Development" => "development.md",
              "Reference" => "ref.md",
              "License" => "license.md"])
 
