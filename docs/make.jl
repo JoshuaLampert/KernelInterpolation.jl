@@ -14,11 +14,13 @@ makedocs(;
                                   prettyurls = get(ENV, "CI", "false") == "true",
                                   canonical = "https://JoshuaLampert.github.io/KernelInterpolation.jl/stable",
                                   edit_link = "main",
-                                  assets = String[]),
+                                  assets = String[],
+                                  mathengine = Documenter.MathJax3()),
          pages = ["Home" => "index.md",
-             "Sets of nodes" => "nodesets.md",
-             "Interpolation" => "interpolation.md",
-             "Solving PDEs" => "pde.md",
+             "Guide" => [
+                 "Sets of nodes" => "nodesets.md",
+                 "Interpolation" => "interpolation.md",
+                 "Solving PDEs by collocation" => "pde.md"],
              "Development" => "development.md",
              "Reference" => "ref.md",
              "License" => "license.md"])
