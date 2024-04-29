@@ -59,16 +59,16 @@ K(x, y) = \mathrm{e}^{-\|x - y\|_2^2}.
 It can be shown that the Gauß kernel is positive definite. The Gauß kernel is a member of the most common class of kernel functions, namely
 *radial basis functions*. A *translation-invariant* kernel function is given by ``K(x, y) = \Phi(x - y)``, where ``\Phi:\Omega\to\mathbb{R}^d``
 is depends only on one variable. A *radial basis function* kernel is a translation-invariant kernel, where ``\Phi`` is given by
-``\Phi(x) = \varphi(\|x\|_2)`` for a univariate function ``\varphi:\mathbb{R}_{\ge 0}\to\mathbb{R}``, which is sometimes called
+``\Phi(x) = \phi(\|x\|_2)`` for a univariate function ``\phi:\mathbb{R}_{\ge 0}\to\mathbb{R}``, which is sometimes called
 *basic function* [^Fasshauer2007]. The Gauß kernel, e.g., is given by the basic function
 
 ```math
-\varphi(r) = \mathrm{e}^{-r^2}.
+\phi(r) = \mathrm{e}^{-r^2}.
 ```
 
 Many radial symmetric kernels come with a parameter, the so-called *shape parameter* ``\varepsilon``, which can be used to control the "flatness"
 of the kernel. The shape parameter simply acts as a multiplicative factor to the norm, i.e. for a general translation-invariant we take
-``K(x, y) = \varphi(\varepsilon\|x - y\|)``.
+``K(x, y) = \phi(\varepsilon\|x - y\|)``.
 
 The completion of the linear space of functions that is spanned by the basis given a specific kernel and a domain ``\Omega``,
 ``\mathcal{H}_{K, \Omega} = \text{span}\{K(\cdot, x), x\in\Omega\}``, is called *native space* and is a (reproducing kernel) Hilbert space (RKHS),
@@ -115,7 +115,7 @@ matrix provided that the interpolant is augmented by polynomials of order (i.e. 
 positive definite kernels are the *polyharmonic splines*, which are built by the basic function
 
 ```math
-\varphi_k(r) = \begin{cases}
+\phi_k(r) = \begin{cases}
   r^k, &\text{ if } k \text{ odd}\\
   r^k\log{r}, &\text{ if } k \text{ even}
 \end{cases}
@@ -161,7 +161,7 @@ nothing # hide
 
 ![Franke function](franke_function.png)
 
-Finally, we pick a `kernel` function and creeate an [`KernelInterpolation.Interpolation`](@ref) object by calling [`interpolate`](@ref). Here,
+Finally, we pick a `kernel` function and create a [`KernelInterpolation.Interpolation`](@ref) object by calling [`interpolate`](@ref). Here,
 we choose a [`PolyharmonicSplineKernel`](@ref) of second order, i.e. ``k = 2`` (also known as [`ThinPlateSplineKernel`](@ref)). The order of
 the polynomials will automatically be determined by the chosen kernel, but can also explicitly be passed as a keyword argument `order`.
 
@@ -177,15 +177,110 @@ interpolates the given data, we can call
 maximum(abs.(itp.(nodes) - f_X))
 ```
 
+Evaluating the interpolant in a node that is not part of the training set can be done by
+
+```@example interpolation
+x = [0.5, 0.5]
+abs.(itp(x) - f(x))
+```
+
+Crucial for the stability of solving the linear system is the condition number of the system matrix. We can check it by
+
+```@example interpolation
+using LinearAlgebra: cond
+cond(system_matrix(itp))
+```
+
+The condition number should be as small as possible. If it is too large, the interpolation might be unstable. The condition number depends
+on the choice of the kernel and the nodes. If the condition number is too large, you might want to try a different kernel or a different set.
+Here, we have an order of magnitude of ``10^5``, which is acceptable.
+
 ## Visualizing the results
 
-## Adding a custom kernel
+To visualize the interpolation, we can use evaluate the interpolant on a grid of points and plot the result. We can use the function
+[`homogeneous_hypercube`](@ref) to create a grid of points in the unit square.
 
-TODO:
+```@example interpolation
+N = 50
+nodes_grid = homogeneous_hypercube(N, (0.0, 0.0), (1.0, 1.0))
+x = unique(values_along_dim(nodes_grid, 1))
+y = unique(values_along_dim(nodes_grid, 2))
+z_itp = reshape(itp.(nodes_grid), (N, N))'
+p1 = plot(x, y, z_itp, st = :heatmap, colorbar = :none, title = "Interpolation")
+z_true = reshape(f.(nodes_grid), (N, N))'
+p2 = plot(x, y, z_true, st = :heatmap, colorbar = :none, title = "True function")
+plot(p1, p2, layout = (1, 2))
+savefig("interpolation_franke.png") # hide
+nothing # hide
+```
 
-* List of kernels and names in KernelInterpolation.jl
-* Adding a custom kernel
-* Visualization
+![Interpolation of the Franke function](interpolation_franke.png)
+
+Instead of creating a grid of points with [`homogeneous_hypercube`](@ref) and manually reshaping the result, we can also directly the interpolant with
+`plot(itp; x_min = 0.0, x_max = 1.0)`, which will automatically create a grid of points and plot the result.
+
+For a publication-ready visualization, we can use ParaView to visualize the interpolant. We can save the interpolant to a VTK file by
+
+```@example interpolation
+vtk_save("interpolation_franke", nodes_grid, itp, f, keys = ["interpolant", "true"])
+```
+
+Common filters in ParaView to visualize the interpolant are the `Delaunay2D` filter to create a surface plot or `Warp by Scalar` filter to create a 3D
+plot.
+
+## Overview of kernels and adding a custom kernel
+
+In the previous example, we used the [`PolyharmonicSplineKernel`](@ref), which is a predefined kernel in KernelInterpolation.jl. There are a number of different
+kernels already defined, which can be used in an analogous way. For an overview of the existing radial-symmetric kernels, see the following table.
+
+| Kernel name | Formula | Order | Smoothness
+| --- | --- | --- | --- |
+| [`GaussKernel`](@ref) | ``\phi(r) = \mathrm{e}^{-r^2}`` | ``0`` | ``C^\infty`` |
+| [`MultiquadricKernel`](@ref) | ``\phi(r) = (1 + r^2)^\beta, \beta > 0`` | ``\lceil{\beta}\rceil`` | ``C^\infty`` |
+| [`InverseMultiquadricKernel`](@ref) | ``\phi(r) = (1 + r^2)^{-\beta}, \beta > 0`` | ``0`` | ``C^\infty`` |
+| [`PolyharmonicSplineKernel`](@ref) | ``\phi_k(r) = \begin{cases} r^k, &\text{ if } k \text{ odd}\\ r^k\log{r}, &\text{ if } k \text{ even} \end{cases}, k\in\mathbb{N}`` | ``\left\lceil{\frac{k}{2}}\right\rceil`` for odd ``k`` and ``\frac{k}{2} + 1`` for even ``k`` | ``C^{k - 1}`` for odd ``k`` and ``C^k`` for even ``k`` |
+| [`ThinPlateSplineKernel`](@ref) | ``\phi(r) = r^2\log{r}`` | 2 | ``C^2`` |
+| [`WendlandKernel`](@ref) | ``\phi_{d,k}(r) = \begin{cases}p_{d,k}(r), &\text{ if } 0\le r\le 1\\0, &\text{ else}\end{cases}, d, k\in\mathbb{N}`` for some polynomial ``p_{d,k}``| ``0`` | ``C^{2k}`` |
+| [`RadialCharacteristicKernel`](@ref) | ``\phi(r) = (1 - r^2)^\beta_+, \beta\ge(d + 1)/2`` | ``0`` | ``C^0`` |
+| [`MaternKernel`](@ref) | ``\phi_{\nu}(r) = \frac{2^{1 - \nu}}{\Gamma(\nu)}\left(\sqrt{2\nu}r\right)^\nu K_{\nu}\left(\sqrt{2\nu}r\right), \nu > 0`` | ``0`` | ``C^{2(\nu - 1)}`` |
+| [`RieszKernel`](@ref) | ``\phi(r) = -r^\beta, 0 < \beta < 2`` | ``1`` | ``C^\infty`` |
+
+Kernels can be composed by using [`SumKernel`](@ref) and [`ProductKernel`](@ref). Anisotropic kernels can be created by using [`TransformationKernel`](@ref),
+which applies a transformation to the input before evaluating the kernel.
+
+However, you can also define your own kernel. A radial-symmetric kernel is a subtype of [`KernelInterpolation.RadialSymmetricKernel`](@ref), which in
+turn is a subtype of [`KernelInterpolation.AbstractKernel`](@ref) and needs to implement the functions [`phi`](@ref) and [`order`](@ref). Let's define a exponential
+kernel with ``\phi(r) = \mathrm{e}^{-r^{1.5}}`` and use it for the interpolation problem above.
+
+```@example interpolation
+struct MyKernel{Dim} <: KernelInterpolation.RadialSymmetricKernel{Dim} end
+KernelInterpolation.phi(::MyKernel, r) = exp(-r^1.5)
+KernelInterpolation.order(::MyKernel) = 0
+
+kernel = MyKernel{2}()
+itp_quadratic = interpolate(nodes, f_X, kernel)
+p3 = plot(itp_quadratic; x_min = 0.0, x_max = 1.0, title = "Interpolation with custom kernel", colorbar = :none)
+plot(p3, p2, layout = (1, 2))
+savefig("interpolation_franke_custom.png") # hide
+nothing # hide
+```
+
+![Interpolation with the custom kernel](interpolation_franke_custom.png)
+
+Kernels can be visualized by either plotting the kernel itself or together with a [`NodeSet`](@ref) to plot the multivariate form of it or by plotting
+the kernel with a one-dimensional vector to plot the basic function:
+
+```@example interpolation
+x = -2.0:0.01:2.0
+p_kernel = plot(x, kernel; label = "Custom kernel")
+plot!(p_kernel, x, GaussKernel{2}(); label = "Gauss kernel", title = "Basic function")
+p_nodes = plot(kernel; title = "Bivariate custom kernel")
+plot(p_kernel, p_nodes, layout = (1, 2))
+savefig("kernel_custom.png") # hide
+nothing # hide
+```
+
+![Custom kernel](kernel_custom.png)
 
 ## References
 
