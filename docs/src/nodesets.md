@@ -84,6 +84,8 @@ nodes_halton = NodeSet(nodes_matrix')
 
 For the available sampling algorithms in QuasiMonteCarlo.jl, see the [overview in the documentation](https://docs.sciml.ai/QuasiMonteCarlo/stable/samplers/).
 
+More complicated [`NodeSet`](@ref)s consisting of different shapes can be created, e.g., by `merge`ing different [`NodeSet`](@ref)s.
+
 ## Visualizing [`NodeSet`](@ref)s
 
 To visualize a [`NodeSet`](@ref), there are currently two possibilities. The first one uses [Plots.jl](https://docs.juliaplots.org/stable/).
