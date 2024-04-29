@@ -1,4 +1,4 @@
-# Sets of nodes
+# [Sets of nodes](@id nodesets)
 
 Numerical methods based on kernel functions are usually meshfree, i.e. they do not need not any information of
 connectivity between the different points (a mesh). Instead, they usually solely use a(n) (unstructured) set of points in space
@@ -25,7 +25,7 @@ q_X = \frac{1}{2}\min\limits_{x_i\neq x_j}\|x_i - x_j\|_2.
 ```
 
 Geometrically, ``q_X`` is the radius of the largest ball that can be placed around every node in ``X`` such that no two balls
-overlap. This quantity depends only on the choice of the nodes and is always computed by KernelInterpolations. It can be accessed
+overlap. This quantity depends only on the choice of the nodes and is always computed by KernelInterpolation.jl. It can be accessed
 by calling
 
 ```@example nodesets
@@ -39,9 +39,9 @@ geometric property of node sets, often essential for the error analysis of kerne
 h_X = \sup_{x\in\Omega}\min_{x_j\in X}\|x - x_j\|_2,
 ```
 
-which can be interpreted as the radius of the largest ball that can be placed in ``\Omega`` such that the ball does not cover contain
+which can be interpreted as the radius of the largest ball that can be placed in ``\Omega`` such that the ball does not contain any
 point in ``X``. This quantity depends on the choice of a domain ``\Omega\subset\mathbb{R^d}`` that covers ``X`` and can therefore not
-solely computed by the `NodeSet`. However, it can be estimated by creating a fine grid of points inside ``\Omega``. Let's say we take
+solely be computed by the `NodeSet`. However, it can be estimated by creating a fine grid of points inside ``\Omega``. Let's say we take
 ``\Omega = [0,1]^2``. We can conveniently create a set of equidistant points within any hypercube by calling [`homogeneous_hypercube`](@ref):
 
 ```@example nodesets
@@ -49,7 +49,7 @@ nodes_fine = homogeneous_hypercube(20, (0.0, 0.0), (1.0, 1.0))
 ```
 
 This creates a `NodeSet` with 20 nodes equally spaced along both dimensions. The distance matrix of the two sets, i.e. the matrix
-with entries ``D_{ij} = \|x_i - \xi_j\|_2`` for ``x_i\in X`` and ``\xi_j`` in the evaluation points of ``\Omega``, can be obtained by
+with entries ``D_{ij} = \|x_i - \xi_j\|_2`` for ``x_i\in X`` and ``\xi_j`` being the evaluation points in ``\Omega``, can be obtained by
 calling the function [`distance_matrix`](@ref):
 
 ```@example nodesets
@@ -65,7 +65,7 @@ h = maximum(minimum(D, dims = 1))
 Note that this is only an estimate. The true fill distance is ``\sqrt{2}/2\approx 0.707`` (and reached by placing ``x\in\Omega`` at
 ``(0.5, 0.5)^T``). The estimate can be improved by taking a finer evaluation grid.
 
-Next to [`homogeneous_hypercube`](@ref) KernelInterpolation.jl provides additional convenience functions to create specific commonly
+Next to [`homogeneous_hypercube`](@ref), KernelInterpolation.jl provides additional convenience functions to create specific commonly
 used [`NodeSet`](@ref)s. These are [`homogeneous_hypercube`](@ref) to create equally spaced nodes at the boundary of a hypercube,
 [`random_hypercube`](@ref) and [`random_hypercube_boundary`](@ref) to create random uniformly distributed nodes inside or at the
 boundary of a hypercube, and [`random_hypersphere`](@ref) and [`random_hypersphere_boundary`](@ref) for random uniformly distributed
@@ -84,6 +84,8 @@ nodes_halton = NodeSet(nodes_matrix')
 
 For the available sampling algorithms in QuasiMonteCarlo.jl, see the [overview in the documentation](https://docs.sciml.ai/QuasiMonteCarlo/stable/samplers/).
 
+More complicated [`NodeSet`](@ref)s consisting of different shapes can be created, e.g., by `merge`ing different [`NodeSet`](@ref)s.
+
 ## Visualizing [`NodeSet`](@ref)s
 
 To visualize a [`NodeSet`](@ref), there are currently two possibilities. The first one uses [Plots.jl](https://docs.juliaplots.org/stable/).
@@ -92,7 +94,11 @@ After installing and loading Plots.jl, we can then simply call `plot` on any 1D,
 ```@example nodesets
 using Plots
 plot(nodes_halton)
+savefig("nodes_halton.png") # hide
+nothing # Avoid showing the path # hide
 ```
+
+![Halton nodes](nodes_halton.png)
 
 You might want to consider using other plotting backends, e.g. [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl) can be used by
 additionally calling `pyplot()` before `plot` in the above code snippet. Refer to the [documentation of Plots.jl](https://docs.juliaplots.org/stable/backends/)
@@ -104,7 +110,11 @@ as a usual array, e.g., broadcasting works with the common dot syntax).
 ```@example nodesets
 f(x) = sinpi(x[1])
 plot(nodes_halton, zcolor = f.(nodes_halton))
+savefig("nodes_halton_function.png") # hide
+nothing # Avoid showing the path # hide
 ```
+
+![Halton nodes with function values](nodes_halton_function.png)
 
 For 1D or 2D [`NodeSet`](@ref)s you can also pass a function (or, again, an object of [`KernelInterpolation.Interpolation`](@ref)),
 which is then used to determine the values in the vertical direction. For a surface plot of a function based on a set of nodes,
@@ -112,9 +122,13 @@ you can, e.g., run the following
 
 ```@example nodesets
 plot(nodes_fine, f, st = :surface)
+savefig("nodes_fine.png") # hide
+nothing # Avoid showing the path # hide
 ```
 
-As an alternative to to the plotting from within Julia, you can save [`NodeSet`](@ref)s to the commonly used [VTK files](https://vtk.org/)
+![Surface plot](nodes_fine.png)
+
+As an alternative to plotting from within Julia, you can save [`NodeSet`](@ref)s to the commonly used [VTK files](https://vtk.org/)
 and then view the result, e.g., in [ParaView](https://www.paraview.org/) or [VisIt](https://visit-dav.github.io/visit-website/). You can
 save a [`NodeSet`](@ref) simply by using [`vtk_save`](@ref) and passing a filename as well as the [`NodeSet`](@ref):
 
@@ -123,7 +137,7 @@ vtk_save("nodes_halton", nodes_halton)
 ```
 
 Again, you can additionally save node values by passing additional functions or vectors (of the same size as the [`NodeSet`](@ref)),
-which can also be visualized within ParaView or VisIt.
+which can also be visualized with ParaView or VisIt.
 Note that you can also read back in a [`NodeSet`](@ref) (and possibly the additional node values) by using [`vtk_read`](@ref):
 
 ```@example nodesets
