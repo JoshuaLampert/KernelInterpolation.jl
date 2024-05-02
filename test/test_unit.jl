@@ -3,6 +3,7 @@ module TestUnit
 using Test
 using KernelInterpolation
 using LinearAlgebra: norm, Symmetric
+using OrdinaryDiffEq: solve, Rodas5P
 using StaticArrays: MVector
 using Plots
 
@@ -670,8 +671,9 @@ using Plots
     end
 
     @testset "PDEs" begin
+        # stationary PDEs
         # Passing a function
-        f(x) = x[1] + x[2]
+        f(x, equations) = x[1] + x[2]
         poisson = @test_nowarn PoissonEquation(f)
         @test_nowarn println(poisson)
         @test_nowarn display(poisson)
@@ -679,41 +681,128 @@ using Plots
                            1.0 0.0
                            0.0 1.0
                            1.0 1.0])
-        @test KernelInterpolation.rhs(poisson, nodeset) == [0.0, 1.0, 1.0, 2.0]
+        @test KernelInterpolation.rhs(nodeset, poisson) == [0.0, 1.0, 1.0, 2.0]
         # Passing a vector
         @test_nowarn poisson = PoissonEquation([0.0, 1.0, 1.0, 3.0])
-        @test KernelInterpolation.rhs(poisson, nodeset) == [0.0, 1.0, 1.0, 3.0]
+        @test KernelInterpolation.rhs(nodeset, poisson) == [0.0, 1.0, 1.0, 3.0]
+
+        # time-dependent PDEs
+        # Passing a function
+        f(t, x, equations) = x[1] + x[2] + t
+        heat = @test_nowarn HeatEquation(2.0, f)
+        @test_nowarn println(heat)
+        @test_nowarn display(heat)
+        @test KernelInterpolation.rhs(1.0, nodeset, heat) == [1.0, 2.0, 2.0, 3.0]
+        # Passing a vector
+        @test_nowarn heat = HeatEquation(2.0, [1.0, 2.0, 2.0, 4.0])
+        @test KernelInterpolation.rhs(1.0, nodeset, heat) == [1.0, 2.0, 2.0, 4.0]
     end
 
-    @testset "solving PDEs" begin
+    @testset "Discretization" begin
+        # SpatialDiscretization
         nodeset_inner = NodeSet([0.25 0.25
                                  0.75 0.25
                                  0.25 0.75
                                  0.75 0.75])
-        u(x) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2]
-        f(x) = -4.0 # -Laplacian of u
+        u1(x) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2]
+        f1(x, equations) = -4.0
         nodeset_boundary = NodeSet([0.0 0.0
                                     1.0 0.0
                                     0.0 1.0
                                     1.0 1.0])
-        values_boundary = u.(nodeset_boundary)
+        g1(x) = u1(x)
         kernel = Matern52Kernel{2}(shape_parameter = 0.5)
-        pde = PoissonEquation(f)
-        itp = @test_nowarn solve(pde, nodeset_inner, nodeset_boundary, values_boundary,
-                                 kernel)
+        pde = PoissonEquation(f1)
+        sd = @test_nowarn SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, kernel)
+        @test_nowarn println(sd)
+        @test_nowarn display(sd)
+        @test dim(sd) == 2
+        @test eltype(sd) == Float64
+
+        # SemiDiscretization
+        u2(t, x) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2] + t
+        f2(t, x, equations) = -4.0 # -Δu
+        g2(t, x) = u2(t, x)
+        pde = HeatEquation(2.0, f2)
+        semi = @test_nowarn Semidiscretization(pde, nodeset_inner, g2, nodeset_boundary, kernel)
+        @test_nowarn println(semi)
+        @test_nowarn display(semi)
+        @test dim(semi) == 2
+        @test eltype(semi) == Float64
+    end
+
+    @testset "solving PDEs" begin
+        # stationary PDE
+        nodeset_inner = NodeSet([0.25 0.25
+                                 0.75 0.25
+                                 0.25 0.75
+                                 0.75 0.75])
+        u1(x) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2]
+        f1(x, equations) = -4.0 # -Δu
+        nodeset_boundary = NodeSet([0.0 0.0
+                                    1.0 0.0
+                                    0.0 1.0
+                                    1.0 1.0])
+        g1(x) = u1(x)
+        kernel = Matern52Kernel{2}(shape_parameter = 0.5)
+        pde = PoissonEquation(f1)
+        sd = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, kernel)
+        itp = @test_nowarn solve_stationary(sd)
 
         # Test if the solution satisfies the PDE in the inner nodes
         for node in nodeset_inner
-            @test isapprox(pde(itp, node), f(node), atol = 1e-14)
-            @test isapprox(Laplacian()(itp, node), -f(node), atol = 1e-14)
+            @test isapprox(pde(itp, node), f1(node, pde), atol = 1e-14)
+            @test isapprox(Laplacian()(itp, node), -f1(node, pde), atol = 1e-14)
         end
         # Test if the solution satisfies the boundary conditions
+        values_boundary = g1.(nodeset_boundary)
         for (node, value) in zip(nodeset_boundary, values_boundary)
             @test isapprox(itp(node), value, atol = 1e-14)
         end
         # Test if the solution is close to the analytical solution in other points
         x = [0.1, 0.08]
-        @test isapprox(itp(x), u(x), atol = 0.12)
+        @test isapprox(itp(x), u1(x), atol = 0.12)
+
+        # time-dependent PDE
+        u2(t, x, equations) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2] + t
+        f2(t, x, equations) = -3.0 # ∂_t u -Δu
+        pde = HeatEquation(2.0, f2)
+        g2(t, x) = u2(t, x, pde)
+        semi = Semidiscretization(pde, nodeset_inner, g2, nodeset_boundary, u2, kernel)
+        ode = @test_nowarn semidiscretize(semi, (0.0, 0.1))
+        sol = @test_nowarn solve(ode, Rodas5P())
+        titp = @test_nowarn TemporalInterpolation(sol)
+        # Test if the solution satisfies the initial condition
+        t = sol.t[1]
+        for node in merge(nodeset_inner, nodeset_boundary)
+            @test isapprox(titp(t, node), u2(t, node, pde), atol = 1e-14)
+            @test isapprox(titp(t)(node), titp(t, node))
+        end
+        # Test if the solution satisfies the boundary conditions
+        t = sol.t[2]
+        values_boundary = g2.(Ref(t), nodeset_boundary)
+        for (node, value) in zip(nodeset_boundary, values_boundary)
+            @test isapprox(titp(t, node), value, atol = 1e-14)
+            @test isapprox(titp(t)(node), titp(t, node))
+        end
+        t = sol.t[end]
+        values_boundary = g2.(Ref(t), nodeset_boundary)
+        for (node, value) in zip(nodeset_boundary, values_boundary)
+            @test isapprox(titp(t, node), value, atol = 1e-14)
+            @test isapprox(titp(t)(node), titp(t, node))
+        end
+        t = sol.t[end]
+        A = Matrix(semi.cache.kernel_matrix)
+        c = sol(t)
+        u1_values = A * c
+        u2_values = titp.(Ref(t), merge(nodeset_inner, nodeset_boundary))
+        for (u1_val, u2_val) in zip(u1_values, u2_values)
+            @test isapprox(u1_val, u2_val, atol = 1e-14)
+        end
+        # Test if the solution is close to the analytical solution in other points
+        t = 0.03423
+        x = [0.1, 0.08]
+        @test isapprox(titp(t, x), u2(t, x, pde), atol = 0.12)
     end
 
     @testset "Visualization" begin
