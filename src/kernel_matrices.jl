@@ -75,4 +75,3 @@ function pde_matrix(equations, nodeset_inner, nodeset, kernel)
     end
     return A
 end
-

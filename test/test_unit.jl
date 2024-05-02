@@ -713,7 +713,8 @@ using Plots
         g1(x) = u1(x)
         kernel = Matern52Kernel{2}(shape_parameter = 0.5)
         pde = PoissonEquation(f1)
-        sd = @test_nowarn SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, kernel)
+        sd = @test_nowarn SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary,
+                                                kernel)
         @test_nowarn println(sd)
         @test_nowarn display(sd)
         @test dim(sd) == 2
@@ -724,7 +725,8 @@ using Plots
         f2(t, x, equations) = -4.0 # -Δu
         g2(t, x) = u2(t, x)
         pde = HeatEquation(2.0, f2)
-        semi = @test_nowarn Semidiscretization(pde, nodeset_inner, g2, nodeset_boundary, kernel)
+        semi = @test_nowarn Semidiscretization(pde, nodeset_inner, g2, nodeset_boundary,
+                                               kernel)
         @test_nowarn println(semi)
         @test_nowarn display(semi)
         @test dim(semi) == 2

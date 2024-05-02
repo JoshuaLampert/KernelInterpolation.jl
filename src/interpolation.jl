@@ -181,7 +181,8 @@ function (itp::Interpolation)(x::RealT) where {RealT <: Real}
     return itp([x])
 end
 
-function (diff_op_or_pde::Union{AbstractDifferentialOperator, AbstractStationaryEquation})(itp::Interpolation, x)
+function (diff_op_or_pde::Union{AbstractDifferentialOperator, AbstractStationaryEquation})(itp::Interpolation,
+                                                                                           x)
     kernel = interpolation_kernel(itp)
     xs = nodeset(itp)
     c = kernel_coefficients(itp)
@@ -261,7 +262,8 @@ function (titp::TemporalInterpolation)(t)
     # Do not support additional polynomial basis for now
     xx = polyvars(dim(semi))
     ps = monomials(xx, 0:-1)
-    itp = Interpolation(kernel, merge(nodeset_inner, nodeset_boundary), c, semi.cache.mass_matrix, ps, xx)
+    itp = Interpolation(kernel, merge(nodeset_inner, nodeset_boundary), c,
+                        semi.cache.mass_matrix, ps, xx)
     return itp
 end
 

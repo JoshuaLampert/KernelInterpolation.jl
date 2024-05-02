@@ -7,7 +7,8 @@ is a function describing the Dirichlet boundary conditions.
 
 See also [`Semidiscretization`](@ref), [`solve_stationary`](@ref).
 """
-struct SpatialDiscretization{Dim, RealT, Equations, BoundaryCondition, Kernel <: AbstractKernel{Dim}}
+struct SpatialDiscretization{Dim, RealT, Equations, BoundaryCondition,
+                             Kernel <: AbstractKernel{Dim}}
     equations::Equations
     nodeset_inner::NodeSet{Dim, RealT}
     boundary_condition::BoundaryCondition
@@ -15,12 +16,18 @@ struct SpatialDiscretization{Dim, RealT, Equations, BoundaryCondition, Kernel <:
     kernel::Kernel
 end
 
-function SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary, kernel = GaussKernel{dim(nodeset_inner)}())
-    return SpatialDiscretization{dim(nodeset_inner), eltype(nodeset_inner), typeof(equations), typeof(boundary_condition), typeof(kernel)}(equations, nodeset_inner, boundary_condition, nodeset_boundary, kernel)
+function SpatialDiscretization(equations, nodeset_inner, boundary_condition,
+                               nodeset_boundary, kernel = GaussKernel{dim(nodeset_inner)}())
+    return SpatialDiscretization{dim(nodeset_inner), eltype(nodeset_inner),
+                                 typeof(equations), typeof(boundary_condition),
+                                 typeof(kernel)}(equations, nodeset_inner,
+                                                 boundary_condition, nodeset_boundary,
+                                                 kernel)
 end
 
 function Base.show(io::IO, sd::SpatialDiscretization)
-    print(io, "SpatialDiscretization with $(dim(sd)) dimensions, $(length(sd.nodeset_inner)) inner nodes, $(length(sd.nodeset_boundary)) boundary nodes, and kernel $(sd.kernel)")
+    print(io,
+          "SpatialDiscretization with $(dim(sd)) dimensions, $(length(sd.nodeset_inner)) inner nodes, $(length(sd.nodeset_boundary)) boundary nodes, and kernel $(sd.kernel)")
 end
 
 dim(::SpatialDiscretization{Dim}) where {Dim} = Dim
@@ -33,7 +40,10 @@ Solve a stationary partial differential equation discretized as `spatial_discret
 conditions by non-symmetric collocation (Kansa method).
 Returns an [`Interpolation`](@ref) object.
 """
-function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, RealT}) where {Dim, RealT}
+function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, RealT}) where {
+                                                                                            Dim,
+                                                                                            RealT
+                                                                                            }
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, kernel = spatial_discretization
     nodeset = merge(nodeset_inner, nodeset_boundary)
 
@@ -80,21 +90,27 @@ function Semidiscretization(spatial_discretization, initial_condition)
                            b_matrix]
     m_matrix = [k_matrix_inner
                 zeros(eltype(k_matrix_inner), size(k_matrix_boundary)...)]
-    cache = (; kernel_matrix = k_matrix, mass_matrix = m_matrix, pde_boundary_matrix = pde_boundary_matrix)
-    return Semidiscretization{typeof(initial_condition), typeof(cache)}(spatial_discretization, initial_condition, cache)
+    cache = (; kernel_matrix = k_matrix, mass_matrix = m_matrix,
+             pde_boundary_matrix = pde_boundary_matrix)
+    return Semidiscretization{typeof(initial_condition), typeof(cache)}(spatial_discretization,
+                                                                        initial_condition,
+                                                                        cache)
 end
 
-function Semidiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary, initial_condition, kernel = GaussKernel{dim(nodeset_inner)}())
-    return Semidiscretization(SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary, kernel), initial_condition)
+function Semidiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary,
+                            initial_condition, kernel = GaussKernel{dim(nodeset_inner)}())
+    return Semidiscretization(SpatialDiscretization(equations, nodeset_inner,
+                                                    boundary_condition, nodeset_boundary,
+                                                    kernel), initial_condition)
 end
 
 function Base.show(io::IO, semi::Semidiscretization)
-    print(io, "Semidiscretization with $(dim(semi)) dimensions, $(length(semi.spatial_discretization.nodeset_inner)) inner nodes, $(length(semi.spatial_discretization.nodeset_boundary)) boundary nodes, and kernel $(semi.spatial_discretization.kernel)")
+    print(io,
+          "Semidiscretization with $(dim(semi)) dimensions, $(length(semi.spatial_discretization.nodeset_inner)) inner nodes, $(length(semi.spatial_discretization.nodeset_boundary)) boundary nodes, and kernel $(semi.spatial_discretization.kernel)")
 end
 
 dim(semi::Semidiscretization) = dim(semi.spatial_discretization)
 Base.eltype(semi::Semidiscretization) = eltype(semi.spatial_discretization)
-
 
 # right-hand side of the ODE
 # M c' = -A c + b
@@ -109,7 +125,8 @@ Base.eltype(semi::Semidiscretization) = eltype(semi.spatial_discretization)
 function rhs!(dc, c, semi, t)
     @unpack pde_boundary_matrix = semi.cache
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary = semi.spatial_discretization
-    rhs_vector = [rhs(t, nodeset_inner, equations); boundary_condition.(Ref(t), nodeset_boundary)]
+    rhs_vector = [rhs(t, nodeset_inner, equations);
+                  boundary_condition.(Ref(t), nodeset_boundary)]
     # dc = -pde_boundary_matrix * c + rhs_vector
     dc[:] = muladd(pde_boundary_matrix, -c, rhs_vector)
     return nothing
@@ -123,7 +140,8 @@ Wrap a `Semidiscretization` object into an `ODEProblem` object with time span `t
 function semidiscretize(semi::Semidiscretization, tspan)
     nodeset = merge(semi.spatial_discretization.nodeset_inner,
                     semi.spatial_discretization.nodeset_boundary)
-    u0 = semi.initial_condition.(Ref(first(tspan)), nodeset, Ref(semi.spatial_discretization.equations))
+    u0 = semi.initial_condition.(Ref(first(tspan)), nodeset,
+                                 Ref(semi.spatial_discretization.equations))
     c0 = semi.cache.kernel_matrix \ u0
     iip = true # is-inplace, i.e., we modify a vector when calling rhs!
     f = ODEFunction{iip}(rhs!, mass_matrix = semi.cache.mass_matrix)

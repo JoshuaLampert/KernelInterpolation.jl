@@ -3,7 +3,10 @@ using OrdinaryDiffEq
 using Plots
 
 # right-hand-side of heat equation
-f(t, x, equations) = exp(t) * (x[1] * (x[1] - 1) * x[2] * (x[2] - 1) - 2 * equations.diffusivity * (x[1] * (x[1] - 1) + x[2] * (x[2] - 1)))
+function f(t, x, equations)
+    exp(t) * (x[1] * (x[1] - 1) * x[2] * (x[2] - 1) -
+     2 * equations.diffusivity * (x[1] * (x[1] - 1) + x[2] * (x[2] - 1)))
+end
 pde = HeatEquation(2.0, f)
 
 # analytical solution
