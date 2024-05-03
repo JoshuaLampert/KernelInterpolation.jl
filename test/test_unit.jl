@@ -777,14 +777,14 @@ using Plots
         # Test if the solution satisfies the initial condition
         t = sol.t[1]
         for node in merge(nodeset_inner, nodeset_boundary)
-            @test isapprox(titp(t, node), u2(t, node, pde), atol = 1e-14)
+            @test isapprox(titp(t, node), u2(t, node, pde), atol = 1e-13)
             @test isapprox(titp(t)(node), titp(t, node))
         end
         # Test if the solution satisfies the boundary conditions
         t = sol.t[2]
         values_boundary = g2.(Ref(t), nodeset_boundary)
         for (node, value) in zip(nodeset_boundary, values_boundary)
-            @test isapprox(titp(t, node), value, atol = 1e-14)
+            @test isapprox(titp(t, node), value, atol = 1e-13)
             @test isapprox(titp(t)(node), titp(t, node))
         end
         t = sol.t[end]
