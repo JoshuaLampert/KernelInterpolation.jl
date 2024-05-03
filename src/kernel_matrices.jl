@@ -6,7 +6,7 @@ Return the kernel matrix for the nodeset and kernel. The kernel matrix is define
 A_{ij} = K(x_i, \xi_j),
 ```
 where ``x_i`` are the nodes in the `nodeset1`, ``\xi_j`` are the nodes in the `nodeset2`,
-and ``K`` the kernel.
+and ``K`` the `kernel`.
 """
 function kernel_matrix(nodeset1, nodeset2, kernel)
     n = length(nodeset1)
@@ -27,7 +27,7 @@ Return the kernel matrix for the nodeset and kernel. The kernel matrix is define
 ```math
 A_{ij} = K(x_i, x_j),
 ```
-where ``x_i`` are the nodes in the `nodeset` and ``K`` the kernel.
+where ``x_i`` are the nodes in the `nodeset` and ``K`` the `kernel`.
 """
 function kernel_matrix(nodeset, kernel)
     kernel_matrix(nodeset, nodeset, kernel)
@@ -62,7 +62,7 @@ Compute the matrix of a partial differential equation with a given kernel. The m
 ```math
     A_{ij} = \mathcal{L}K(x_i, \xi_j),
 ```
-where ``\mathcal{L}`` is the differential operator defined by the `equations`, ``K`` the kernel, ``x_i`` are the nodes
+where ``\mathcal{L}`` is the differential operator defined by the `equations`, ``K`` the `kernel`, ``x_i`` are the nodes
 in `nodeset1` and ``\xi_j`` are the nodes in `nodeset2`.
 """
 function pde_matrix(equations, nodeset1, nodeset2, kernel)

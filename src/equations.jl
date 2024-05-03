@@ -16,7 +16,7 @@ end
 Poisson equation with right-hand side `f`, which can be a space-dependent function or a vector. The Poisson equation is
 defined as
 ```math
-    -Δu = f
+    -\Delta u = f
 ```
 """
 struct PoissonEquation{F} <: AbstractStationaryEquation where {F}
@@ -53,7 +53,7 @@ Heat equation with thermal diffusivity `diffusivity`. The heat equation is defin
 ```math
     \partial_t u = \kappa\Delta u + f,
 ```
-where ``\kappa`` is the thermal diffusivity and ``f``` is the right-hand side, which can be a time- and space-dependent function or a vector.
+where ``\kappa`` is the thermal diffusivity and ``f`` is the right-hand side, which can be a time- and space-dependent function or a vector.
 """
 struct HeatEquation{RealT, F} <: AbstractTimeDependentEquation
     diffusivity::RealT

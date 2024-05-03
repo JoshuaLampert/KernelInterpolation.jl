@@ -94,7 +94,7 @@ s(x) = \sum\limits_{j = 1}^Nc_jK(x, x_j) + \sum\limits_{k = 1}^Qd_kp_k(x),
 ```
 
 where ``p_k`` are a basis functions (usually monomials) of the ``Q = \begin{pmatrix}m - 1 + d\\d\end{pmatrix}``-dimensional space of polynomials
-of degree ``m``. To obtain a complete system of equations, we need to enforce the constraints
+of degree ``m - 1``. To obtain a complete system of equations, we need to enforce the constraints
 
 ```math
 \sum\limits_{j = 1}^Nc_jp_k(x_j) = 0, \quad\forall k = 1,\ldots,M.
@@ -110,7 +110,7 @@ where the entries of ``P\in\mathbb{R}^{N\times Q}`` are given by ``P_{jk} = p_k(
 polynomials exactly, but also leads to a larger class of possible kernels that can be taken for the interpolation because now it is not required
 anymore that the kernel is positive definite, but it suffices that the new system matrix ``\begin{pmatrix}A_X & P\\P^T & 0\end{pmatrix}`` is regular.
 This leads to the notion of *conditionally positive definite kernels of order ``m``*, which are kernel functions that produce an invertible system
-matrix provided that the interpolant is augmented by polynomials of order (i.e. degree - 1) ``m``. It turns out that any positive definite kernel
+matrix provided that the interpolant is augmented by polynomials of order ``m`` (i.e. degree ``m - 1``). It turns out that any positive definite kernel
 (i.e. conditionally positive definite of order 0) is also conditionally positive definite of any order ``m\ge 0``. One popular class of conditionally
 positive definite kernels are the *polyharmonic splines*, which are built by the basic function
 

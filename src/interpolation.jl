@@ -19,13 +19,13 @@ nodeset(itp::AbstractInterpolation) = itp.nodeset
 
 Interpolation object that can be evaluated at a node and represents a kernel interpolation of the form
 ```math
-    s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^Q d_kp_k(x),
+    s(x) = \sum_{j = 1}^N c_jK(x, x_j) + \sum_{k = 1}^Q d_kp_k(x),
 ```
 where ``x_j`` are the nodes in the nodeset and ``s(x)`` the interpolant satisfying ``s(x_j) = f(x_j)``, where
 ``f(x_j)`` are given by `values` in [`interpolate`](@ref) and ``p_k`` is a basis of the `Q`-dimensional space
 of multivariate polynomials of order [`order`](@ref). The additional conditions
 ```math
-    \sum_{j = 1}^n c_jp_k(x_j) = 0, \quad k = 1,\ldots, Q
+    \sum_{j = 1}^N c_jp_k(x_j) = 0, \quad k = 1,\ldots, Q
 ```
 are enforced.
 """
@@ -124,17 +124,17 @@ system_matrix(itp::Interpolation) = itp.system_matrix
     interpolate(nodeset, values, kernel = GaussKernel{dim(nodeset)}(), m = order(kernel))
 
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
-and polynomials up to a degree `polynomial_degree`, i.e., determine the coefficients `c_j` and `d_k` in the expansion
+and polynomials up to a order `m` (i.e. degree - 1), i.e., determine the coefficients ``c_j`` and ``d_k`` in the expansion
 ```math
     s(x) = \sum_{j = 1}^N c_jK(x, x_j) + \sum_{k = 1}^Q d_kp_k(x),
 ```
 where ``x_j`` are the nodes in the nodeset and ``s(x)`` the interpolant ``s(x_j) = f(x_j)``, where ``f(x_j)``
-are given by `values` and ``p_k`` is a basis of the `q`-dimensional space of multivariate polynomials with
+are given by `values` and ``p_k`` is a basis of the ``Q``-dimensional space of multivariate polynomials with
 maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional conditions
 ```math
-    \sum_{j = 1}^N c_jp_k(x_j) = 0, \quad k = 1,\ldots, Q
+    \sum_{j = 1}^N c_jp_k(x_j) = 0, \quad k = 1,\ldots, Q = \begin{pmatrix}m - 1 + d\\d\end{pmatrix}
 ```
-are enforced. Returns an [`Interpolation`](@ref) object.
+are enforced. Returns an [`KernelInterpolation.Interpolation`](@ref) object.
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
                      kernel = GaussKernel{Dim}(),
