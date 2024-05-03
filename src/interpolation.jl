@@ -19,13 +19,13 @@ nodeset(itp::AbstractInterpolation) = itp.nodeset
 
 Interpolation object that can be evaluated at a node and represents a kernel interpolation of the form
 ```math
-    s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^q d_kp_k(x),
+    s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^Q d_kp_k(x),
 ```
 where ``x_j`` are the nodes in the nodeset and ``s(x)`` the interpolant satisfying ``s(x_j) = f(x_j)``, where
-``f(x_j)`` are given by `values` in [`interpolate`](@ref) and ``p_k`` is a basis of the `q`-dimensional space
+``f(x_j)`` are given by `values` in [`interpolate`](@ref) and ``p_k`` is a basis of the `Q`-dimensional space
 of multivariate polynomials of order [`order`](@ref). The additional conditions
 ```math
-    \sum_{j = 1}^n c_jp_k(x_j) = 0, \quad k = 1,\ldots, q
+    \sum_{j = 1}^n c_jp_k(x_j) = 0, \quad k = 1,\ldots, Q
 ```
 are enforced.
 """
@@ -126,13 +126,13 @@ system_matrix(itp::Interpolation) = itp.system_matrix
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
 and polynomials up to a degree `polynomial_degree`, i.e., determine the coefficients `c_j` and `d_k` in the expansion
 ```math
-    s(x) = \sum_{j = 1}^n c_jK(x, x_j) + \sum_{k = 1}^q d_kp_k(x),
+    s(x) = \sum_{j = 1}^N c_jK(x, x_j) + \sum_{k = 1}^Q d_kp_k(x),
 ```
 where ``x_j`` are the nodes in the nodeset and ``s(x)`` the interpolant ``s(x_j) = f(x_j)``, where ``f(x_j)``
 are given by `values` and ``p_k`` is a basis of the `q`-dimensional space of multivariate polynomials with
 maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional conditions
 ```math
-    \sum_{j = 1}^n c_jp_k(x_j) = 0, \quad k = 1,\ldots, q
+    \sum_{j = 1}^N c_jp_k(x_j) = 0, \quad k = 1,\ldots, Q
 ```
 are enforced. Returns an [`Interpolation`](@ref) object.
 """
@@ -200,24 +200,24 @@ end
 Inner product of the native space for two interpolants `itp1` and `itp2`
 with the same kernel. The inner product is defined as
 ```math
-    (f, g)_K = \sum_{j = 1}^n\sum_{k = 1}^mc_jd_kK(x_j, y_k)
+    \langle f, g\rangle_K = \sum_{i = 1}^N\sum_{j = 1}^Mc_i^fc_j^gK(x_i, \xi_j)
 ```
-for the interpolants ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)`` and
-``g(x) = \sum_{k = 1}^md_kK(x, y_k)``.
+for the interpolants ``f(x) = \sum_{i = 1}^Nc_i^fK(x, x_i)`` and
+``g(x) = \sum_{j = 1}^Mc_j^gK(x, \xi_j)``.
 
 See also [`kernel_norm`](@ref).
 """
 function kernel_inner_product(itp1, itp2)
     kernel = interpolation_kernel(itp1)
     @assert kernel == interpolation_kernel(itp2)
-    c = kernel_coefficients(itp1)
-    d = kernel_coefficients(itp2)
+    c_f = kernel_coefficients(itp1)
+    c_g = kernel_coefficients(itp2)
     xs = nodeset(itp1)
-    ys = nodeset(itp2)
+    xis = nodeset(itp2)
     s = 0
-    for j in eachindex(c)
-        for k in eachindex(d)
-            s += c[j] * d[k] * kernel(xs[j], ys[k])
+    for i in eachindex(c_f)
+        for j in eachindex(c_g)
+            s += c_f[i] * c_g[j] * kernel(xs[i], xis[j])
         end
     end
     return s
@@ -229,7 +229,7 @@ end
 Norm of the native space defined by the kernel of the interpolant `itp`.
 The norm is defined as
 ```math
-    \|f\|_K^2 = \sum_{j,k=1}^nc_jc_kK(x_j, x_k)
+    \|f\|_K^2 = \sum_{i,j=1}^Nc_ic_jK(x_i, x_j)
 ```
 for the interpolant ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)``.
 
@@ -241,7 +241,8 @@ kernel_norm(itp) = sqrt(kernel_inner_product(itp, itp))
     TemporalInterpolation(ode_sol::ODESolution)
 
 Temporal interpolation of an ODE solution. The result can be evaluated at a time `t` and a spatial point `x`.
-Evaluating the interpolation at a time `t` returns an interpolation object that can be evaluated at a spatial point `x`.
+Evaluating the interpolation at a time `t` returns a [`KernelInterpolation.Interpolation`](@ref) object that can
+be evaluated at a spatial point `x`.
 """
 struct TemporalInterpolation
     ode_sol::ODESolution

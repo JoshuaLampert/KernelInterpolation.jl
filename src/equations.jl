@@ -51,9 +51,9 @@ end
 
 Heat equation with thermal diffusivity `diffusivity`. The heat equation is defined as
 ```math
-    ∂_t u = κΔu + f,
+    \partial_t u = \kappa\Delta u + f,
 ```
-where `κ` is the thermal diffusivity and `f` is the right-hand side, which can be a time- and space-dependent function or a vector.
+where ``\kappa`` is the thermal diffusivity and ``f``` is the right-hand side, which can be a time- and space-dependent function or a vector.
 """
 struct HeatEquation{RealT, F} <: AbstractTimeDependentEquation
     diffusivity::RealT

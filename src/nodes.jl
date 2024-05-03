@@ -69,7 +69,7 @@ end
 @doc raw"""
     separation_distance(nodeset::NodeSet)
 
-Return the separation distance of a node set ``X = \{x_1,\ldots, x_n\}`` defined by
+Return the separation distance of a [`NodeSet`](@ref) ``X = \{x_1,\ldots, x_n\}`` defined by
 ```math
     q_X = \frac{1}{2}\min_{x_i\neq x_j}\|x_i - x_j\|.
 ```
@@ -171,7 +171,7 @@ end
 @doc raw"""
     distance_matrix(nodeset1::NodeSet, nodeset2::NodeSet)
 
-Compute the distance matrix between two sets of nodes, which is a matrix ``D`` with
+Compute the distance matrix between two [`NodeSet`](@ref)s, which is a matrix ``D`` with
 ``D_{ij} = \|x_i - \xi_j\|`` for all ``i`` and ``j``, where ``x_i`` are the nodes in
 `nodeset1` and ``\xi_j`` are the nodes on `nodeset2`.
 """
@@ -206,7 +206,7 @@ end
 """
     random_hypercube(n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
-Create a `NodeSet` with `n` random nodes each of dimension `dim` inside a hypercube defined by
+Create a [`NodeSet`](@ref) with `n` random nodes each of dimension `dim` inside a hypercube defined by
 the bounds `x_min` and `x_max`. If the bounds are given as single values, they are applied for
 each dimension. If they are `Tuple`s of size `dim` the hypercube has the according bounds.
 If `dim` is not given explicitly, it is inferred by the lengths of `x_min` and `x_max` if possible.
@@ -229,7 +229,7 @@ end
 """
     random_hypercube_boundary(n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
-Create a `NodeSet` with `n` random nodes each of dimension `dim` on the boundary of a hypercube
+Create a [`NodeSet`](@ref) with `n` random nodes each of dimension `dim` on the boundary of a hypercube
 defined by the bounds `x_min` and `x_max`. If the bounds are given as single values, they are
 applied for each dimension. If they are `Tuple`s of size `dim` the hypercube has the according bounds.
 If `dim` is not given explicitly, it is inferred by the lengths of `x_min` and `x_max` if possible.
@@ -269,7 +269,7 @@ end
 @doc raw"""
     homogeneous_hypercube(n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
-If `n` is integer, create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
+If `n` is integer, create a [`NodeSet`](@ref) with `n` homogeneously distributed nodes in every dimension each of dimension
 `dim` inside a hypercube defined by the bounds `x_min` and `x_max`. If `n` is a `Tuple` of length `dim`,
 then use as many nodes in each dimension as described by `n`. The resulting `NodeSet` will have
 ``n^{\textrm{dim}}`` respectively ``\prod_{j = 1}n_j`` points. If the bounds are given as single values,
@@ -313,7 +313,7 @@ end
 """
     homogeneous_hypercube_boundary(n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
-If `n` is integer, create a `NodeSet` with `n` homogeneously distributed nodes in every dimension each of dimension
+If `n` is integer, create a [`NodeSet`](@ref) with `n` homogeneously distributed nodes in every dimension each of dimension
 `dim` on the boundary of a hypercube defined by the bounds `x_min` and `x_max`. If `n` is a `Tuple` of length `dim`,
 then use as many nodes in each dimension as described by `n`. If the bounds are given as single values, they
 are applied for each dimension. If they are `Tuple`s of size `dim`, the hypercube has the according bounds.
@@ -392,7 +392,7 @@ end
 """
     random_hypersphere(n, r = 1.0, center = zeros(dim); [dim])
 
-Create a `NodeSet` with `n` random nodes each of dimension `dim` inside a hypersphere with
+Create a [`NodeSet`](@ref) with `n` random nodes each of dimension `dim` inside a hypersphere with
 radius `r` around the center `center`.
 If `dim` is not given explicitly, it is inferred by the length of `center` if possible.
 """
@@ -412,7 +412,7 @@ end
 """
     random_hypersphere_boundary(n, r = 1.0, center = zeros(dim); [dim])
 
-Create a `NodeSet` with `n` random nodes each of dimension `dim` at the boundary of a
+Create a [`NodeSet`](@ref) with `n` random nodes each of dimension `dim` at the boundary of a
 hypersphere with radius `r` around the center `center`.
 If `dim` is not given explicitly, it is inferred by the length of `center` if possible.
 """

@@ -75,13 +75,13 @@ The completion of the linear space of functions that is spanned by the basis giv
 which comes with an inner product given by
 
 ```math
-\langle f, g\rangle_K = \sum\limits_{i = 1}^N\sum\limits_{j = 1}^Mc_i^fc_j^gK(x_i, y_j),
+\langle f, g\rangle_K = \sum\limits_{i = 1}^N\sum\limits_{j = 1}^Mc_i^fc_j^gK(x_i, \xi_j),
 ```
 
 for ``f, g\in\mathcal{H}_{K, \Omega}`` having the representations
 
 ```math
-f(x) = \sum\limits_{i = 1}^Nc_i^fK(x, x_i) \quad\text{and}\quad g(x) = \sum\limits_{j = 1}^Mc_j^gK(x, y_j).
+f(x) = \sum\limits_{i = 1}^Nc_i^fK(x, x_i) \quad\text{and}\quad g(x) = \sum\limits_{j = 1}^Mc_j^gK(x, \xi_j).
 ```
 
 The corresponding norm inherited by the kernel scalar product is denoted as ``\|\cdot\|_K = \sqrt{\langle\cdot,\cdot\rangle_K}``.
@@ -90,10 +90,10 @@ Often, it can be useful to augment the linear combination of kernel basis functi
 i.e. the interpolant takes the form
 
 ```math
-s(x) = \sum\limits_{j = 1}^Nc_jK(x, x_j) + \sum\limits_{k = 1}^Md_kp_k(x),
+s(x) = \sum\limits_{j = 1}^Nc_jK(x, x_j) + \sum\limits_{k = 1}^Qd_kp_k(x),
 ```
 
-where ``p_k`` are a basis functions (usually monomials) of the ``M = \begin{pmatrix}m - 1 + d\\d\end{pmatrix}``-dimensional space of polynomials
+where ``p_k`` are a basis functions (usually monomials) of the ``Q = \begin{pmatrix}m - 1 + d\\d\end{pmatrix}``-dimensional space of polynomials
 of degree ``m``. To obtain a complete system of equations, we need to enforce the constraints
 
 ```math
@@ -106,7 +106,7 @@ The linear system now consists of a system-matrix that has 4 blocks:
 \begin{pmatrix}A_X & P\\P^T & 0\end{pmatrix}\begin{pmatrix}c\\d\end{pmatrix} = \begin{pmatrix}f_X\\0\end{pmatrix},
 ```
 
-where the entries of ``P\in\mathbb{R}^{N\times M}`` are given by ``P_{jk} = p_k(x_j)``. This strategy does not only guarantee to be able to reproduce
+where the entries of ``P\in\mathbb{R}^{N\times Q}`` are given by ``P_{jk} = p_k(x_j)``. This strategy does not only guarantee to be able to reproduce
 polynomials exactly, but also leads to a larger class of possible kernels that can be taken for the interpolation because now it is not required
 anymore that the kernel is positive definite, but it suffices that the new system matrix ``\begin{pmatrix}A_X & P\\P^T & 0\end{pmatrix}`` is regular.
 This leads to the notion of *conditionally positive definite kernels of order ``m``*, which are kernel functions that produce an invertible system

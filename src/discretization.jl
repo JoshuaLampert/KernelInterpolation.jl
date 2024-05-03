@@ -135,7 +135,7 @@ end
 """
     semidiscetize(semi::Semidiscretization, tspan)
 
-Wrap a `Semidiscretization` object into an `ODEProblem` object with time span `tspan`.
+Wrap a [`Semidiscretization`](@ref) object into an `ODEProblem` object with time span `tspan`.
 """
 function semidiscretize(semi::Semidiscretization, tspan)
     nodeset = merge(semi.spatial_discretization.nodeset_inner,
