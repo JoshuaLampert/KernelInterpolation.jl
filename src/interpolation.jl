@@ -41,7 +41,7 @@ end
 
 function Base.show(io::IO, itp::Interpolation)
     return print(io,
-                 "Interpolation with $(length(nodeset(itp))) nodes, $(interpolation_kernel(itp)) kernel and polynomial of order $(order(itp)).")
+                 "Interpolation with $(length(nodeset(itp))) nodes, kernel $(interpolation_kernel(itp)) and polynomial of order $(order(itp)).")
 end
 
 """
@@ -146,66 +146,14 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
     ps = monomials(xx, 0:(m - 1))
     q = length(ps)
 
-    kernel_matrix = Matrix{RealT}(undef, n, n)
-    for i in 1:n
-        for j in 1:n
-            kernel_matrix[i, j] = kernel(nodeset[i], nodeset[j])
-        end
-    end
-    polynomial_matrix = Matrix{RealT}(undef, n, q)
-    for i in 1:n
-        for j in 1:q
-            polynomial_matrix[i, j] = ps[j](xx => nodeset[i])
-        end
-    end
-    system_matrix = [kernel_matrix polynomial_matrix
-                     transpose(polynomial_matrix) zeros(q, q)]
+    k_matrix = kernel_matrix(nodeset, kernel)
+    p_matrix = polynomial_matrix(nodeset, ps)
+    system_matrix = [k_matrix p_matrix
+                     transpose(p_matrix) zeros(q, q)]
     b = [values; zeros(q)]
     symmetric_system_matrix = Symmetric(system_matrix)
     c = symmetric_system_matrix \ b
     return Interpolation(kernel, nodeset, c, symmetric_system_matrix, ps, xx)
-end
-
-"""
-    solve(pde, nodeset_inner, nodeset_boundary, values_boundary, kernel = GaussKernel{dim(nodeset_inner)})
-
-Solve a partial differential equation `pde` with Dirichlet boundary conditions by non-symmetric collocation
-(Kansa method) using the kernel `kernel`. The `nodeset_inner` are the nodes in the domain and `nodeset_boundary`
-are the nodes on the boundary. The `values_boundary` are the values of the boundary condition at the nodes given
-by Dirichlet boundary conditions. Returns an [`Interpolation`](@ref) object.
-"""
-function solve(pde, nodeset_inner::NodeSet{Dim, RealT},
-               nodeset_boundary::NodeSet{Dim, RealT},
-               values_boundary::Vector{RealT},
-               kernel = GaussKernel{Dim}()) where {Dim, RealT}
-    @assert dim(kernel) == Dim
-    n_i = length(nodeset_inner)
-    n_b = length(nodeset_boundary)
-    nodeset = merge(nodeset_inner, nodeset_boundary)
-    n = n_i + n_b
-
-    pde_matrix = Matrix{RealT}(undef, n_i, n)
-    for i in 1:n_i
-        for j in 1:n
-            pde_matrix[i, j] = pde(kernel, nodeset_inner[i], nodeset[j])
-        end
-    end
-    boundary_matrix = Matrix{RealT}(undef, n_b, n)
-    for i in 1:n_b
-        for j in 1:n
-            # Dirichlet boundary condition
-            boundary_matrix[i, j] = kernel(nodeset_boundary[i], nodeset[j])
-        end
-    end
-    system_matrix = [pde_matrix
-                     boundary_matrix]
-    b = [rhs(pde, nodeset_inner); values_boundary]
-    c = system_matrix \ b
-
-    # Do not support additional polynomial basis for now
-    xx = polyvars(Dim)
-    ps = monomials(xx, 0:-1)
-    return Interpolation(kernel, nodeset, c, system_matrix, ps, xx)
 end
 
 # Evaluate interpolant
@@ -233,24 +181,14 @@ function (itp::Interpolation)(x::RealT) where {RealT <: Real}
     return itp([x])
 end
 
-function (diff_op::AbstractDifferentialOperator)(itp::Interpolation, x)
+function (diff_op_or_pde::Union{AbstractDifferentialOperator, AbstractStationaryEquation})(itp::Interpolation,
+                                                                                           x)
     kernel = interpolation_kernel(itp)
     xs = nodeset(itp)
     c = kernel_coefficients(itp)
     s = 0
     for j in eachindex(c)
-        s += c[j] * diff_op(kernel, x, xs[j])
-    end
-    return s
-end
-
-function (pde::AbstractPDE)(itp::Interpolation, x)
-    kernel = interpolation_kernel(itp)
-    xs = nodeset(itp)
-    c = kernel_coefficients(itp)
-    s = 0
-    for j in eachindex(c)
-        s += c[j] * pde(kernel, x, xs[j])
+        s += c[j] * diff_op_or_pde(kernel, x, xs[j])
     end
     return s
 end
@@ -298,3 +236,42 @@ for the interpolant ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)``.
 See also [`kernel_inner_product`](@ref).
 """
 kernel_norm(itp) = sqrt(kernel_inner_product(itp, itp))
+
+"""
+    TemporalInterpolation(ode_sol::ODESolution)
+
+Temporal interpolation of an ODE solution. The result can be evaluated at a time `t` and a spatial point `x`.
+Evaluating the interpolation at a time `t` returns an interpolation object that can be evaluated at a spatial point `x`.
+"""
+struct TemporalInterpolation
+    ode_sol::ODESolution
+end
+
+function Base.show(io::IO, titp::TemporalInterpolation)
+    sd = titp.ode_sol.prob.p.spatial_discretization
+    tspan = titp.ode_sol.prob.tspan
+    return print(io,
+                 "Temporal interpolation with $(length(sd.nodeset_inner)) inner nodes, $(length(sd.nodeset_boundary)) boundary nodes, kernel $(sd.kernel), and time span $tspan")
+end
+
+function (titp::TemporalInterpolation)(t)
+    ode_sol = titp.ode_sol
+    semi = ode_sol.prob.p
+    @unpack kernel, nodeset_inner, boundary_condition, nodeset_boundary = semi.spatial_discretization
+    c = ode_sol(t)
+    # Do not support additional polynomial basis for now
+    xx = polyvars(dim(semi))
+    ps = monomials(xx, 0:-1)
+    itp = Interpolation(kernel, merge(nodeset_inner, nodeset_boundary), c,
+                        semi.cache.mass_matrix, ps, xx)
+    return itp
+end
+
+# This should give the same result as
+# c = ode_sol(t)
+# A = semi.cache.kernel_matrix
+# return A * c
+function (titp::TemporalInterpolation)(t, x)
+    itp = titp(t)
+    return itp(x)
+end

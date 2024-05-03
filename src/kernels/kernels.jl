@@ -10,7 +10,7 @@ abstract type AbstractKernel{Dim} end
 
 Return the dimension of a kernel, i.e. the size of the input vector.
 """
-dim(kernel::AbstractKernel{Dim}) where {Dim} = Dim
+dim(::AbstractKernel{Dim}) where {Dim} = Dim
 
 """
     get_name(kernel::AbstractKernel)

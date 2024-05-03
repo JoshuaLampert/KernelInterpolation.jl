@@ -39,16 +39,32 @@ macro test_include_example(example, args...)
                 @test isapprox(norm(many_values .- many_values_test, Inf), $linf;
                                atol = $atol, rtol = $rtol)
             else
-                rhs_values = KernelInterpolation.rhs(pde, nodeset_inner)
-                for i in eachindex(nodeset_inner)
-                    @test isapprox(pde(itp, nodeset_inner[i]), rhs_values[i],
-                                   atol = $atol, rtol = $rtol)
+                if pde isa KernelInterpolation.AbstractStationaryEquation
+                    rhs_values = KernelInterpolation.rhs(nodeset_inner, pde)
+                    for i in eachindex(nodeset_inner)
+                        @test isapprox(pde(itp, nodeset_inner[i]), rhs_values[i],
+                                       atol = $atol, rtol = $rtol)
+                    end
+                    values_boundary = g.(nodeset_boundary)
+                    # Because of some namespace issues
+                    itp2 = itp
+
+                    many_values = u.(many_nodes, Ref(pde))
+                elseif pde isa KernelInterpolation.AbstractTimeDependentEquation
+                    t = last(tspan)
+                    values_boundary = g.(t, nodeset_boundary)
+                    itp2 = titp(t)
+
+                    many_values = u.(Ref(t), many_nodes, Ref(pde))
+                else
+                    error("Unknown PDE type")
                 end
+
                 for (node, value) in zip(nodeset_boundary, values_boundary)
-                    @test isapprox(itp(node), value, atol = $atol, rtol = $rtol)
+                    @test isapprox(itp2(node), value, atol = $atol, rtol = $rtol)
                 end
-                many_values = u.(many_nodes)
-                many_values_test = itp.(many_nodes)
+
+                many_values_test = itp2.(many_nodes)
                 @test isapprox(norm(many_values .- many_values_test), $l2;
                                atol = $atol, rtol = $rtol)
                 @test isapprox(norm(many_values .- many_values_test, Inf), $linf;

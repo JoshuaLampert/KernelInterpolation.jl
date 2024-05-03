@@ -10,7 +10,7 @@ include("test_util.jl")
 
 EXAMPLES_DIR = joinpath(examples_dir(), "interpolation")
 
-@testset "Examples" begin
+@testset "Interpolation Examples" begin
     @ki_testset "interpolation_1d.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_1d.jl"),
                               l2=0.08077225063031548, linf=0.006631451019030288)
