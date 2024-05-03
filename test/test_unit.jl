@@ -774,6 +774,8 @@ using Plots
         ode = @test_nowarn semidiscretize(semi, (0.0, 0.1))
         sol = @test_nowarn solve(ode, Rodas5P())
         titp = @test_nowarn TemporalInterpolation(sol)
+        @test_nowarn println(titp)
+        @test_nowarn display(titp)
         # Test if the solution satisfies the initial condition
         t = sol.t[1]
         for node in merge(nodeset_inner, nodeset_boundary)

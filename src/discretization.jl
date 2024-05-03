@@ -14,15 +14,12 @@ struct SpatialDiscretization{Dim, RealT, Equations, BoundaryCondition,
     boundary_condition::BoundaryCondition
     nodeset_boundary::NodeSet{Dim, RealT}
     kernel::Kernel
-end
 
-function SpatialDiscretization(equations, nodeset_inner, boundary_condition,
-                               nodeset_boundary, kernel = GaussKernel{dim(nodeset_inner)}())
-    return SpatialDiscretization{dim(nodeset_inner), eltype(nodeset_inner),
-                                 typeof(equations), typeof(boundary_condition),
-                                 typeof(kernel)}(equations, nodeset_inner,
-                                                 boundary_condition, nodeset_boundary,
-                                                 kernel)
+    function SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary,
+                                   kernel = GaussKernel{dim(nodeset_inner)}())
+        new{dim(nodeset_inner), eltype(nodeset_inner), typeof(equations), typeof(boundary_condition), typeof(kernel)}(equations,
+            nodeset_inner, boundary_condition, nodeset_boundary, kernel)
+    end
 end
 
 function Base.show(io::IO, sd::SpatialDiscretization)
