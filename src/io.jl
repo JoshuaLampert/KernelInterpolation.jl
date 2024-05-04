@@ -2,8 +2,8 @@
     vtk_save(filename, nodeset::NodeSet, functions_or_vectors...;
              keys = "value_" .* string.(eachindex(functions_or_vectors)))
 
-Save a [`NodeSet`](@ref) to a VTK file. You can optionally pass a list of functions or functions_or_vectors to save
-the values of the functions at the nodes. The functions can also be passed as
+Save a [`NodeSet`](@ref) to a VTK file. You can optionally pass a list of space-dependent functions
+or vectors to save the values of the functions at the nodes. The functions can also be passed as
 [`KernelInterpolation.Interpolation`](@ref) or directly as vectors. The optional keyword argument `keys` is used to
 specify the names of the data arrays in the VTK file.
 
@@ -19,7 +19,7 @@ function vtk_save(filename, nodeset::NodeSet, functions_or_vectors...;
             if fun_or_vec isa AbstractArray
                 vec = fun_or_vec
             else
-                vec = fun_or_vec.(Ref(time), nodeset)
+                vec = fun_or_vec.(nodeset)
             end
             vtk["$(keys[i])"] = vec
         end
@@ -31,6 +31,7 @@ end
                keys = "value_" .* string.(eachindex(functions_or_vectors)))
 
 Same as [`vtk_save`](@ref), but appends the data to a Paraview collection file `pvd` at time `time`.
+In contrast to [`vtk_save`](@ref), the functions are time- and space-dependent.
 """
 function add_to_pvd(filename, pvd, time, nodeset::NodeSet, functions_or_vectors...;
                     keys = "value_" .* string.(eachindex(functions_or_vectors)))
