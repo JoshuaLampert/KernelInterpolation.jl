@@ -18,7 +18,7 @@ TypedPolynomials = "afbbf031-7a57-5f58-a1b9-b774a0fad08d"
 WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
-DiffEqCallbacks = "2.25"
+DiffEqCallbacks = "3"
 ForwardDiff = "0.10.36"
 LinearAlgebra = "1"
 Printf = "1"
