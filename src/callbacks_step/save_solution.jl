@@ -147,7 +147,6 @@ function finalize_save_cb(cb, u, t, integrator)
 end
 
 function finalize_save_cb(solution_callback::SaveSolutionCallback, u, t, integrator)
-    @show "covered"
     WriteVTK.vtk_save(solution_callback.pvd)
     return nothing
 end
