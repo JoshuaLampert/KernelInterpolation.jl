@@ -39,8 +39,8 @@ function Base.show(io::IO, cb::DiscreteCallback{<:Any, <:SaveSolutionCallback})
 end
 
 function Base.show(io::IO,
-               cb::DiscreteCallback{<:Any,
-                                    <:PeriodicCallbackAffect{<:SaveSolutionCallback}})
+                   cb::DiscreteCallback{<:Any,
+                                        <:PeriodicCallbackAffect{<:SaveSolutionCallback}})
     @nospecialize cb # reduce precompilation time
 
     save_solution_callback = cb.affect!.affect!
@@ -53,7 +53,9 @@ function SaveSolutionCallback(; interval::Integer = 0,
                               save_final_solution = true,
                               output_directory = "out",
                               extra_functions = (),
-                              keys = append!(["itp"], "value_" .* string.(eachindex(extra_functions))))
+                              keys = append!(["itp"],
+                                             "value_" .*
+                                             string.(eachindex(extra_functions))))
     if !isnothing(dt) && interval > 0
         throw(ArgumentError("You can either set the number of steps between output (using `interval`) or the time between outputs (using `dt`) but not both simultaneously"))
     end
@@ -115,7 +117,7 @@ function (solution_callback::SaveSolutionCallback)(u, t, integrator)
     # We need to check the number of accepted steps since callbacks are not
     # activated after a rejected step.
     return interval_or_dt > 0 && (((integrator.stats.naccept % interval_or_dt == 0) &&
-            !(integrator.stats.naccept == 0 && integrator.iter > 0)) ||
+             !(integrator.stats.naccept == 0 && integrator.iter > 0)) ||
             (save_final_solution && isfinished(integrator)))
 end
 

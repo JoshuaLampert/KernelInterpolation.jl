@@ -11,7 +11,8 @@ using SimpleUnPack: @unpack
 using SpecialFunctions: besselk, loggamma
 using StaticArrays: StaticArrays, MVector
 using TypedPolynomials: Variable, monomials, degree
-using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes, CollectionFile
+using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
+                CollectionFile
 
 include("kernels/kernels.jl")
 include("nodes.jl")
