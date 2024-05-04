@@ -4,8 +4,10 @@ authors = ["Joshua Lampert <joshua.lampert@uni-hamburg.de> and contributors"]
 version = "1.0.0-DEV"
 
 [deps]
+DiffEqCallbacks = "459566f4-90b8-5000-8ac3-15dfb0a30def"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 ReadVTK = "dc215faf-f008-4882-a9f7-a79a826fadc3"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
@@ -16,8 +18,10 @@ TypedPolynomials = "afbbf031-7a57-5f58-a1b9-b774a0fad08d"
 WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
+DiffEqCallbacks = "2.25"
 ForwardDiff = "0.10.36"
 LinearAlgebra = "1"
+Printf = "1"
 ReadVTK = "0.2"
 RecipesBase = "1.1"
 SciMLBase = "1.93, 2"

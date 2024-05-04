@@ -20,7 +20,9 @@ kernel = WendlandKernel{2}(3, shape_parameter = 0.3)
 sd = Semidiscretization(pde, nodeset_inner, g, nodeset_boundary, u, kernel)
 tspan = (0.0, 1.0)
 ode = semidiscretize(sd, tspan)
-sol = solve(ode, Rosenbrock23(), saveat = 0.01)
+
+callback = SaveSolutionCallback(interval = 10)
+sol = solve(ode, Rosenbrock23(), saveat = 0.01, callback = callback)
 titp = TemporalInterpolation(sol)
 
 many_nodes = homogeneous_hypercube(20; dim = 2)

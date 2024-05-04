@@ -809,6 +809,17 @@ using Plots
         @test isapprox(titp(t, x), u2(t, x, pde), atol = 0.12)
     end
 
+    @testset "Callbacks" begin
+        # SaveSolutionCallback
+        save_solution_callback = SaveSolutionCallback(dt = 0.1)
+        @test_nowarn println(save_solution_callback)
+        @test_nowarn display(save_solution_callback)
+        save_solution_callback = SaveSolutionCallback(interval = 10)
+        @test_nowarn println(save_solution_callback)
+        @test_nowarn display(save_solution_callback)
+        @test_throws ArgumentError SaveSolutionCallback(interval = 10, dt = 0.1)
+    end
+
     @testset "Visualization" begin
         f = sum
         kernel = GaussKernel{3}(shape_parameter = 0.5)
