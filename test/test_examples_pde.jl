@@ -25,7 +25,7 @@ EXAMPLES_DIR = joinpath(examples_dir(), "PDEs")
 
     @ki_testset "heat_2d_manufactured.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "heat_2d_manufactured.jl"),
-                              l2=0.051463425182303034, linf=0.005234201685725859,
+                              l2=0.051463428227268404, linf=0.005234201701416197,
                               pde_test=true)
     end
 end

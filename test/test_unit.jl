@@ -558,7 +558,7 @@ using Plots
         @test dim(itp) == dim(kernel)
         @test dim(itp) == dim(nodes)
         # Saving the interpolation and the function to a VTK file
-        @test_nowarn vtk_save("itp", nodes, f, itp; keys = ["f", "itp"])
+        @test_nowarn vtk_save("itp", nodes, f, itp, ff; keys = ["f", "itp", "f2"])
         nodes2, point_data = @test_nowarn vtk_read("itp.vtu")
         @test length(nodes) == length(nodes2)
         for i in eachindex(nodes)
@@ -566,6 +566,7 @@ using Plots
         end
         @test point_data["f"] == ff
         @test point_data["itp"] == itp.(nodes)
+        @test point_data["f2"] == ff
         @test_nowarn rm("itp.vtu", force = true)
 
         expected_coefficients = [
@@ -807,6 +808,17 @@ using Plots
         t = 0.03423
         x = [0.1, 0.08]
         @test isapprox(titp(t, x), u2(t, x, pde), atol = 0.12)
+    end
+
+    @testset "Callbacks" begin
+        # SaveSolutionCallback
+        save_solution_callback = SaveSolutionCallback(dt = 0.1)
+        @test_nowarn println(save_solution_callback)
+        @test_nowarn display(save_solution_callback)
+        save_solution_callback = SaveSolutionCallback(interval = 10)
+        @test_nowarn println(save_solution_callback)
+        @test_nowarn display(save_solution_callback)
+        @test_throws ArgumentError SaveSolutionCallback(interval = 10, dt = 0.1)
     end
 
     @testset "Visualization" begin

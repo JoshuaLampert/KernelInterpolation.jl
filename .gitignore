@@ -3,3 +3,4 @@
 **/*.vtu
 run
 run/*
+out*/
