@@ -1,5 +1,5 @@
 @doc raw"""
-    TransformationKernel(kernel, transformation)
+    TransformationKernel{Dim}(kernel, transformation)
 
 Given a base `kernel` and a bijective `transformation` function, construct
 a new kernel that applies the transformation to both arguments ``x`` and ``y``,
@@ -7,7 +7,9 @@ i.e., the new kernel ``K_T`` is given by
 ```math
     K_T(x, y) = K(Tx, Ty),
 ```
-where ``K`` is the base kernel and ``T`` the transformation.
+where ``K`` is the base `kernel` and ``T`` the transformation, i.e. if ``K``
+is a kernel of dimension ``d``, ``T`` is a function from dimension `Dim` to ``d``,
+where `Dim` is the dimension of the new kernel.
 """
 struct TransformationKernel{Dim, Kernel, Transformation} <: AbstractKernel{Dim}
     kernel::Kernel
@@ -33,7 +35,7 @@ end
 order(kernel::TransformationKernel) = order(kernel.kernel)
 
 @doc raw"""
-    ProductKernel(kernels)
+    ProductKernel{Dim}(kernels)
 
 Given a vector of `kernels`, construct a new kernel that multiplies the
 results of the component kernels, i.e., the new kernel ``K`` is given by
@@ -42,6 +44,7 @@ results of the component kernels, i.e., the new kernel ``K`` is given by
 ```
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
 Note that all component kernels need to have the same [`dim`](@ref).
+A `ProductKernel` can also be constructed using the `*` operator.
 """
 struct ProductKernel{Dim} <: AbstractKernel{Dim}
     kernels::Vector{AbstractKernel}
@@ -76,8 +79,10 @@ end
 # TODO: Is that correct in general?
 order(kernel::ProductKernel) = maximum(order.(kernel.kernels))
 
+Base.:*(k1::AbstractKernel, k2::AbstractKernel) = ProductKernel{dim(k1)}([k1, k2])
+
 @doc raw"""
-    SumKernel(kernels)
+    SumKernel{Dim}(kernels)
 
 Given a vector of `kernels`, construct a new kernel that sums the
 results of the component kernels, i.e., the new kernel ``K`` is given by
@@ -86,6 +91,7 @@ results of the component kernels, i.e., the new kernel ``K`` is given by
 ```
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
 Note that all component kernels need to have the same [`dim`](@ref).
+A `SumKernel` can also be constructed using the `+` operator.
 """
 struct SumKernel{Dim} <: AbstractKernel{Dim}
     kernels::Vector{AbstractKernel}
@@ -119,3 +125,5 @@ end
 
 # TODO: Is that correct in general?
 order(kernel::SumKernel) = minimum(order.(kernel.kernels))
+
+Base.:+(k1::AbstractKernel, k2::AbstractKernel) = SumKernel{dim(k2)}([k1, k2])
