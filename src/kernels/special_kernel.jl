@@ -44,6 +44,7 @@ results of the component kernels, i.e., the new kernel ``K`` is given by
 ```
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
 Note that all component kernels need to have the same [`dim`](@ref).
+A `ProductKernel` can also be constructed using the `*` operator.
 """
 struct ProductKernel{Dim} <: AbstractKernel{Dim}
     kernels::Vector{AbstractKernel}
@@ -90,6 +91,7 @@ results of the component kernels, i.e., the new kernel ``K`` is given by
 ```
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
 Note that all component kernels need to have the same [`dim`](@ref).
+A `SumKernel` can also be constructed using the `+` operator.
 """
 struct SumKernel{Dim} <: AbstractKernel{Dim}
     kernels::Vector{AbstractKernel}
