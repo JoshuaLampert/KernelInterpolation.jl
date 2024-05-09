@@ -4,10 +4,10 @@ using Plots
 
 # source term of advection equation
 f(t, x, equations) = 0.0
-pde = AdvectionEquation([0.5,], f)
+pde = AdvectionEquation([0.5], f)
 
 # initial condition
-u(t, x, equations) = exp(-100.0 * (x[1] - equations.advection_velocity[1] * t - 0.5) ^ 2)
+u(t, x, equations) = exp(-100.0 * (x[1] - equations.advection_velocity[1] * t - 0.5)^2)
 
 n = 20
 nodeset_inner = homogeneous_hypercube(n, 0.01, 1.0)
@@ -27,7 +27,8 @@ many_nodes = homogeneous_hypercube(1000; dim = 1)
 
 anim = @animate for t in sol.t
     plot(many_nodes, titp(t), label = "numerical", training_nodes = false, linewidth = 2)
-    plot!(many_nodes, u.(Ref(t), many_nodes, Ref(pde)), label = "analytical", linewidth = 2, linestyle = :dot)
+    plot!(many_nodes, u.(Ref(t), many_nodes, Ref(pde)), label = "analytical", linewidth = 2,
+          linestyle = :dot)
     plot!(plot_title = "t = $t", ylims = (-0.1, 1.1))
 end
 OUT = "out"

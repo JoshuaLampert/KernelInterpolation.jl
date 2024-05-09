@@ -8,7 +8,9 @@ f(t, x, equations) = 0.0
 pde = AdvectionEquation([0.5, 0.5, 0.5], f)
 
 # initial condition
-u(t, x, equations) = exp(-20.0 * norm(x .- equations.advection_velocity .* t .- [0.3, 0.3, 0.3]) ^ 2)
+function u(t, x, equations)
+    exp(-20.0 * norm(x .- equations.advection_velocity .* t .- [0.3, 0.3, 0.3])^2)
+end
 
 n = 10
 nodeset_inner = homogeneous_hypercube(n, 0.01, 1.0; dim = 3)
@@ -29,7 +31,10 @@ OUT = "out"
 ispath(OUT) || mkpath(OUT)
 pvd = paraview_collection(joinpath(OUT, "solution"))
 for t in sol.t
-    KernelInterpolation.add_to_pvd(joinpath(OUT, "advection_3d_basic_$(lpad(round(Int, t * 100), 4, '0'))"), pvd, t, many_nodes,
-               titp(t).(many_nodes), u.(Ref(t), many_nodes, Ref(pde)), keys = ["numerical", "analytical"])
+    KernelInterpolation.add_to_pvd(joinpath(OUT,
+                                            "advection_3d_basic_$(lpad(round(Int, t * 100), 4, '0'))"),
+                                   pvd, t, many_nodes,
+                                   titp(t).(many_nodes), u.(Ref(t), many_nodes, Ref(pde)),
+                                   keys = ["numerical", "analytical"])
 end
 WriteVTK.vtk_save(pvd)

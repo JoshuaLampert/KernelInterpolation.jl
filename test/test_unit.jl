@@ -681,7 +681,8 @@ using Plots
         kernel = GaussKernel{3}(shape_parameter = 0.5)
         x2 = [0.1, 0.2, 0.3]
         @test isapprox(l(kernel, x2), AnalyticalLaplacian()(kernel, x2))
-        @test isapprox(g(kernel, x2), [-0.04828027081287833, -0.09656054162575665, -0.14484081243863497])
+        @test isapprox(g(kernel, x2),
+                       [-0.04828027081287833, -0.09656054162575665, -0.14484081243863497])
         kernel = GaussKernel{4}(shape_parameter = 0.5)
         x3 = rand(4)
         @test isapprox(l(kernel, x3, x3), AnalyticalLaplacian()(kernel, x3, x3))

@@ -38,7 +38,7 @@ EXAMPLES_DIR = joinpath(examples_dir(), "PDEs")
     @ki_testset "advection_3d_basic.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "advection_3d_basic.jl"),
                               l2=0.05532511824096249, linf=0.004383701006257845,
-                              pde_test=true, tspan = (0.0, 0.1))
+                              pde_test=true, tspan=(0.0, 0.1))
     end
 end
 
