@@ -47,6 +47,32 @@ function rhs(t, nodeset::NodeSet, equations::AbstractTimeDependentEquation)
 end
 
 @doc raw"""
+    AdvectionEquation(advection_velocity)
+
+Advection equation with advection velocity `advection_velocity`. The advection equation is defined as
+```math
+    \partial_t u + \mathbf{a}\cdot\nabla u = f,
+```
+where ``\mathbf{a}`` is the advection velocity and ``f`` a source term.
+"""
+struct AdvectionEquation{RealT, F} <: AbstractTimeDependentEquation where {RealT, F}
+    advection_velocity::Vector{RealT}
+    f::F
+
+    function AdvectionEquation(advection_velocity, f)
+        return new{eltype(advection_velocity), typeof(f)}(advection_velocity, f)
+    end
+end
+
+function Base.show(io::IO, ::AdvectionEquation)
+    print(io, "∂_t u + a⋅∇u = f")
+end
+
+function (equations::AdvectionEquation)(kernel::RadialSymmetricKernel, x, y)
+    return dot(equations.advection_velocity, Gradient()(kernel, x, y))
+end
+
+@doc raw"""
     HeatEquation(diffusivity, f)
 
 Heat equation with thermal diffusivity `diffusivity`. The heat equation is defined as

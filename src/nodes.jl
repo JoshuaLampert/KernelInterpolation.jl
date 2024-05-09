@@ -54,6 +54,15 @@ function NodeSet(nodes::AbstractVector{RealT}) where {RealT}
     return NodeSet([[node] for node in nodes])
 end
 
+"""
+    empty_nodeset(Dim, RealT)
+
+Create an empty [`NodeSet`](@ref).
+"""
+function empty_nodeset(Dim, RealT)
+    NodeSet{Dim, RealT}(Vector{MVector{Dim, RealT}}[], Inf)
+end
+
 function separation_distance(nodes::Vector{MVector{Dim, RealT}}) where {Dim, RealT}
     r = Inf
     for (i, x) in enumerate(nodes)
