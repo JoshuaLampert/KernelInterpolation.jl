@@ -707,6 +707,14 @@ using Plots
         # time-dependent PDEs
         # Passing a function
         f(t, x, equations) = x[1] + x[2] + t
+        advection = @test_nowarn AdvectionEquation((2.0, 0.5), f)
+        @test_nowarn println(advection)
+        @test_nowarn display(advection)
+        @test KernelInterpolation.rhs(1.0, nodeset, advection) == [1.0, 2.0, 2.0, 3.0]
+        # Passing a vector
+        @test_nowarn advection = HeatEquation((2.0, 0.5), [1.0, 2.0, 2.0, 4.0])
+        @test KernelInterpolation.rhs(1.0, nodeset, advection) == [1.0, 2.0, 2.0, 4.0]
+
         heat = @test_nowarn HeatEquation(2.0, f)
         @test_nowarn println(heat)
         @test_nowarn display(heat)

@@ -59,8 +59,12 @@ struct AdvectionEquation{RealT, F} <: AbstractTimeDependentEquation where {RealT
     advection_velocity::Vector{RealT}
     f::F
 
-    function AdvectionEquation(advection_velocity, f)
-        return new{eltype(advection_velocity), typeof(f)}(advection_velocity, f)
+    function AdvectionEquation(advection_velocity::Vector{RealT}, f) where {RealT}
+        return new{RealT, typeof(f)}(advection_velocity, f)
+    end
+
+    function AdvectionEquation(advection_velocity::NTuple, f)
+        return new{eltype(advection_velocity), typeof(f)}(collect(advection_velocity), f)
     end
 end
 

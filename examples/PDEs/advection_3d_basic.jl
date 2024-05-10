@@ -5,7 +5,7 @@ using WriteVTK: WriteVTK, paraview_collection
 
 # source term of advection equation
 f(t, x, equations) = 0.0
-pde = AdvectionEquation([0.5, 0.5, 0.5], f)
+pde = AdvectionEquation((0.5, 0.5, 0.5), f)
 
 # initial condition
 function u(t, x, equations)
