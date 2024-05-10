@@ -708,6 +708,7 @@ using Plots
         # Passing a function
         f(t, x, equations) = x[1] + x[2] + t
         advection = @test_nowarn AdvectionEquation((2.0, 0.5), f)
+        advection = @test_nowarn AdvectionEquation([2.0, 0.5], f)
         @test_nowarn println(advection)
         @test_nowarn display(advection)
         @test KernelInterpolation.rhs(1.0, nodeset, advection) == [1.0, 2.0, 2.0, 3.0]
