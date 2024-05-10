@@ -27,8 +27,10 @@ many_nodes = homogeneous_hypercube(200; dim = 1)
 
 plot()
 for t in 0.0:0.2:1.0
-    plot!(many_nodes, titp(t), training_nodes = false, linewidth = 2, color = :blue, label = t == 0.0 ? "numerical" : "")
+    plot!(many_nodes, titp(t), training_nodes = false, linewidth = 2, color = :blue,
+          label = t == 0.0 ? "numerical" : "")
     scatter!(many_nodes, u.(Ref(t), many_nodes, Ref(pde)), linewidth = 2,
-             linestyle = :dot, color = :red, markersize = 2, label = t == 0.0 ? "analytical" : "")
+             linestyle = :dot, color = :red, markersize = 2,
+             label = t == 0.0 ? "analytical" : "")
 end
 plot!()
