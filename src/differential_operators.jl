@@ -1,7 +1,7 @@
 abstract type AbstractDifferentialOperator end
 
 function (D::AbstractDifferentialOperator)(kernel::RadialSymmetricKernel, x, y)
-    @assert length(x) == length(y)
+    @assert length(x) == length(y) == dim(kernel)
     return save_call(D, kernel, x .- y)
 end
 
@@ -17,9 +17,26 @@ function save_call(D::AbstractDifferentialOperator, kernel::RadialSymmetricKerne
 end
 
 """
+    Gradient()
+
+The gradient operator. It can be called with a `RadialSymmetricKernel` and points
+`x` and `y` to evaluate the gradient of the `kernel` at `x - y`.
+"""
+struct Gradient <: AbstractDifferentialOperator
+end
+
+function Base.show(io::IO, ::Gradient)
+    print(io, "∇")
+end
+
+function (::Gradient)(kernel::RadialSymmetricKernel, x)
+    return ForwardDiff.gradient(x -> Phi(kernel, x), x)
+end
+
+"""
     Laplacian()
 
-The Laplacian operator. It can be called with an `RadialSymmetricKernel` and points
+The Laplacian operator. It can be called with a `RadialSymmetricKernel` and points
 `x` and `y` to evaluate the Laplacian of the `kernel` at `x - y`.
 """
 struct Laplacian <: AbstractDifferentialOperator

@@ -187,6 +187,15 @@ using Plots
         end
         @test length(point_data) == 0
         @test_nowarn rm("nodeset1.vtu", force = true)
+        nodeset1_1 = @test_nowarn empty_nodeset(2, Float64)
+        @test length(nodeset1_1) == 0
+        @test dim(nodeset1_1) == 2
+        @test separation_distance(nodeset1_1) == Inf
+        @test_nowarn push!(nodeset1_1, [0.0, 0.0])
+        @test length(nodeset1_1) == 1
+        @test separation_distance(nodeset1_1) == Inf
+        @test_nowarn push!(nodeset1_1, [1.0, 0.0])
+        @test separation_distance(nodeset1_1) == 0.5
 
         nodeset2 = @test_nowarn NodeSet([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]])
         @test dim(nodeset2) == 2
@@ -630,6 +639,9 @@ using Plots
         l = @test_nowarn Laplacian()
         @test_nowarn println(l)
         @test_nowarn display(l)
+        g = @test_nowarn Gradient()
+        @test_nowarn println(g)
+        @test_nowarn display(g)
         # Test if automatic differentiation gives same results as analytical derivatives
         # Define derivatives of Gauss kernel analytically and use them in the solver
         # instead of automatic differentiation
@@ -664,13 +676,16 @@ using Plots
         end
         kernel = GaussKernel{2}(shape_parameter = 0.5)
         x1 = [0.4, 0.6]
-        @test isapprox(AnalyticalLaplacian()(kernel, x1), Laplacian()(kernel, x1))
+        @test isapprox(l(kernel, x1), AnalyticalLaplacian()(kernel, x1))
+        @test isapprox(g(kernel, x1), [-0.17561908618411226, -0.2634286292761684])
         kernel = GaussKernel{3}(shape_parameter = 0.5)
         x2 = [0.1, 0.2, 0.3]
-        @test isapprox(AnalyticalLaplacian()(kernel, x2), Laplacian()(kernel, x2))
+        @test isapprox(l(kernel, x2), AnalyticalLaplacian()(kernel, x2))
+        @test isapprox(g(kernel, x2),
+                       [-0.04828027081287833, -0.09656054162575665, -0.14484081243863497])
         kernel = GaussKernel{4}(shape_parameter = 0.5)
         x3 = rand(4)
-        @test isapprox(AnalyticalLaplacian()(kernel, x3, x3), Laplacian()(kernel, x3, x3))
+        @test isapprox(l(kernel, x3, x3), AnalyticalLaplacian()(kernel, x3, x3))
     end
 
     @testset "PDEs" begin
@@ -692,6 +707,15 @@ using Plots
         # time-dependent PDEs
         # Passing a function
         f(t, x, equations) = x[1] + x[2] + t
+        advection = @test_nowarn AdvectionEquation((2.0, 0.5), f)
+        advection = @test_nowarn AdvectionEquation([2.0, 0.5], f)
+        @test_nowarn println(advection)
+        @test_nowarn display(advection)
+        @test KernelInterpolation.rhs(1.0, nodeset, advection) == [1.0, 2.0, 2.0, 3.0]
+        # Passing a vector
+        @test_nowarn advection = HeatEquation((2.0, 0.5), [1.0, 2.0, 2.0, 4.0])
+        @test KernelInterpolation.rhs(1.0, nodeset, advection) == [1.0, 2.0, 2.0, 4.0]
+
         heat = @test_nowarn HeatEquation(2.0, f)
         @test_nowarn println(heat)
         @test_nowarn display(heat)

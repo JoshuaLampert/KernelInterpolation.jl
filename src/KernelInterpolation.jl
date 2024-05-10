@@ -2,7 +2,7 @@ module KernelInterpolation
 
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
 using ForwardDiff: ForwardDiff
-using LinearAlgebra: Symmetric, norm, tr, muladd
+using LinearAlgebra: Symmetric, norm, tr, muladd, dot
 using Printf: @sprintf
 using ReadVTK: VTKFile, get_points, get_point_data, get_data
 using RecipesBase: RecipesBase, @recipe, @series
@@ -33,11 +33,11 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        Matern52Kernel, Matern72Kernel, RieszKernel,
        TransformationKernel, ProductKernel, SumKernel
 export phi, Phi, order
-export Laplacian
-export PoissonEquation, HeatEquation
+export Gradient, Laplacian
+export PoissonEquation, AdvectionEquation, HeatEquation
 export SpatialDiscretization, Semidiscretization, semidiscretize
-export NodeSet, separation_distance, dim, eachdim, values_along_dim, distance_matrix,
-       random_hypercube, random_hypercube_boundary, homogeneous_hypercube,
+export NodeSet, empty_nodeset, separation_distance, dim, eachdim, values_along_dim,
+       distance_matrix, random_hypercube, random_hypercube_boundary, homogeneous_hypercube,
        homogeneous_hypercube_boundary, random_hypersphere, random_hypersphere_boundary
 export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
        polynomial_coefficients, polynomial_basis, polyvars, system_matrix,

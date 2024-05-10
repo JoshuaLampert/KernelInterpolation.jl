@@ -68,7 +68,7 @@ depends only on one variable. A *radial basis function* kernel is a translation-
 
 Many radial symmetric kernels come with a parameter, the so-called *shape parameter* ``\varepsilon``, which can be used to control the "flatness"
 of the kernel. The shape parameter simply acts as a multiplicative factor to the norm, i.e. for a general radial-symmetric kernel we take
-``K(x, y) = \phi(\varepsilon\|x - y\|)``.
+``K(x, y) = \phi(\varepsilon\|x - y\|_2)``.
 
 The completion of the linear space of functions that is spanned by the basis given a specific kernel and a domain ``\Omega``,
 ``\mathcal{H}_{K, \Omega} = \overline{\text{span}\{K(\cdot, x), x\in\Omega\}}``, is called *native space* and is a (reproducing kernel) Hilbert space (RKHS),

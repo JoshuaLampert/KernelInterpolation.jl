@@ -144,6 +144,8 @@ function semidiscretize(semi::Semidiscretization, tspan)
                                  Ref(semi.spatial_discretization.equations))
     c0 = semi.cache.kernel_matrix \ u0
     iip = true # is-inplace, i.e., we modify a vector when calling rhs!
+    # TODO: This defines an ODEProblem with a mass matrix, which is singular, i.e. the problem is a DAE.
+    # Many ODE solvers do not support DAEs.
     f = ODEFunction{iip}(rhs!, mass_matrix = semi.cache.mass_matrix)
     return ODEProblem(f, c0, tspan, semi)
 end
