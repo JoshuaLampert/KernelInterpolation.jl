@@ -89,7 +89,6 @@ end
 # workaround from there
 polyvars(d) = ntuple(i -> Variable{Symbol("x[", i, "]")}(), d)
 
-
 # Store main timer for global timing of functions
 const main_timer = TimerOutput()
 

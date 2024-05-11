@@ -132,7 +132,8 @@ function (solution_callback::SaveSolutionCallback)(integrator)
         u = A * integrator.u
         t = integrator.t
         iter = integrator.stats.naccept
-        filename = joinpath(solution_callback.output_directory, @sprintf("solution_%06d", iter))
+        filename = joinpath(solution_callback.output_directory,
+                            @sprintf("solution_%06d", iter))
         add_to_pvd(filename, pvd, t, nodeset, u, extra_functions...; keys = keys)
     end
 
