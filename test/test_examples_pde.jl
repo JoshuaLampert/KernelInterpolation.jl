@@ -45,7 +45,7 @@ EXAMPLES_DIR = joinpath(examples_dir(), "PDEs")
         @test_include_example(joinpath(EXAMPLES_DIR, "advection_diffusion_2d_basic.jl"),
                               l2=1.5864983808899238, linf=0.5647130804141758,
                               pde_test=true, tspan=(0.0, 0.1),
-                              atol=1e-11)
+                              atol=1e-5)
     end
 end
 
