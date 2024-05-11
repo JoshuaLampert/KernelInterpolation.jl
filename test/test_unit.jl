@@ -725,6 +725,7 @@ using Plots
         @test KernelInterpolation.rhs(1.0, nodeset, heat) == [1.0, 2.0, 2.0, 4.0]
 
         advection_diffusion = @test_nowarn AdvectionDiffusionEquation(2.0, (2.0, 0.5), f)
+        advection_diffusion = @test_nowarn AdvectionDiffusionEquation(2.0, [2.0, 0.5], f)
         @test_nowarn println(advection_diffusion)
         @test_nowarn display(advection_diffusion)
         @test KernelInterpolation.rhs(1.0, nodeset, advection_diffusion) ==
