@@ -13,7 +13,8 @@ u(t, x, equations) = exp(-100.0 * norm(x - [0.4, 0.5])^2)
 n = 15
 nodeset_inner = homogeneous_hypercube(n, (0.1, 0.1), (0.9, 1.9); dim = 2)
 n_boundary = 5
-nodeset_boundary = homogeneous_hypercube_boundary(n_boundary, (0.0, 0.0), (1.0, 2.0); dim = 2)
+nodeset_boundary = homogeneous_hypercube_boundary(n_boundary, (0.0, 0.0), (1.0, 2.0);
+                                                  dim = 2)
 # Dirichlet boundary condition
 g(t, x) = 0.0
 

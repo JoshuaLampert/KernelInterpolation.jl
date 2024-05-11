@@ -113,17 +113,21 @@ The advection-diffusion equation is defined as
 where ``\mathbf{a}`` is the advection velocity, ``\kappa`` is the diffusivity, and ``f`` is the right-hand side,
 which can be a time- and space-dependent function or a vector.
 """
-struct AdvectionDiffusionEquation{RealT, F} <: AbstractTimeDependentEquation where {RealT, F}
+struct AdvectionDiffusionEquation{RealT, F} <:
+       AbstractTimeDependentEquation where {RealT, F}
     diffusivity::RealT
     advection_velocity::Vector{RealT}
     f::F
 
-    function AdvectionDiffusionEquation(diffusivity::RealT, advection_velocity::Vector{RealT}, f) where {RealT}
+    function AdvectionDiffusionEquation(diffusivity::RealT,
+                                        advection_velocity::Vector{RealT}, f) where {RealT}
         return new{typeof(diffusivity), typeof(f)}(diffusivity, advection_velocity, f)
     end
 
-    function AdvectionDiffusionEquation(diffusivity::RealT, advection_velocity::NTuple, f) where {RealT}
-        return new{typeof(diffusivity), typeof(f)}(diffusivity, collect(advection_velocity), f)
+    function AdvectionDiffusionEquation(diffusivity::RealT, advection_velocity::NTuple,
+                                        f) where {RealT}
+        return new{typeof(diffusivity), typeof(f)}(diffusivity, collect(advection_velocity),
+                                                   f)
     end
 end
 
@@ -132,5 +136,6 @@ function Base.show(io::IO, ::AdvectionDiffusionEquation)
 end
 
 function (equations::AdvectionDiffusionEquation)(kernel::RadialSymmetricKernel, x, y)
-    return dot(equations.advection_velocity, Gradient()(kernel, x, y)) - equations.diffusivity * Laplacian()(kernel, x, y)
+    return dot(equations.advection_velocity, Gradient()(kernel, x, y)) -
+           equations.diffusivity * Laplacian()(kernel, x, y)
 end
