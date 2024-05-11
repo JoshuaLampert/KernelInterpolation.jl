@@ -125,10 +125,14 @@ Base.eltype(semi::Semidiscretization) = eltype(semi.spatial_discretization)
 function rhs!(dc, c, semi, t)
     @unpack pde_boundary_matrix = semi.cache
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary = semi.spatial_discretization
-    rhs_vector = [rhs(t, nodeset_inner, equations);
-                  boundary_condition.(Ref(t), nodeset_boundary)]
-    # dc = -pde_boundary_matrix * c + rhs_vector
-    dc[:] = muladd(pde_boundary_matrix, -c, rhs_vector)
+    @timeit timer() "rhs!" begin
+        @timeit timer() "rhs vector" begin
+            rhs_vector = [rhs(t, nodeset_inner, equations);
+                          boundary_condition.(Ref(t), nodeset_boundary)]
+        end
+        # dc = -pde_boundary_matrix * c + rhs_vector
+        @timeit timer() "muladd" dc[:]=muladd(pde_boundary_matrix, -c, rhs_vector)
+    end
     return nothing
 end
 
