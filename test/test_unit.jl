@@ -862,6 +862,9 @@ using Plots
         @test_nowarn println(save_solution_callback)
         @test_nowarn display(save_solution_callback)
         @test_throws ArgumentError SaveSolutionCallback(interval = 10, dt = 0.1)
+        summary_callback = SaveSolutionCallback()
+        @test_nowarn println(summary_callback)
+        @test_nowarn display(summary_callback)
     end
 
     @testset "Visualization" begin

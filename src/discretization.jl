@@ -122,13 +122,15 @@ Base.eltype(semi::Semidiscretization) = eltype(semi.spatial_discretization)
 # We can get u from c by
 # u = A c
 # A = (A_I; A_B)∈R^{N x N}
-function rhs!(dc, c, semi, t)
+@timeit timer() "rhs!" function rhs!(dc, c, semi, t)
     @unpack pde_boundary_matrix = semi.cache
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary = semi.spatial_discretization
-    rhs_vector = [rhs(t, nodeset_inner, equations);
-                  boundary_condition.(Ref(t), nodeset_boundary)]
+    @timeit timer() "rhs vector" begin
+        rhs_vector = [rhs(t, nodeset_inner, equations);
+        boundary_condition.(Ref(t), nodeset_boundary)]
+    end
     # dc = -pde_boundary_matrix * c + rhs_vector
-    dc[:] = muladd(pde_boundary_matrix, -c, rhs_vector)
+    @timeit timer() "muladd" dc[:]=muladd(pde_boundary_matrix, -c, rhs_vector)
     return nothing
 end
 

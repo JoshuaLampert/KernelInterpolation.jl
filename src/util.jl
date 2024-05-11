@@ -88,3 +88,10 @@ end
 # https://github.com/JuliaAlgebra/TypedPolynomials.jl/issues/51, instead use the
 # workaround from there
 polyvars(d) = ntuple(i -> Variable{Symbol("x[", i, "]")}(), d)
+
+
+# Store main timer for global timing of functions
+const main_timer = TimerOutput()
+
+# Always call timer() to hide implementation details
+timer() = main_timer

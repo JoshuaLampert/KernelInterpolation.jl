@@ -123,16 +123,18 @@ end
 
 # this method is called when the callback is activated
 function (solution_callback::SaveSolutionCallback)(integrator)
-    @unpack pvd, output_directory, extra_functions, keys = solution_callback
-    semi = integrator.p
-    @unpack nodeset_inner, nodeset_boundary = semi.spatial_discretization
-    nodeset = merge(nodeset_inner, nodeset_boundary)
-    A = semi.cache.kernel_matrix
-    u = A * integrator.u
-    t = integrator.t
-    iter = integrator.stats.naccept
-    filename = joinpath(solution_callback.output_directory, @sprintf("solution_%06d", iter))
-    add_to_pvd(filename, pvd, t, nodeset, u, extra_functions...; keys = keys)
+    @timeit timer() "save solution" begin
+        @unpack pvd, output_directory, extra_functions, keys = solution_callback
+        semi = integrator.p
+        @unpack nodeset_inner, nodeset_boundary = semi.spatial_discretization
+        nodeset = merge(nodeset_inner, nodeset_boundary)
+        A = semi.cache.kernel_matrix
+        u = A * integrator.u
+        t = integrator.t
+        iter = integrator.stats.naccept
+        filename = joinpath(solution_callback.output_directory, @sprintf("solution_%06d", iter))
+        add_to_pvd(filename, pvd, t, nodeset, u, extra_functions...; keys = keys)
+    end
 
     # avoid re-evaluating possible FSAL stages
     u_modified!(integrator, false)
