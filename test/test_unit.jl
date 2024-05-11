@@ -713,7 +713,7 @@ using Plots
         @test_nowarn display(advection)
         @test KernelInterpolation.rhs(1.0, nodeset, advection) == [1.0, 2.0, 2.0, 3.0]
         # Passing a vector
-        @test_nowarn advection = HeatEquation((2.0, 0.5), [1.0, 2.0, 2.0, 4.0])
+        @test_nowarn advection = AdvectionEquation((2.0, 0.5), [1.0, 2.0, 2.0, 4.0])
         @test KernelInterpolation.rhs(1.0, nodeset, advection) == [1.0, 2.0, 2.0, 4.0]
 
         heat = @test_nowarn HeatEquation(2.0, f)
@@ -723,6 +723,18 @@ using Plots
         # Passing a vector
         @test_nowarn heat = HeatEquation(2.0, [1.0, 2.0, 2.0, 4.0])
         @test KernelInterpolation.rhs(1.0, nodeset, heat) == [1.0, 2.0, 2.0, 4.0]
+
+        advection_diffusion = @test_nowarn AdvectionDiffusionEquation(2.0, (2.0, 0.5), f)
+        @test_nowarn println(advection_diffusion)
+        @test_nowarn display(advection_diffusion)
+        @test KernelInterpolation.rhs(1.0, nodeset, advection_diffusion) == [1.0, 2.0, 2.0, 3.0]
+        # Passing a vector
+        @test_nowarn advection_diffusion = AdvectionDiffusionEquation(2.0, (2.0, 0.5), [1.0, 2.0, 2.0, 4.0])
+        @test KernelInterpolation.rhs(1.0, nodeset, advection_diffusion) == [1.0, 2.0, 2.0, 4.0]
+        x = rand(2)
+        y = rand(2)
+        kernel = Matern52Kernel{2}(shape_parameter = 0.5)
+        @test advection_diffusion(kernel, x, y) == advection(kernel, x, y) + heat(kernel, x, y)
     end
 
     @testset "Discretization" begin
