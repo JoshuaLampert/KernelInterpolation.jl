@@ -40,6 +40,13 @@ EXAMPLES_DIR = joinpath(examples_dir(), "PDEs")
                               l2=0.05532511824096249, linf=0.004383701006257845,
                               pde_test=true, tspan=(0.0, 0.1))
     end
+
+    @ki_testset "advection_diffusion_2d_basic.jl" begin
+        @test_include_example(joinpath(EXAMPLES_DIR, "advection_diffusion_2d_basic.jl"),
+                              l2=1.5864983808899238, linf=0.5647130804141758,
+                              pde_test=true, tspan=(0.0, 0.1),
+                              atol=1e-5)
+    end
 end
 
 rm("out"; force = true, recursive = true)

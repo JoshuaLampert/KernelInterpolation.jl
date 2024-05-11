@@ -101,3 +101,41 @@ end
 function (equations::HeatEquation)(kernel::RadialSymmetricKernel, x, y)
     return -equations.diffusivity * Laplacian()(kernel, x, y)
 end
+
+@doc raw"""
+    AdvectionDiffusionEquation(diffusivity, advection_velocity, f)
+
+Advection-diffusion equation with diffusivity `diffusivity` and advection velocity `advection_velocity`.
+The advection-diffusion equation is defined as
+```math
+    \partial_t u + \mathbf{a}\cdot\nabla u = \kappa\Delta u + f,
+```
+where ``\mathbf{a}`` is the advection velocity, ``\kappa`` is the diffusivity, and ``f`` is the right-hand side,
+which can be a time- and space-dependent function or a vector.
+"""
+struct AdvectionDiffusionEquation{RealT, F} <:
+       AbstractTimeDependentEquation where {RealT, F}
+    diffusivity::RealT
+    advection_velocity::Vector{RealT}
+    f::F
+
+    function AdvectionDiffusionEquation(diffusivity::RealT,
+                                        advection_velocity::Vector{RealT}, f) where {RealT}
+        return new{typeof(diffusivity), typeof(f)}(diffusivity, advection_velocity, f)
+    end
+
+    function AdvectionDiffusionEquation(diffusivity::RealT, advection_velocity::NTuple,
+                                        f) where {RealT}
+        return new{typeof(diffusivity), typeof(f)}(diffusivity, collect(advection_velocity),
+                                                   f)
+    end
+end
+
+function Base.show(io::IO, ::AdvectionDiffusionEquation)
+    print(io, "∂_t u + a⋅∇u = κΔu + f")
+end
+
+function (equations::AdvectionDiffusionEquation)(kernel::RadialSymmetricKernel, x, y)
+    return dot(equations.advection_velocity, Gradient()(kernel, x, y)) -
+           equations.diffusivity * Laplacian()(kernel, x, y)
+end
