@@ -6,5 +6,6 @@
            integrator.iter == integrator.opts.maxiters
 end
 
+include("alive.jl")
 include("save_solution.jl")
 include("summary.jl")
