@@ -92,7 +92,7 @@ end
 """
     @test_nowarn_mod expr
 Modified version of `@test_nowarn expr` that prints the content of `stderr` when
-it is not empty and ignores some common info statements printed in DispersiveShallowWater.jl
+it is not empty and ignores some common info statements printed in KernelInterpolation.jl
 uses.
 """
 macro test_nowarn_mod(expr, additional_ignore_content = String[])
