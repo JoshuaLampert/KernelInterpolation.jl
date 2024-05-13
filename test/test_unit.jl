@@ -7,10 +7,12 @@ using OrdinaryDiffEq: solve, Rodas5P
 using StaticArrays: MVector
 using Plots
 
+include("test_util.jl")
+
 @testset "Unit tests" begin
     @testset "util" begin
         @test_nowarn get_examples()
-        @test_nowarn include_example(default_example(), n = 10)
+        @test_nowarn_mod trixi_include(default_example(), n = 10)
     end
 
     @testset "Kernels" begin

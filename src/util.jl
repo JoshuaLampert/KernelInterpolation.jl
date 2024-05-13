@@ -39,51 +39,6 @@ function default_example()
     joinpath(examples_dir(), "interpolation", "interpolation_2d.jl")
 end
 
-# Note: We can't call the method below `KernelInterpolation.include` since that is created automatically
-# inside `module KernelInterpolation` to `include` source files and evaluate them within the global scope
-# of `KernelInterpolation`. However, users will want to evaluate in the global scope of `Main` or something
-# similar to manage dependencies on their own.
-"""
-    include_example([mod::Module=Main,] example::AbstractString; kwargs...)
-
-`include` the file `example` and evaluate its content in the global scope of module `mod`.
-You can override specific assignments in `example` by supplying keyword arguments.
-It's basic purpose is to make it easier to modify some parameters while running KernelInterpolation from the
-REPL. Additionally, this is used in tests to reduce the computational burden for CI while still
-providing examples with sensible default values for users.
-
-Copied from [Trixi.jl](https://github.com/trixi-framework/Trixi.jl).
-"""
-function include_example(mod::Module, example::AbstractString; kwargs...)
-    Base.include(ex -> replace_assignments(ex; kwargs...), mod, example)
-end
-
-function include_example(example::AbstractString; kwargs...)
-    include_example(Main, example; kwargs...)
-end
-
-# Apply the function `f` to `expr` and all sub-expressions recursively.
-walkexpr(f, expr::Expr) = f(Expr(expr.head, (walkexpr(f, arg) for arg in expr.args)...))
-walkexpr(f, x) = f(x)
-
-# Replace assignments to `key` in `expr` by `key = val` for all `(key,val)` in `kwargs`.
-function replace_assignments(expr; kwargs...)
-    # replace explicit and keyword assignments
-    expr = walkexpr(expr) do x
-        if x isa Expr
-            for (key, val) in kwargs
-                if (x.head === Symbol("=") || x.head === :kw) && x.args[1] === Symbol(key)
-                    x.args[2] = :($val)
-                    # dump(x)
-                end
-            end
-        end
-        return x
-    end
-
-    return expr
-end
-
 # Create `d` polyvars from `TypedPolynomials.jl`, don't use `@polyvars` because of
 # https://github.com/JuliaAlgebra/TypedPolynomials.jl/issues/51, instead use the
 # workaround from there

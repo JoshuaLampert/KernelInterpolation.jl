@@ -15,7 +15,7 @@ macro test_include_example(example, args...)
     local kwargs = Pair{Symbol, Any}[]
     for arg in args
         if (arg.head == :(=) &&
-            !(arg.args[1] in (:l2, :linf, :atol, :rtol)))
+            !(arg.args[1] in (:l2, :linf, :atol, :rtol, :pde_test)))
             push!(kwargs, Pair(arg.args...))
         end
     end
@@ -24,7 +24,7 @@ macro test_include_example(example, args...)
         println($example)
 
         # evaluate examples in the scope of the module they're called from
-        @test_nowarn include_example(@__MODULE__, $example; $kwargs...)
+        @test_nowarn_mod trixi_include(@__MODULE__, $example; $kwargs...)
         # if present, compare l2 and linf against reference values
         if !isnothing($l2) || !isnothing($linf)
             if !$pde_test
@@ -88,6 +88,48 @@ function get_kwarg(args, keyword, default_value)
     return val
 end
 
+# Copied from TrixiBase.jl. See https://github.com/trixi-framework/TrixiBase.jl/issues/9.
+"""
+    @test_nowarn_mod expr
+Modified version of `@test_nowarn expr` that prints the content of `stderr` when
+it is not empty and ignores some common info statements printed in DispersiveShallowWater.jl
+uses.
+"""
+macro test_nowarn_mod(expr, additional_ignore_content = String[])
+    quote
+        let fname = tempname()
+            try
+                ret = open(fname, "w") do f
+                    redirect_stderr(f) do
+                        $(esc(expr))
+                    end
+                end
+                stderr_content = read(fname, String)
+                if !isempty(stderr_content)
+                    println("Content of `stderr`:\n", stderr_content)
+                end
+
+                # Patterns matching the following ones will be ignored. Additional patterns
+                # passed as arguments can also be regular expressions, so we just use the
+                # type `Any` for `ignore_content`.
+                ignore_content = Any["[ Info: You just called `trixi_include`. Julia may now compile the code, please be patient.\n"]
+                append!(ignore_content, $additional_ignore_content)
+                for pattern in ignore_content
+                    stderr_content = replace(stderr_content, pattern => "")
+                end
+
+                # We also ignore simple module redefinitions for convenience. Thus, we
+                # check whether every line of `stderr_content` is of the form of a
+                # module replacement warning.
+                @test occursin(r"^(WARNING: replacing module .+\.\n)*$", stderr_content)
+                ret
+            finally
+                rm(fname, force = true)
+            end
+        end
+    end
+end
+
 """
     @ki_testset "name of the testset" #= code to test #=
 
@@ -102,7 +144,7 @@ macro ki_testset(name, expr)
         @eval module $mod
         using Test
         using KernelInterpolation
-        using LinearAlgebra: norm # We use `norm` is all `@ki_testset`s
+        using LinearAlgebra: norm # We use `norm` in all `@ki_testset`s
         include(@__FILE__)
         # We define `EXAMPLES_DIR` in (nearly) all test modules and use it to
         # get the path to the examples to be tested. However, that's not required
