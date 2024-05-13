@@ -10,7 +10,9 @@ using SciMLBase: ODEFunction, ODEProblem, ODESolution, DiscreteCallback, u_modif
 using SimpleUnPack: @unpack
 using SpecialFunctions: besselk, loggamma
 using StaticArrays: StaticArrays, MVector
+using Reexport: @reexport
 using TimerOutputs: TimerOutputs, TimerOutput, @timeit, print_timer, reset_timer!
+@reexport using TrixiBase: trixi_include
 using TypedPolynomials: Variable, monomials, degree
 using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
                 CollectionFile
@@ -46,6 +48,6 @@ export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
        TemporalInterpolation
 export AliveCallback, SaveSolutionCallback, SummaryCallback
 export vtk_save, vtk_read
-export examples_dir, get_examples, default_example, include_example
+export examples_dir, get_examples, default_example
 
 end
