@@ -854,6 +854,14 @@ using Plots
     end
 
     @testset "Callbacks" begin
+        # AliveCallback
+        alive_callback = AliveCallback(dt = 0.1)
+        @test_nowarn println(alive_callback)
+        @test_nowarn display(alive_callback)
+        alive_callback = AliveCallback(interval = 10)
+        @test_nowarn println(alive_callback)
+        @test_nowarn display(alive_callback)
+        @test_throws ArgumentError AliveCallback(interval = 10, dt = 0.1)
         # SaveSolutionCallback
         save_solution_callback = SaveSolutionCallback(dt = 0.1)
         @test_nowarn println(save_solution_callback)
@@ -862,6 +870,7 @@ using Plots
         @test_nowarn println(save_solution_callback)
         @test_nowarn display(save_solution_callback)
         @test_throws ArgumentError SaveSolutionCallback(interval = 10, dt = 0.1)
+        # SummaryCallback
         summary_callback = SummaryCallback()
         @test_nowarn println(summary_callback)
         @test_nowarn display(summary_callback)
