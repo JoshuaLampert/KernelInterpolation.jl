@@ -2,11 +2,11 @@ using KernelInterpolation
 using Plots
 
 # right-hand-side of Poisson equation
-f(x, equations) = 5 / 4 * pi^2 * sin(pi * x[1]) * cos(pi * x[2] / 2)
+f(x, equations) = 5 / 4 * pi^2 * sinpi(x[1]) * cospi(x[2] / 2)
 pde = PoissonEquation(f)
 
 # analytical solution of equation
-u(x, equations) = sin(pi * x[1]) * cos(pi * x[2] / 2)
+u(x, equations) = sinpi(x[1]) * cospi(x[2] / 2)
 
 n = 10
 nodeset_inner = homogeneous_hypercube(n, (0.1, 0.1), (0.9, 0.9); dim = 2)

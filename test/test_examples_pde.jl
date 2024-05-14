@@ -17,6 +17,12 @@ EXAMPLES_DIR = joinpath(examples_dir(), "PDEs")
                               pde_test=true)
     end
 
+    @ki_testset "laplace_2d_annulus.jl" begin
+        # No analytical solution available (don't compare l2 and linf norms)
+        @test_include_example(joinpath(EXAMPLES_DIR, "laplace_2d_annulus.jl"),
+                              pde_test=true, atol=1e-11)
+    end
+
     @ki_testset "anisotropic_elliptic_2d_basic.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "anisotropic_elliptic_2d_basic.jl"),
                               l2=0.3680733486177618, linf=0.09329545570900866,
