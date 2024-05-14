@@ -9,7 +9,8 @@ pde = PoissonEquation(f)
 
 # Create inner nodes of annulus-like domain
 function create_annulus_inner(n, inner_radius = 1.0, outer_radius = 2.0)
-    nodes_matrix = sample(n, [-outer_radius, -outer_radius], [outer_radius, outer_radius], HaltonSample())
+    nodes_matrix = sample(n, [-outer_radius, -outer_radius], [outer_radius, outer_radius],
+                          HaltonSample())
     nodes_halton = NodeSet(nodes_matrix')
     # Remove nodes inside unit circle
     to_delete = []

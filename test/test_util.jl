@@ -27,9 +27,9 @@ macro test_include_example(example, args...)
         @test_nowarn_mod trixi_include(@__MODULE__, $example; $kwargs...)
         # if present, compare l2 and linf against reference values
         if !isnothing($l2) || !isnothing($linf)
-            # interpolation test
-            # assumes `many_nodes` and `values` are defined in the example
             if !$pde_test
+                # interpolation test
+                # assumes `many_nodes` and `values` are defined in the example
                 values_test = itp.(nodeset)
                 # Check interpolation at interpolation nodes
                 @test isapprox(norm(values .- values_test, Inf), 0;
@@ -40,10 +40,10 @@ macro test_include_example(example, args...)
                                atol = $atol, rtol = $rtol)
                 @test isapprox(norm(many_values .- many_values_test, Inf), $linf;
                                atol = $atol, rtol = $rtol)
-            # PDE test
-            # assumes `many_nodes`, `nodes_inner` and `nodeset_boundary` are defined in the example
-            # if `u` is defined, it is used to compare the solution (analytical solution or initial condition) using the l2 and linf norms
             else
+                # PDE test
+                # assumes `many_nodes`, `nodes_inner` and `nodeset_boundary` are defined in the example
+                # if `u` is defined, it is used to compare the solution (analytical solution or initial condition) using the l2 and linf norms
                 if pde isa KernelInterpolation.AbstractStationaryEquation
                     rhs_values = KernelInterpolation.rhs(nodeset_inner, pde)
                     for i in eachindex(nodeset_inner)
