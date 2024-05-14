@@ -684,7 +684,7 @@ include("test_util.jl")
             return (Dim - 1) * phi_deriv_over_r(kernel, r, 1) + phi_deriv(kernel, r, 2)
         end
         kernel = GaussKernel{2}(shape_parameter = 0.5)
-        el_l = EllipticOperator(x -> I, zero, zero) # Laplacian with general elliptic operator
+        el_l = EllipticOperator(x -> I, zero, x -> 0) # Laplacian with general elliptic operator
 
         x1 = [0.4, 0.6]
         @test isapprox(l(kernel, x1), AnalyticalLaplacian()(kernel, x1))
