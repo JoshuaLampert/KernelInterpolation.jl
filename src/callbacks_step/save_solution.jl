@@ -2,13 +2,13 @@
 # https://github.com/trixi-framework/Trixi.jl/blob/cd097fc9d1fe80fb4d7824968d54c99bf3bd5281/src/callbacks_step/save_solution.jl
 
 """
-SaveSolutionCallback(; interval::Integer=0,
-                       dt=nothing,
-                       save_initial_solution=true,
-                       save_final_solution=true,
-                       output_directory="out",
-                       extra_functions=(),
-                       keys=append!(["itp"], "value_" .* string.(eachindex(extra_functions))))
+    SaveSolutionCallback(; interval::Integer=0,
+                         dt=nothing,
+                         save_initial_solution=true,
+                         save_final_solution=true,
+                         output_directory="out",
+                         extra_functions=(),
+                         keys=append!(["itp"], "value_" .* string.(eachindex(extra_functions))))
 
 Save the current numerical solution in regular intervals in VTK format as a
 Paraview Collection (.pvd). Either pass `interval` to save every `interval` time steps

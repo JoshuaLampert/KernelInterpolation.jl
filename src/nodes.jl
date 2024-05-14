@@ -281,7 +281,7 @@ end
 If `n` is integer, create a [`NodeSet`](@ref) with `n` homogeneously distributed nodes in every dimension each of dimension
 `dim` inside a hypercube defined by the bounds `x_min` and `x_max`. If `n` is a `Tuple` of length `dim`,
 then use as many nodes in each dimension as described by `n`. The resulting `NodeSet` will have
-``n^{\textrm{dim}}`` respectively ``\prod_{j = 1}n_j`` points. If the bounds are given as single values,
+``n^{\textrm{dim}}`` respectively ``\prod_{j = 1}{\textrm{dim}}n_j`` points. If the bounds are given as single values,
 they are applied for each dimension. If they are `Tuple`s of size `dim`, the hypercube has the according bounds.
 If `dim` is not given explicitly, it is inferred by the lengths of `n`, `x_min` and `x_max` if possible.
 """
