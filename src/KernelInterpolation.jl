@@ -36,8 +36,8 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        Matern52Kernel, Matern72Kernel, RieszKernel,
        TransformationKernel, ProductKernel, SumKernel
 export phi, Phi, order
-export Gradient, Laplacian
-export PoissonEquation, AdvectionEquation, HeatEquation, AdvectionDiffusionEquation
+export Gradient, Laplacian, EllipticOperator
+export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation, AdvectionDiffusionEquation
 export SpatialDiscretization, Semidiscretization, semidiscretize
 export NodeSet, empty_nodeset, separation_distance, dim, eachdim, values_along_dim,
        distance_matrix, random_hypercube, random_hypercube_boundary, homogeneous_hypercube,

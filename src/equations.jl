@@ -18,6 +18,8 @@ defined as
 ```math
     -\Delta u = f
 ```
+
+See also [`Laplacian`](@ref).
 """
 struct PoissonEquation{F} <: AbstractStationaryEquation where {F}
     f::F
@@ -34,6 +36,35 @@ end
 
 function (::PoissonEquation)(kernel::RadialSymmetricKernel, x, y)
     return -Laplacian()(kernel, x, y)
+end
+
+@doc raw"""
+    EllipticEquation(A, b, c, f)
+
+Libear second-order elliptic equation with matrix `A`, vector `b`, and scalar `c` and right-hand side `f`.
+The elliptic equation is defined as
+```math
+    \mathcal{L}u = \sum_{i,j = 1}^d a_{ij}(x)\partial_{x_i,x_j}^2u + \sum_{i = 1}^db_i(x)\partial_{x_i}u + c(x)u = f,
+```
+where `A`, `b` and `c` are space-dependent functions returning a matrix, a vector and a scalar, respectively.
+
+See also [`EllipticOperator`](@ref).
+"""
+struct EllipticEquation{AType, BType, CType, F} <: AbstractStationaryEquation where {AType, BType, CType, F}
+    op::EllipticOperator{AType, BType, CType}
+    f::F
+
+    function EllipticEquation(A, b, c, f)
+        return new{typeof(A), typeof(b), typeof(c), typeof(f)}(EllipticOperator(A, b, c), f)
+    end
+end
+
+function Base.show(io::IO, ::EllipticEquation)
+    print(io, "-∑_{i,j = 1}^d aᵢⱼ (x)∂_{x_i,x_j}^2u + ∑_{i = 1}^d bᵢ(x)∂_{x_i}u + c(x)u = f")
+end
+
+function (equations::EllipticEquation)(kernel::RadialSymmetricKernel, x, y)
+    return equations.op(kernel, x, y)
 end
 
 abstract type AbstractTimeDependentEquation <: AbstractEquation end

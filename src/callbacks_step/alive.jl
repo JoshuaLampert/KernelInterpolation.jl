@@ -1,9 +1,7 @@
 # Adapted from Trixi.jl
 # https://github.com/trixi-framework/Trixi.jl/blob/c221bca89b38d416fb49137b1b266cecd1646b52/src/callbacks_step/alive.jl
 """
-AliveCallback(io::IO = stdout; interval::Integer=0,
-              dt=nothing)
-
+    AliveCallback(io::IO = stdout; interval::Integer=0, dt=nothing)
 
 Inexpensive callback showing that a simulation is still running by printing
 some information such as the current time to the screen every `interval`

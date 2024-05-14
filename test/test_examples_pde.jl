@@ -17,6 +17,12 @@ EXAMPLES_DIR = joinpath(examples_dir(), "PDEs")
                               pde_test=true)
     end
 
+    @ki_testset "anisotropic_elliptic_2d_basic.jl" begin
+        @test_include_example(joinpath(EXAMPLES_DIR, "anisotropic_elliptic_2d_basic.jl"),
+                              l2=0.3680733486177618, linf=0.09329545570900866,
+                              pde_test=true)
+    end
+
     @ki_testset "heat_2d_basic.jl" begin
         @test_include_example(joinpath(EXAMPLES_DIR, "heat_2d_basic.jl"),
                               l2=0.8163804598948964, linf=0.0751084002569955,

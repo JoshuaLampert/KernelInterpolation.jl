@@ -112,12 +112,12 @@ end
 dim(semi::Semidiscretization) = dim(semi.spatial_discretization)
 Base.eltype(semi::Semidiscretization) = eltype(semi.spatial_discretization)
 
-# right-hand side of the ODE
-# M c' = -A c + b
+# right-hand side of the ODE (N_I: number of inner nodes, N_B: number of boundary nodes, N = N_I + N_B)
+# M c' = -A_{LB} c + b
 # where M is the (singular) mass matrix
 # M = (A_I; 0)∈R^{N x N}, A_I∈R^{N_I x N}
 # A_{LB} = (A_L; A_B)∈R^{N x N}, A_L∈R^{N_I x N}, A_B∈R^{N_B x N}
-# b = (g; g)∈R^N, f∈R^{N_I}, g∈R^{N_B}
+# b = (f; g)∈R^N, f∈R^{N_I}, g∈R^{N_B}
 
 # We can get u from c by
 # u = A c

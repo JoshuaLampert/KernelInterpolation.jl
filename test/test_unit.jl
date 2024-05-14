@@ -2,7 +2,7 @@ module TestUnit
 
 using Test
 using KernelInterpolation
-using LinearAlgebra: norm, Symmetric
+using LinearAlgebra: norm, Symmetric, I
 using OrdinaryDiffEq: solve, Rodas5P
 using StaticArrays: MVector
 using Plots
@@ -644,6 +644,13 @@ include("test_util.jl")
         g = @test_nowarn Gradient()
         @test_nowarn println(g)
         @test_nowarn display(g)
+        A(x) = [x[1]*x[2] sin(x[1])
+                sin(x[2]) x[1]^2]
+        b(x) = [x[1]^2 + x[2], x[1] + x[2]^2]
+        c(x) = x[1] + x[2]
+        el = @test_nowarn EllipticOperator(A, b, c)
+        @test_nowarn println(el)
+        @test_nowarn display(el)
         # Test if automatic differentiation gives same results as analytical derivatives
         # Define derivatives of Gauss kernel analytically and use them in the solver
         # instead of automatic differentiation
@@ -677,24 +684,30 @@ include("test_util.jl")
             return (Dim - 1) * phi_deriv_over_r(kernel, r, 1) + phi_deriv(kernel, r, 2)
         end
         kernel = GaussKernel{2}(shape_parameter = 0.5)
+        el_l = EllipticOperator(x ->  I, zero, zero) # Laplacian with general elliptic operator
+
         x1 = [0.4, 0.6]
         @test isapprox(l(kernel, x1), AnalyticalLaplacian()(kernel, x1))
         @test isapprox(g(kernel, x1), [-0.17561908618411226, -0.2634286292761684])
+        @test isapprox(el(kernel, x1), 0.6486985764273818)
+        @test isapprox(el_l(kernel, x1), -AnalyticalLaplacian()(kernel, x1))
         kernel = GaussKernel{3}(shape_parameter = 0.5)
         x2 = [0.1, 0.2, 0.3]
         @test isapprox(l(kernel, x2), AnalyticalLaplacian()(kernel, x2))
         @test isapprox(g(kernel, x2),
                        [-0.04828027081287833, -0.09656054162575665, -0.14484081243863497])
+        @test isapprox(el_l(kernel, x2), -AnalyticalLaplacian()(kernel, x2))
         kernel = GaussKernel{4}(shape_parameter = 0.5)
         x3 = rand(4)
         @test isapprox(l(kernel, x3, x3), AnalyticalLaplacian()(kernel, x3, x3))
+        @test isapprox(el_l(kernel, x3, x3), -AnalyticalLaplacian()(kernel, x3, x3))
     end
 
     @testset "PDEs" begin
         # stationary PDEs
         # Passing a function
-        f(x, equations) = x[1] + x[2]
-        poisson = @test_nowarn PoissonEquation(f)
+        f1(x, equations) = x[1] + x[2]
+        poisson = @test_nowarn PoissonEquation(f1)
         @test_nowarn println(poisson)
         @test_nowarn display(poisson)
         nodeset = NodeSet([0.0 0.0
@@ -706,11 +719,23 @@ include("test_util.jl")
         @test_nowarn poisson = PoissonEquation([0.0, 1.0, 1.0, 3.0])
         @test KernelInterpolation.rhs(nodeset, poisson) == [0.0, 1.0, 1.0, 3.0]
 
+        A(x) = [x[1]*x[2] sin(x[1])
+                sin(x[2]) x[1]^2]
+        b(x) = [x[1]^2 + x[2], x[1] + x[2]^2]
+        c(x) = x[1] + x[2]
+        elliptic = @test_nowarn EllipticEquation(A, b, c, f1)
+        @test_nowarn println(elliptic)
+        @test_nowarn display(elliptic)
+        @test KernelInterpolation.rhs(nodeset, elliptic) == [0.0, 1.0, 1.0, 2.0]
+        # Passing a vector
+        @test_nowarn elliptic = EllipticEquation(A, b, c, [0.0, 1.0, 1.0, 3.0])
+        @test KernelInterpolation.rhs(nodeset, elliptic) == [0.0, 1.0, 1.0, 3.0]
+
         # time-dependent PDEs
         # Passing a function
-        f(t, x, equations) = x[1] + x[2] + t
-        advection = @test_nowarn AdvectionEquation((2.0, 0.5), f)
-        advection = @test_nowarn AdvectionEquation([2.0, 0.5], f)
+        f2(t, x, equations) = x[1] + x[2] + t
+        advection = @test_nowarn AdvectionEquation((2.0, 0.5), f2)
+        advection = @test_nowarn AdvectionEquation([2.0, 0.5], f2)
         @test_nowarn println(advection)
         @test_nowarn display(advection)
         @test KernelInterpolation.rhs(1.0, nodeset, advection) == [1.0, 2.0, 2.0, 3.0]
@@ -718,7 +743,7 @@ include("test_util.jl")
         @test_nowarn advection = AdvectionEquation((2.0, 0.5), [1.0, 2.0, 2.0, 4.0])
         @test KernelInterpolation.rhs(1.0, nodeset, advection) == [1.0, 2.0, 2.0, 4.0]
 
-        heat = @test_nowarn HeatEquation(2.0, f)
+        heat = @test_nowarn HeatEquation(2.0, f2)
         @test_nowarn println(heat)
         @test_nowarn display(heat)
         @test KernelInterpolation.rhs(1.0, nodeset, heat) == [1.0, 2.0, 2.0, 3.0]
@@ -726,8 +751,8 @@ include("test_util.jl")
         @test_nowarn heat = HeatEquation(2.0, [1.0, 2.0, 2.0, 4.0])
         @test KernelInterpolation.rhs(1.0, nodeset, heat) == [1.0, 2.0, 2.0, 4.0]
 
-        advection_diffusion = @test_nowarn AdvectionDiffusionEquation(2.0, (2.0, 0.5), f)
-        advection_diffusion = @test_nowarn AdvectionDiffusionEquation(2.0, [2.0, 0.5], f)
+        advection_diffusion = @test_nowarn AdvectionDiffusionEquation(2.0, (2.0, 0.5), f2)
+        advection_diffusion = @test_nowarn AdvectionDiffusionEquation(2.0, [2.0, 0.5], f2)
         @test_nowarn println(advection_diffusion)
         @test_nowarn display(advection_diffusion)
         @test KernelInterpolation.rhs(1.0, nodeset, advection_diffusion) ==
@@ -737,11 +762,19 @@ include("test_util.jl")
                                                                       [1.0, 2.0, 2.0, 4.0])
         @test KernelInterpolation.rhs(1.0, nodeset, advection_diffusion) ==
               [1.0, 2.0, 2.0, 4.0]
+
+        # Test consistency between equations
+        kernel = Matern52Kernel{2}(shape_parameter = 0.5)
         x = rand(2)
         y = rand(2)
-        kernel = Matern52Kernel{2}(shape_parameter = 0.5)
         @test advection_diffusion(kernel, x, y) ==
               advection(kernel, x, y) + heat(kernel, x, y)
+        el_laplace = EllipticEquation(x ->  [1 0; 0 1], x -> [0, 0], x -> 0, f1)
+        @test el_laplace(kernel, x, y) == poisson(kernel, x, y)
+        el_advection = EllipticEquation(x ->  [0 0; 0 0], x -> [2, 0.5], x -> 0, f1)
+        @test el_advection(kernel, x, y) == advection(kernel, x, y)
+        el_advection_diffusion = EllipticEquation(x ->  [2 0; 0 2], x -> [2, 0.5], x -> 0.0, f1)
+        @test el_advection_diffusion(kernel, x, y) == advection_diffusion(kernel, x, y)
     end
 
     @testset "Discretization" begin
