@@ -684,7 +684,7 @@ include("test_util.jl")
             return (Dim - 1) * phi_deriv_over_r(kernel, r, 1) + phi_deriv(kernel, r, 2)
         end
         kernel = GaussKernel{2}(shape_parameter = 0.5)
-        el_l = EllipticOperator(x ->  I, zero, zero) # Laplacian with general elliptic operator
+        el_l = EllipticOperator(x -> I, zero, zero) # Laplacian with general elliptic operator
 
         x1 = [0.4, 0.6]
         @test isapprox(l(kernel, x1), AnalyticalLaplacian()(kernel, x1))
@@ -769,11 +769,12 @@ include("test_util.jl")
         y = rand(2)
         @test advection_diffusion(kernel, x, y) ==
               advection(kernel, x, y) + heat(kernel, x, y)
-        el_laplace = EllipticEquation(x ->  [1 0; 0 1], x -> [0, 0], x -> 0, f1)
+        el_laplace = EllipticEquation(x -> [1 0; 0 1], x -> [0, 0], x -> 0, f1)
         @test el_laplace(kernel, x, y) == poisson(kernel, x, y)
-        el_advection = EllipticEquation(x ->  [0 0; 0 0], x -> [2, 0.5], x -> 0, f1)
+        el_advection = EllipticEquation(x -> [0 0; 0 0], x -> [2, 0.5], x -> 0, f1)
         @test el_advection(kernel, x, y) == advection(kernel, x, y)
-        el_advection_diffusion = EllipticEquation(x ->  [2 0; 0 2], x -> [2, 0.5], x -> 0.0, f1)
+        el_advection_diffusion = EllipticEquation(x -> [2 0; 0 2], x -> [2, 0.5], x -> 0.0,
+                                                  f1)
         @test el_advection_diffusion(kernel, x, y) == advection_diffusion(kernel, x, y)
     end
 

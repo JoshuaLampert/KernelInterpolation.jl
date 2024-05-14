@@ -5,16 +5,17 @@ using Plots
 u(x, equations) = exp(x[1] * x[2])
 
 # coefficients of elliptic equation
-A(x) = [x[1]*x[2] + 1 sin(x[2])
+A(x) = [x[1] * x[2]+1 sin(x[2])
         sin(x[2]) 2]
 b(x) = [x[1]^2, 1]
-c(x) = 3*x[2]^2*x[1] + 4*x[2]
+c(x) = 3 * x[2]^2 * x[1] + 4 * x[2]
 # right-hand-side of elliptic equation (computed from analytical solution)
 function f(x, equations)
     AA = equations.op.A(x)
     bb = equations.op.b(x)
     cc = equations.op.c(x)
-    return (-AA[1, 1] * x[2]^2 - (AA[1, 2] + AA[2, 1]) * (1 + x[1]*x[2]) - AA[2, 2] * x[1]^2 + bb[1] * x[2] + bb[2] * x[1] + cc) * u(x, equations)
+    return (-AA[1, 1] * x[2]^2 - (AA[1, 2] + AA[2, 1]) * (1 + x[1] * x[2]) -
+            AA[2, 2] * x[1]^2 + bb[1] * x[2] + bb[2] * x[1] + cc) * u(x, equations)
 end
 pde = EllipticEquation(A, b, c, f)
 

@@ -50,7 +50,8 @@ where `A`, `b` and `c` are space-dependent functions returning a matrix, a vecto
 
 See also [`EllipticOperator`](@ref).
 """
-struct EllipticEquation{AType, BType, CType, F} <: AbstractStationaryEquation where {AType, BType, CType, F}
+struct EllipticEquation{AType, BType, CType, F} <:
+       AbstractStationaryEquation where {AType, BType, CType, F}
     op::EllipticOperator{AType, BType, CType}
     f::F
 
@@ -60,7 +61,8 @@ struct EllipticEquation{AType, BType, CType, F} <: AbstractStationaryEquation wh
 end
 
 function Base.show(io::IO, ::EllipticEquation)
-    print(io, "-∑_{i,j = 1}^d aᵢⱼ (x)∂_{x_i,x_j}^2u + ∑_{i = 1}^d bᵢ(x)∂_{x_i}u + c(x)u = f")
+    print(io,
+          "-∑_{i,j = 1}^d aᵢⱼ (x)∂_{x_i,x_j}^2u + ∑_{i = 1}^d bᵢ(x)∂_{x_i}u + c(x)u = f")
 end
 
 function (equations::EllipticEquation)(kernel::RadialSymmetricKernel, x, y)

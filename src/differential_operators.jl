@@ -63,7 +63,8 @@ The operator is defined as
 positive definite for any input `x`.
 The operator can be called with a [`RadialSymmetricKernel`](@ref) and points `x` and `y` to evaluate the operator of the `kernel` at `x - y`.
 """
-struct EllipticOperator{AType, BType, CType} <: AbstractDifferentialOperator where {AType, BType, CType}
+struct EllipticOperator{AType, BType, CType} <:
+       AbstractDifferentialOperator where {AType, BType, CType}
     A::AType
     b::BType
     c::CType
