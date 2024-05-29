@@ -252,7 +252,7 @@ Kernels can be composed by using [`SumKernel`](@ref) and [`ProductKernel`](@ref)
 which applies a transformation to the input before evaluating the kernel.
 
 However, you can also define your own kernel. A radial-symmetric kernel is a subtype of [`KernelInterpolation.RadialSymmetricKernel`](@ref), which in
-turn is a subtype of [`KernelInterpolation.AbstractKernel`](@ref) and needs to implement the functions [`phi`](@ref) and [`order`](@ref). Let's define a exponential
+turn is a subtype of [`KernelInterpolation.AbstractKernel`](@ref) and needs to implement the functions [`phi`](@ref) and [`order`](@ref). Let's define an exponential
 kernel with ``\phi(r) = \mathrm{e}^{-r^{1.5}}`` and use it for the interpolation problem above.
 
 ```@example interpolation
