@@ -122,7 +122,7 @@ end
 
 # this method is called when the callback is activated
 function (solution_callback::SaveSolutionCallback)(integrator)
-    @timeit timer() "save solution" begin
+    @trixi_timeit timer() "save solution" begin
         @unpack pvd, output_directory, extra_functions, keys = solution_callback
         semi = integrator.p
         @unpack nodeset_inner, nodeset_boundary = semi.spatial_discretization

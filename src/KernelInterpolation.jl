@@ -11,8 +11,9 @@ using SimpleUnPack: @unpack
 using SpecialFunctions: besselk, loggamma
 using StaticArrays: StaticArrays, MVector
 using Reexport: @reexport
-using TimerOutputs: TimerOutputs, TimerOutput, @timeit, print_timer, reset_timer!
+using TimerOutputs: TimerOutputs, print_timer, reset_timer!
 @reexport using TrixiBase: trixi_include
+using TrixiBase: @trixi_timeit, timer
 using TypedPolynomials: Variable, monomials, degree
 using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
                 CollectionFile
