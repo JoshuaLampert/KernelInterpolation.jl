@@ -25,7 +25,7 @@ tspan = (0.0, 1.0)
 ode = semidiscretize(sd, tspan)
 callback = SaveSolutionCallback(dt = 0.01, extra_functions = ((t, x) -> u(t, x, pde),),
                                 keys = ["itp", "u"])
-sol = solve(ode, Rosenbrock23(), saveat = 0.01, callback = callback)
+sol = solve(ode, Rodas5P(), saveat = 0.01, callback = callback)
 titp = TemporalInterpolation(sol)
 
 many_nodes = homogeneous_hypercube(20; dim = 2)
