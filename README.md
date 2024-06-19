@@ -16,7 +16,7 @@ If you have not yet installed Julia, then you first need to [download Julia](htt
 ```julia
 julia> using Pkg
 
-julia> Pkg.add("https://github.com/JoshuaLampert/KernelInterpolation.jl")
+julia> Pkg.add(url="https://github.com/JoshuaLampert/KernelInterpolation.jl")
 ```
 
 For visualizing the results, additionally you need to install [Plots.jl](https://github.com/JuliaPlots/Plots.jl), which can be done by
