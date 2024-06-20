@@ -3,12 +3,12 @@
     if Dim == 1
         x = LinRange(x_min, x_max, N)
         title --> get_name(kernel)
-        x, kernel.(Ref(0.0), x)
+        x, kernel.(x)
     elseif Dim == 2
         nodeset = homogeneous_hypercube(N, x_min, x_max; dim = 2)
         x = unique(values_along_dim(nodeset, 1))
         y = unique(values_along_dim(nodeset, 2))
-        z = reshape(kernel.(Ref([0.0, 0.0]), nodeset), (N, N))
+        z = reshape(kernel.(nodeset), (N, N))
         seriestype --> :heatmap # :contourf
         title --> get_name(kernel)
         x, y, z
@@ -20,7 +20,7 @@ end
 @recipe function f(x::AbstractVector, kernel::AbstractKernel)
     xguide --> "r"
     title --> get_name(kernel)
-    x, kernel.(Ref(0.0), x)
+    x, kernel.(x)
 end
 
 @recipe function f(nodeset::NodeSet, kernel::AbstractKernel)
@@ -34,7 +34,7 @@ end
         seriestype --> :scatter
         label --> "nodes"
         title --> get_name(kernel)
-        x, y, kernel.(Ref([0.0, 0.0]), nodeset)
+        x, y, kernel.(nodeset)
     else
         @error("Plotting a kernel is only supported for dimension up to 2, but the set has dimension $(dim(nodeset))")
     end

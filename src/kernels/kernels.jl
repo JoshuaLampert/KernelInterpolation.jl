@@ -20,5 +20,9 @@ Returns the canonical, human-readable name for the given system of equations.
 get_name(kernel::AbstractKernel) = string(nameof(typeof(kernel))) * "{" *
                                    string(dim(kernel)) * "}"
 
+function (kernel::AbstractKernel)(x)
+    return kernel(x, zero(x))
+end
+
 include("radialsymmetric_kernel.jl")
 include("special_kernel.jl")

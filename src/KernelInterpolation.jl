@@ -47,7 +47,8 @@ export NodeSet, empty_nodeset, separation_distance, dim, eachdim, values_along_d
 export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
        polynomial_coefficients, polynomial_basis, polyvars, system_matrix,
        interpolate, solve_stationary, kernel_inner_product, kernel_norm,
-       TemporalInterpolation
+       kernel_matrix, operator_matrix
+export Interpolation, TemporalInterpolation
 export AliveCallback, SaveSolutionCallback, SummaryCallback
 export vtk_save, vtk_read
 export examples_dir, get_examples, default_example
