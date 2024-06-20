@@ -1,19 +1,5 @@
 abstract type AbstractInterpolation{Kernel, Dim, RealT} end
 
-"""
-    interpolation_kernel(itp)
-
-Return the kernel from an interpolation object.
-"""
-interpolation_kernel(itp::AbstractInterpolation) = itp.kernel
-
-"""
-	nodeset(itp)
-
-Return the node set from an interpolation object.
-"""
-nodeset(itp::AbstractInterpolation) = itp.nodeset
-
 @doc raw"""
     Interpolation
 
@@ -50,6 +36,20 @@ end
 Return the dimension of the input variables of the interpolation.
 """
 dim(::Interpolation{Kernel, Dim, RealT, A}) where {Kernel, Dim, RealT, A} = Dim
+
+"""
+    interpolation_kernel(itp)
+
+Return the kernel from an interpolation object.
+"""
+interpolation_kernel(itp::AbstractInterpolation) = itp.kernel
+
+"""
+	nodeset(itp)
+
+Return the node set from an interpolation object.
+"""
+nodeset(itp::AbstractInterpolation) = itp.nodeset
 
 """
     coefficients(itp::Interpolation)

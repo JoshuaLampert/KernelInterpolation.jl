@@ -12,6 +12,10 @@ The kernel is then defined by
 ```math
     K(x, y) = \Phi(x - y).
 ```
+
+A `RadialSymmetricKernel` can be evaluated at two points `x` and `y` by calling
+`kernel(x, y)` or at a single point `x` by calling `kernel(x)`, which implicitly
+sets `y` to zero.
 """
 abstract type RadialSymmetricKernel{Dim} <: AbstractKernel{Dim} end
 

@@ -7,7 +7,7 @@ or vectors to save the values of the functions at the nodes. The functions can a
 [`KernelInterpolation.Interpolation`](@ref) or directly as vectors. The optional keyword argument `keys` is used to
 specify the names of the data arrays in the VTK file.
 
-See [`add_to_pvd`](@ref)
+See also [`add_to_pvd`](@ref), [`vtk_read`](@ref).
 """
 function vtk_save(filename, nodeset::NodeSet, functions_or_vectors...;
                   keys = "value_" .* string.(eachindex(functions_or_vectors)))
@@ -57,6 +57,8 @@ end
 Read a set of nodes from a VTK file and return them as a [`NodeSet`](@ref). Note that the data
 will always be returned as a 3D [`NodeSet`](@ref), even if the data is 1D or 2D. The point data
 will be returned as a dictionary with the keys being the names of the data arrays in the VTK file.
+
+See also [`vtk_save`](@ref).
 """
 function vtk_read(filename)
     vtk = VTKFile(filename)

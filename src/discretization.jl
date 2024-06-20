@@ -45,19 +45,16 @@ function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, Rea
                                                                                             RealT
                                                                                             }
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, kernel = spatial_discretization
-    nodeset = merge(nodeset_inner, nodeset_boundary)
 
-    pd_matrix = pde_matrix(equations, nodeset_inner, nodeset, kernel)
-    b_matrix = kernel_matrix(nodeset_boundary, nodeset, kernel)
-    system_matrix = [pd_matrix
-                     b_matrix]
+    system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, kernel)
     b = [rhs(nodeset_inner, equations); boundary_condition.(nodeset_boundary)]
     c = system_matrix \ b
 
     # Do not support additional polynomial basis for now
     xx = polyvars(Dim)
     ps = monomials(xx, 0:-1)
-    return Interpolation(kernel, nodeset, c, system_matrix, ps, xx)
+    return Interpolation(kernel, merge(nodeset_inner, nodeset_boundary), c, system_matrix,
+                         ps, xx)
 end
 
 """
@@ -84,14 +81,12 @@ function Semidiscretization(spatial_discretization, initial_condition)
     # whole kernel matrix is not needed for rhs, but for initial condition
     k_matrix = [k_matrix_inner
                 k_matrix_boundary]
-    pd_matrix = pde_matrix(equations, nodeset_inner, nodeset, kernel)
-    b_matrix = kernel_matrix(nodeset_boundary, nodeset, kernel)
-    pde_boundary_matrix = [pd_matrix
-                           b_matrix]
+    pdeb_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, kernel)
+
     m_matrix = [k_matrix_inner
                 zeros(eltype(k_matrix_inner), size(k_matrix_boundary)...)]
     cache = (; kernel_matrix = k_matrix, mass_matrix = m_matrix,
-             pde_boundary_matrix = pde_boundary_matrix)
+             pde_boundary_matrix = pdeb_matrix)
     return Semidiscretization{typeof(initial_condition), typeof(cache)}(spatial_discretization,
                                                                         initial_condition,
                                                                         cache)

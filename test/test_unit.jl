@@ -841,6 +841,22 @@ include("test_util.jl")
         for (node, value) in zip(nodeset_boundary, values_boundary)
             @test isapprox(itp(node), value, atol = 1e-14)
         end
+        nodes = nodeset(itp)
+        # Test if u = A * c
+        A = kernel_matrix(nodes, kernel)
+        c = coefficients(itp)
+        u1_values = A * c
+        u2_values = itp.(nodes)
+        for (u1_val, u2_val) in zip(u1_values, u2_values)
+            @test isapprox(u1_val, u2_val, atol = 1e-14)
+        end
+        # Test if L * u = b
+        L = operator_matrix(pde, nodeset_inner, nodeset_boundary, kernel)
+        b = [f1.(nodeset_inner, Ref(pde)); g1.(nodeset_boundary)]
+        b_test = L * u2_values
+        for (b_val, b_test_val) in zip(b, b_test)
+            @test isapprox(b_val, b_test_val, atol = 1e-12)
+        end
         # Test if the solution is close to the analytical solution in other points
         x = [0.1, 0.08]
         @test isapprox(itp(x), u1(x), atol = 0.12)
@@ -875,7 +891,7 @@ include("test_util.jl")
             @test isapprox(titp(t, node), value, atol = 1e-14)
             @test isapprox(titp(t)(node), titp(t, node))
         end
-        t = sol.t[end]
+        # Test if u = A * c
         A = Matrix(semi.cache.kernel_matrix)
         c = sol(t)
         u1_values = A * c
