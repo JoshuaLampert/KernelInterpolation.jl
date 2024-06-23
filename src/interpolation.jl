@@ -134,7 +134,7 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
 ```math
     \sum_{j = 1}^N c_jp_k(x_j) = 0, \quad k = 1,\ldots, Q = \begin{pmatrix}m - 1 + d\\d\end{pmatrix}
 ```
-are enforced. Returns an [`KernelInterpolation.Interpolation`](@ref) object.
+are enforced. Returns an [`Interpolation`](@ref) object.
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
                      kernel = GaussKernel{Dim}(),
@@ -241,7 +241,7 @@ kernel_norm(itp) = sqrt(kernel_inner_product(itp, itp))
     TemporalInterpolation(ode_sol::ODESolution)
 
 Temporal interpolation of an ODE solution. The result can be evaluated at a time `t` and a spatial point `x`.
-Evaluating the interpolation at a time `t` returns a [`KernelInterpolation.Interpolation`](@ref) object that can
+Evaluating the interpolation at a time `t` returns an [`Interpolation`](@ref) object that can
 be evaluated at a spatial point `x`.
 """
 struct TemporalInterpolation

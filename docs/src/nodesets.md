@@ -103,7 +103,7 @@ nothing # Avoid showing the path # hide
 You might want to consider using other plotting backends, e.g. [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl) can be used by
 additionally calling `pyplot()` before `plot` in the above code snippet. Refer to the [documentation of Plots.jl](https://docs.juliaplots.org/stable/backends/)
 for the different available backends.
-In order to color the nodes according to the values of a function (or an [`KernelInterpolation.Interpolation`](@ref)) at the nodes,
+In order to color the nodes according to the values of a function (or an [`Interpolation`](@ref)) at the nodes,
 you can additionally pass the vector of function values as keyword argument `zcolor` (note that you can treat a [`NodeSet`](@ref)
 as a usual array, e.g., broadcasting works with the common dot syntax).
 
@@ -116,7 +116,7 @@ nothing # Avoid showing the path # hide
 
 ![Halton nodes with function values](nodes_halton_function.png)
 
-For 1D or 2D [`NodeSet`](@ref)s you can also pass a function (or, again, an object of [`KernelInterpolation.Interpolation`](@ref)),
+For 1D or 2D [`NodeSet`](@ref)s you can also pass a function (or, again, an object of [`Interpolation`](@ref)),
 which is then used to determine the values in the vertical direction. For a surface plot of a function based on a set of nodes,
 you can, e.g., run the following
 

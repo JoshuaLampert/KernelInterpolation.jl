@@ -27,4 +27,5 @@ makedocs(;
 
 deploydocs(;
            repo = "github.com/JoshuaLampert/KernelInterpolation.jl",
-           devbranch = "main")
+           devbranch = "main",
+           push_preview = true)

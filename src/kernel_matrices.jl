@@ -82,9 +82,9 @@ end
 
 Compute the matrix of a partial differential equation (or differential operator) with a given kernel. The matrix is defined as
 ```math
-    A_\mathcal{L} = \begin{pmatrix}\tilde A_\mathcal{L}\\\tilde A}\end{pmatrix},
+    A_\mathcal{L} = \begin{pmatrix}\tilde A_\mathcal{L}\\\tilde A\end{pmatrix},
 ```
-where ``\tilde A_\mathcal{L}`` is the matrix of the differential operator (defined by the `equations`) for the inner nodes `x_i`:
+where ``\tilde A_\mathcal{L}`` is the matrix of the differential operator (defined by the `equations`) for the inner nodes ``x_i``:
 ```math
     (\tilde A_\mathcal{L})_{ij} = \mathcal{L}K(x_i, \xi_j),
 ```
@@ -108,7 +108,7 @@ end
 @doc raw"""
     operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
 
-Compute the operator matrix `L` discretizing `\mathcal{L}` for a given kernel. The operator matrix is defined as
+Compute the operator matrix ``L`` discretizing ``\mathcal{L}`` for a given kernel. The operator matrix is defined as
 ```math
     L = A_\mathcal{L} * A^{-1},
 ```

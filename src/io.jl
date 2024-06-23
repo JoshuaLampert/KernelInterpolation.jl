@@ -4,7 +4,7 @@
 
 Save a [`NodeSet`](@ref) to a VTK file. You can optionally pass a list of space-dependent functions
 or vectors to save the values of the functions at the nodes. The functions can also be passed as
-[`KernelInterpolation.Interpolation`](@ref) or directly as vectors. The optional keyword argument `keys` is used to
+[`Interpolation`](@ref) or directly as vectors. The optional keyword argument `keys` is used to
 specify the names of the data arrays in the VTK file.
 
 See also [`add_to_pvd`](@ref), [`vtk_read`](@ref).
