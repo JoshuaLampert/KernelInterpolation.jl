@@ -41,21 +41,21 @@ In order to interpolate discrete function values of a (potentially) multivariate
 julia> nodeset = homogeneous_hypercube(5, (-2, -1), (2, 1))
 ```
 
-Here, we specified that the hypercube has 5 nodes along each of the 2 dimensions (i.e. in total we have $5^2 = 25$ nodes) and that the boundaries of the cube are given by the lower left corner located at $(-2, -1)$ and the upper right corner at $(2, 1)$. Similarly, [`NodeSet`](@ref)s can be constructed by the functions [`random_hypercube`](@ref), [`random_hypercube_boundary`](@ref), [`homogeneous_hypercube_boundary`](@ref), [`random_hypersphere`](@ref) or [`random_hypersphere_boundary`](@ref) or by directly passing a set of nodes to the constructor of `NodeSet`. Besides the `nodeset`, we need the function values at the nodes. Let's say, we want to reconstruct the function $f(x) = \sin(x_1\cdot x_2)$. Then, we can create the vector of function values by
+Here, we specified that the hypercube has 5 nodes along each of the 2 dimensions (i.e. in total we have $5^2 = 25$ nodes) and that the boundaries of the cube are given by the lower left corner located at $(-2, -1)$ and the upper right corner at $(2, 1)$. Similarly, [`NodeSet`](@ref)s can be constructed by the functions [`random_hypercube`](@ref), [`random_hypercube_boundary`](@ref), [`homogeneous_hypercube_boundary`](@ref), [`random_hypersphere`](@ref) or [`random_hypersphere_boundary`](@ref) or by directly passing a set of nodes to the constructor of [`NodeSet`](@ref). Besides the `nodeset`, we need the function values at the nodes. Let's say, we want to reconstruct the function $f(x) = \sin(x_1\cdot x_2)$. Then, we can create the vector of function values by
 
 ```julia
 julia> f(x) = sin(x[1]*x[2])
 julia> ff = f.(nodeset)
 ```
 
-Finally, we obtain the `Interpolation` object by calling [`interpolate`](@ref), where we specify the kernel function that is used for the reconstruction. Here, we take a Gaussian $\phi(r) = \exp(-(\varepsilon r)^2)$ with shape parameter $\varepsilon = 1/2$ as radial-symmetric basis function:
+Finally, we obtain the [`Interpolation`](@ref) object by calling [`interpolate`](@ref), where we specify the kernel function that is used for the reconstruction. Here, we take a Gaussian $\phi(r) = \exp(-(\varepsilon r)^2)$ with shape parameter $\varepsilon = 1/2$ as radial-symmetric basis function:
 
 ```julia
 julia> kernel = GaussKernel{dim(nodeset)}(shape_parameter = 0.5)
 julia> itp = interpolate(nodeset, ff, kernel)
 ```
 
-If the `kernel` is only conditionally positive definite, the interpolant will be augmented by a polynomial of the corresponding order of the kernel. Another order can also be passed explicitly with the keyword argument `m` of `interpolate`. The result `itp` is an object that is callable on any point $x\in\mathbb{R}^d$, e.g.,
+If the `kernel` is only conditionally positive definite, the interpolant will be augmented by a polynomial of the corresponding order of the kernel. Another order can also be passed explicitly with the keyword argument `m` of [`interpolate`](@ref). The result `itp` is an object that is callable on any point $x\in\mathbb{R}^d$, e.g.,
 
 ```julia
 julia> itp([-1.3, 0.26])
@@ -75,13 +75,13 @@ In order to visualize the results, you need to have [Plots.jl](https://github.co
 julia> using Plots
 ```
 
-A `NodeSet` can simply be plotted by calling
+A [`NodeSet`](@ref) can simply be plotted by calling
 
 ```julia
 julia> plot(nodeset)
 ```
 
-An `Interpolation` object can be plotted by providing a `NodeSet` at which the interpolation is evaluated. Continuing the example from above, we can visualize the resulting interpolant on a finer grid
+An [`Interpolation`](@ref) object can be plotted by providing a [`NodeSet`](@ref) at which the interpolation is evaluated. Continuing the example from above, we can visualize the resulting interpolant on a finer grid
 
 ```julia
 julia> nodeset_fine = homogeneous_hypercube(20, 2, (-2, -1), (2, 1))
