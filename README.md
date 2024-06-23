@@ -9,7 +9,9 @@
 
 **KernelInterpolation.jl** is a [Julia](https://julialang.org/) package that
 implements methods for multivariate interpolation in arbitrary dimension based on symmetric (conditionally) positive-definite kernels
-with a focus on radial-basis functions.
+with a focus on radial-basis functions. It can be used for classical interpolation of scattered data, as well as for generalized
+(Hermite-Birkhoff) interpolation by using a meshfree collocation approach. This can be used to solve partial differential equations both
+stationary ones and time-dependent ones by using some time integration method from [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl).
 
 ## Installation
 
@@ -30,6 +32,11 @@ julia> using Pkg
 
 julia> Pkg.add("Plots")
 ```
+
+To create special node sets, you might also want to install [QuasiMonteCarlo.jl](https://github.com/SciML/QuasiMonteCarlo.jl) and
+for solving time-dependent partial differential equations [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl) in a
+similar way as above for Plots.jl. See the documentation for more examples on how to use these packages in combination with
+KernelInterpolation.jl.
 
 ## Usage
 
@@ -80,6 +87,8 @@ julia> f([-1.3, 0.26])
 -0.33160091709280176
 ```
 
+For more sophisticated examples also involving solving stationary or time-dependent partial differential equations, see the
+[documentation](https://joshualampert.github.io/KernelInterpolation.jl/dev/pdes).
 More examples can be found in the [`examples/`](https://github.com/JoshuaLampert/KernelInterpolation.jl/tree/main/examples) subdirectory.
 
 ### Visualization
@@ -109,6 +118,10 @@ To visualize the true solution `f` in the same plot as a surface plot we can cal
 ```julia
 julia> plot!(nodeset_fine, f, st = :surface)
 ```
+
+KernelInterpolation.jl also supports exporting (and importing) to the VTK files, which can be visualized using tools
+such as [ParaView](https://www.paraview.org/) or [VisIt](https://visit-dav.github.io/visit-website/). See the documentation
+for more details.
 
 ## Authors
 

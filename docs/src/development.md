@@ -19,7 +19,7 @@ cd KernelInterpolation.jl
 mkdir run
 cd run
 julia --project=. -e 'using Pkg; Pkg.develop(PackageSpec(path=".."))' # Install local KernelInterpolation.jl clone
-julia --project=. -e 'using Pkg; Pkg.add(["Plots", "QuasiMonteCarlo"])' # Install additional packages
+julia --project=. -e 'using Pkg; Pkg.add(["Plots", "QuasiMonteCarlo", "OrdinaryDiffEq"])' # Install additional packages
 ```
 
 If you use other packages for executing KernelInterpolation.jl, you can add them to the project in the `run`
