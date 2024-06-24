@@ -121,7 +121,7 @@ To visualize the true solution `f` in the same plot as a surface plot we can cal
 julia> plot!(nodeset_fine, f, st = :surface)
 ```
 
-KernelInterpolation.jl also supports exporting (and importing) to the VTK files, which can be visualized using tools
+KernelInterpolation.jl also supports exporting (and importing) VTK files, which can be visualized using tools
 such as [ParaView](https://www.paraview.org/) or [VisIt](https://visit-dav.github.io/visit-website/). See the documentation
 for more details.
 

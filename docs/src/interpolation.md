@@ -1,4 +1,4 @@
-# Classical interpolation
+# [Classical interpolation](@id classical_interpolation)
 
 Kernel methods are well-suited to interpolate given function values, which are known at scattered data points in any space
 dimension. In this tutorial, we will discuss the basics of kernel-based interpolation methods and how these can be
