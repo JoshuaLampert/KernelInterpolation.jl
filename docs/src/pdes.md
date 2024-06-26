@@ -35,13 +35,36 @@ boundary operator $\mathcal{B}$ as
 where $g$ is a given function. As boundary operator $\mathcal{B}$ we usually consider the identity operator, which corresponds to Dirichlet boundary conditions.
 Like in the case of classical interpolation, we pick a set of nodes $X_I = \{x_i\}_{i = 1}^{N_I}\subset\Omega$. Due to the additional boundary conditions, we also
 pick a set of nodes $X_B = \{x_i\}_{i = N_I + 1}^N\subset\partial\Omega$. Let $N = N_I + N_B$ and $X = X_I\cup X_B$. We again formulate an ansatz function $u$
-as a linear combination of basis functions. In the simplest case, we use the same linear combination, i.e.
+as a linear combination of basis functions. In the simplest case, we use the same linear combination (neglecting polynomial augmentation for simplicity), i.e.
 
 ```math
-u(x) = \sum_{i = 1}^N c_iK(x, x_i),
+u(x) = \sum_{j = 1}^N c_iK(x, x_j),
 ```
 
-where $K(x, x_i)$ are the kernel functions. This approach is also non as non-symmetric collocation or Kansa's method.
+where $K$ is the kernel function. This approach is also non as non-symmetric collocation or Kansa's method. By enforcing the conditions $\mathcal{L}u(x_i) = f(x_i)$
+for $i = 1,\ldots,N_I$ and $\mathcal{B}u(x_i) = g(x_i)$ for $i = N_I + 1,\ldots,N$ we obtain a linear system of equations for the coefficients $c_i$, which can be
+written as
+
+```math
+\begin{pmatrix}
+\tilde{A}_I \\ \tilde{A}_B
+\end{pmatrix}
+c = \begin{pmatrix}
+f_{X_I} \\ g_{X_B}
+\end{pmatrix},
+```
+
+where $\tilde{A}_I\in\mathbb{R}^{N_I\times N$ and $\tilde{A}_B\in\mathbb{R}^{N_I\times N$ are the matrices corresponding to the conditions at the interior and boundary nodes,
+respectively, i.e.
+
+```math
+(\tilde{A}_I)_{ij} = \mathcal{L}K(x_i, x_j), i = 1, \ldots, N_I, j = 1, \ldots, N \\
+(\tilde{A}_B)_{ij} = \mathcal{B}K(x_i, x_j), i = 1, \ldots, N_B, j = 1, \ldots, N.
+```
+
+Since the kernel function is known and differentiable, we can compute the derivatives of $K$ analytically. Note, however, that the system matrix
+$A = \begin{pmatrix} \tilde{A}_I \\ \tilde{A}_B \end{pmatrix}$ is not invertible in general because it not symmetric anymore as it was the case in the classical interpolation.
+Thus, this approach is also called non-symmetric collocation.
 
 TODO:
 
