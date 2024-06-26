@@ -55,11 +55,11 @@ function NodeSet(nodes::AbstractVector{RealT}) where {RealT}
 end
 
 """
-    empty_nodeset(Dim, RealT)
+    empty_nodeset(Dim, RealT = Float64)
 
 Create an empty [`NodeSet`](@ref).
 """
-function empty_nodeset(Dim, RealT)
+function empty_nodeset(Dim, RealT = Float64)
     NodeSet{Dim, RealT}(Vector{MVector{Dim, RealT}}[], Inf)
 end
 

@@ -65,6 +65,52 @@ respectively, i.e.
 Since the kernel function is known and differentiable, we can compute the derivatives of $K$ analytically. Note, however, that the system matrix
 $A = \begin{pmatrix} \tilde{A}_I \\ \tilde{A}_B \end{pmatrix}$ is not invertible in general because it not symmetric anymore as it was the case in the classical interpolation.
 Thus, this approach is also called non-symmetric collocation.
+Let us see how this can be implemented in KernelInterpolation.jl by solving the Poisson equation ``-\Delta u = f`` in an L-shaped domain. We start by defining the equation
+(thus the differential operator) and the right-hand side. KernelInterpolation.jl provides already a set of predefined differential operators and equations.
+
+```@example poisson
+using KernelInterpolation
+
+# right-hand-side of Poisson equation
+f(x, equations) = 5 / 4 * pi^2 * sinpi(x[1]) * cospi(x[2] / 2)
+pde = PoissonEquation(f)
+
+# analytical solution of equation
+u(x, equations) = sinpi(x[1]) * cospi(x[2] / 2)
+```
+
+Next, we define the domain and the boundary of the L-shaped domain. We use a homogeneous grid for the nodes and filter the inner and boundary nodes in two separate
+[`NodeSet`](@ref)s.
+
+```@example poisson
+# domain
+x_min1 = (0.0, 0.0)
+x_max1 = (1 * pi, 1.0)
+x_min2 = (1 * pi, 0.0)
+x_max2 = (2 * pi, 1.0)
+x_min3 = (0.0, 1.0)
+x_max3 = (1 * pi, 2.0)
+N = 6
+nodeset1 = homogeneous_hypercube(N, x_min1, x_max1)
+nodeset2 = homogeneous_hypercube(N, x_min2, x_max2)
+nodeset3 = homogeneous_hypercube(N, x_min3, x_max3)
+nodeset = merge(nodeset1, nodeset2, nodeset3)
+unique!(nodeset)
+nodeset_inner = empty_nodeset(2)
+nodeset_boundary = empty_nodeset(2)
+for x in nodeset
+    if x[1] == 0.0 || x[2] == 0.0 || x[2] == 2.0 || x[1] == 2.0 * pi || (x[1] == 1.0 * pi && x[2] >= 1.0) || (x[2] == 1.0 && x[1] >= pi)
+        push!(nodeset_boundary, x)
+    else
+        push!(nodeset_inner, x)
+    end
+end
+```
+
+Finally, we solve the PDE by collocation and visualize the results.
+
+```@example poisson
+```
 
 TODO:
 
