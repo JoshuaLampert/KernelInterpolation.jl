@@ -38,7 +38,7 @@ pick a set of nodes $X_B = \{x_i\}_{i = N_I + 1}^N\subset\partial\Omega$. Let $N
 as a linear combination of basis functions. In the simplest case, we use the same linear combination (neglecting polynomial augmentation for simplicity), i.e.
 
 ```math
-u(x) = \sum_{j = 1}^N c_iK(x, x_j),
+u(x) = \sum_{j = 1}^N c_jK(x, x_j),
 ```
 
 where $K$ is the kernel function. This approach is also non as non-symmetric collocation or Kansa's method. By enforcing the conditions $\mathcal{L}u(x_i) = f(x_i)$
@@ -58,8 +58,10 @@ where $\tilde{A}_I\in\mathbb{R}^{N_I\times N}$ and $\tilde{A}_B\in\mathbb{R}^{N_
 respectively, i.e.
 
 ```math
-(\tilde{A}_I)_{ij} = \mathcal{L}K(x_i, x_j), i = 1, \ldots, N_I, j = 1, \ldots, N \\
-(\tilde{A}_B)_{ij} = \mathcal{B}K(x_i, x_j), i = 1, \ldots, N_B, j = 1, \ldots, N.
+\begin{align}
+    (\tilde{A}_I)_{ij} = \mathcal{L}K(x_i, x_j), i = 1, \ldots, N_I, j = 1, \ldots, N \\
+    (\tilde{A}_B)_{ij} = \mathcal{B}K(x_i, x_j), i = 1, \ldots, N_B, j = 1, \ldots, N.
+\end{align}
 ```
 
 Since the kernel function is known and differentiable, we can compute the derivatives of $K$ analytically.
@@ -143,9 +145,80 @@ vtk_save(joinpath(OUT, "poisson_2d_L_shape"), many_nodes, itp, x -> u(x, pde);
 rm(joinpath(OUT, "poisson_2d_L_shape.vtu")) #clean up again # hide
 ```
 
-The resulting VTK file can be visualized with a tool like ParaView. After applying the filter "Warp by Scalar", setting the coloring accordingly, and changing the
+The resulting VTK file can be visualized with a tool like ParaView. After applying the filter `Warp by Scalar`, setting the coloring accordingly, and changing the
 "Representation" to "Point Gaussian", we obtain the following visualization:
 
 ![Poisson equation in an L shape domain](poisson_L_shape.png)
 
 ## Time-dependent PDEs
+
+KernelInterpolation.jl also supports the solution of time-dependent PDEs. The idea is to use the same approach as above for the spatial part of the PDE and then obtain
+an ordinary differential equation (ODE), which can be solved by some time integration method (method of lines). The general form of a time-dependent PDE is
+
+```math
+\partial u/\partial t + \mathcal{L}u = + f,
+```
+
+where $\mathcal{L}$ is a linear differential operator of order $m$ and $f$ is a given function. The initial condition is given by $u(x, 0) = u_0(x)$. Boundary conditions
+are applied as before. Similar to the stationary case, we discretize the spatial part of the PDE by collocation and obtain a system of ODEs for the coefficients $c_i$ of
+the basis functions, i.e. now the coefficients depend on time:
+
+```math
+u(t, x) = \sum_{j = 1}^N c_j(t)K(x, x_j),
+```
+
+where $c_j(t)$ are the coefficients at time $t$. We again divide the spatial domain in a set of points in the inner domain $X_I$ and at the boundary $X_B$. Plugging in
+the ansatz function into the PDE and the boundary conditions and evaluating at the nodes, we obtain the following system of ODEs and differential equations:
+
+```math
+\begin{align}
+    \partial_t u(t, x_i) = \sum_{j = 1}^N \partial_t c_j(t)K(x_i, x_j) = -\sum_{j = 1}^Nc_j(t)\mathcal{L}K(x_i, x_j) + f(x_i), i = 1, \ldots, N_I \\
+    0 = -\sum_{j = 1}^Nc_j(t)\mathcal{B}K(x_i, x_j) + g(x_i), i = N_I + 1, \ldots, N.
+\end{align}
+```
+
+These equations can be written compactly as a differential-algebraic equation (DAE) of the form
+
+```math
+Mc^\prime(t) = -Ac(t) + b
+```
+
+where $c(t) = [c_1(t), \ldots, c_N(t)]^T$ is the vector of coefficients, $M\in\mathbb{R}^{N\times N}$ is a (singular) mass matrix, $A\in\mathbb{R}^{N\times N}$ is the system matrix,
+and $b = \begin{pmatrix}f_{X_I}\\ g_{X_B}\end{pmatrix}\in\mathbb{R}^N$. The matrices are given by
+
+```math
+M = \begin{pmatrix} \tilde{A_I}\\0\end{pmatrix}\quad A = \begin{pmatrix} \tilde{A_L}\\\tilde{A_B}\end{pmatrix},
+```
+
+where
+
+```math
+\begin{align}
+    \tilde{A_I}\in\mathbb{R}^{N_I\times N}, (\tilde{A_I})_{ij} = K(x_i, x_j)\\
+    \tilde{A_L}\in\mathbb{R}^{N_I\times N}, (\tilde{A_L})_{ij} = \mathcal{L}K(x_i, x_j)\\
+    \tilde{A_B}\in\mathbb{R}^{N_B\times N}, (\tilde{A_B})_{ij} = \mathcal{B}K(x_i, x_j).
+\end{align}
+```
+
+The coefficients for the initial conditions can be computed from the initial condition $u_0(x)$ by solving the linear system
+
+```math
+\begin{pmatrix}
+\tilde{A_I}\\\tilde{A_B}
+\end{pmatrix}
+c_0 = (u_0)_X.
+```
+
+For the solution of the DAE system, KernelInterpolation.jl uses the library [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl), which already provides a
+wide range of time integration methods. Note that this is a differential-algebraic equation (DAE) system, which is more difficult to solve than a simple ODE system. Thus,
+we are restricted to specialized time integration methods, which can handle DAEs. We recommend using the `Rodas5` method, which is a Rosenbrock method for stiff DAEs. See
+also the [documentation of OrdinaryDiffEq.jl](https://docs.sciml.ai/DiffEqDocs/latest/tutorials/dae_example/) for more information.
+
+In KernelInterpolation.jl, you can use the constructor [`Semidiscretization`](@ref) in a very similar way as [`SpatialDiscretization`](@ref), but with the additional
+initial condition. This can be turned into an `ODEProblem` object from the OrdinaryDiffEq.jl ecosystem by calling [`semidiscretize`](@ref). The resulting `ODEProblem`
+can then be solved by calling the [`solve`](https://docs.sciml.ai/DiffEqDocs/latest/basics/common_solver_opts/) function from OrdinaryDiffEq.jl. The resulting object is an
+`ODESolution` object, which can be transferred to a [`TermporalInterpolation`](@ref) by passing it to its constructor. This object acts similarly to an [`Interpolation`](@ref),
+but has an additional time argument, e.g., `itp = titp(1.0)` gives an interpolation object `itp` from a temporal interpolation `titp` at time `t = 1.0`.
+For a complete example of a time-dependent PDE, see the, e.g., [example of the heat equation](https://github.com/JoshuaLampert/KernelInterpolation.jl/blob/main/examples/PDEs/heat_2d_basic.jl).
+KernelInterpolation.jl provides some callbacks that are can be passed to `solve` in order to call them during the time integration process, which can be used to monitor the solution
+or to save it to a file. To date, these are [`AliveCallback`](@ref), [`SaveSolutionCallback`](@ref), and [`SummaryCallback`](@ref).
