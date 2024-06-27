@@ -187,7 +187,7 @@ where $c(t) = [c_1(t), \ldots, c_N(t)]^T$ is the vector of coefficients, $M\in\m
 and $b = \begin{pmatrix}f_{X_I}\\ g_{X_B}\end{pmatrix}\in\mathbb{R}^N$. The matrices are given by
 
 ```math
-M = \begin{pmatrix} \tilde{A_I}\\0\end{pmatrix}\quad A = \begin{pmatrix} \tilde{A_L}\\\tilde{A_B}\end{pmatrix},
+M = \begin{pmatrix} \tilde{A_I}\\0\end{pmatrix} \quad\text{and}\quad A = \begin{pmatrix} \tilde{A_L}\\\tilde{A_B}\end{pmatrix},
 ```
 
 where
