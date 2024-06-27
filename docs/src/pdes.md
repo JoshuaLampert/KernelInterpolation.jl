@@ -104,9 +104,9 @@ function create_L_shape(N)
             push!(nodeset_inner, x)
         end
     end
-    return nodeset
+    return nodeset_inner, nodeset_boundary
 end
-nodeset = create_L_shape(6)
+nodeset_inner, nodeset_boundary = create_L_shape(6)
 ```
 
 Finally, we define the boundary condition, the kernel, and collect all necessary information in a [`SpatialDiscretization`](@ref), which can be solved by calling the
@@ -125,7 +125,8 @@ The result `itp` is an [`Interpolation`](@ref) object, which can be used to eval
 to a VTK file and visualize it.
 
 ```@example poisson
-many_nodes = create_L_shape(20)
+many_nodes_inner, many_nodes_boundary = create_L_shape(20)
+many_nodes = merge(many_nodes_inner, many_nodes_boundary)
 OUT = "out"
 ispath(OUT) || mkpath(OUT)
 vtk_save(joinpath(OUT, "poisson_2d_L_shape"), many_nodes, itp, x -> u(x, pde);
