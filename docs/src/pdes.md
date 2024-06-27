@@ -58,10 +58,10 @@ where $\tilde{A}_I\in\mathbb{R}^{N_I\times N}$ and $\tilde{A}_B\in\mathbb{R}^{N_
 respectively, i.e.
 
 ```math
-\begin{align}
-    (\tilde{A}_I)_{ij} = \mathcal{L}K(x_i, x_j), i = 1, \ldots, N_I, j = 1, \ldots, N \\
-    (\tilde{A}_B)_{ij} = \mathcal{B}K(x_i, x_j), i = 1, \ldots, N_B, j = 1, \ldots, N.
-\end{align}
+\begin{align*}
+    (\tilde{A}_I)_{ij} &= \mathcal{L}K(x_i, x_j), i = 1, \ldots, N_I, j = 1, \ldots, N \\
+    (\tilde{A}_B)_{ij} &= \mathcal{B}K(x_i, x_j), i = 1, \ldots, N_B, j = 1, \ldots, N.
+\end{align*}
 ```
 
 Since the kernel function is known and differentiable, we can compute the derivatives of $K$ analytically.
@@ -171,10 +171,10 @@ where $c_j(t)$ are the coefficients at time $t$. We again divide the spatial dom
 the ansatz function into the PDE and the boundary conditions and evaluating at the nodes, we obtain the following system of ODEs and differential equations:
 
 ```math
-\begin{align}
+\begin{align*}
     \partial_t u(t, x_i) &= \sum_{j = 1}^N \partial_t c_j(t)K(x_i, x_j) = -\sum_{j = 1}^Nc_j(t)\mathcal{L}K(x_i, x_j) + f(x_i), i = 1, \ldots, N_I \\
     0 &= -\sum_{j = 1}^Nc_j(t)\mathcal{B}K(x_i, x_j) + g(x_i), i = N_I + 1, \ldots, N.
-\end{align}
+\end{align*}
 ```
 
 These equations can be written compactly as a differential-algebraic equation (DAE) of the form
@@ -193,11 +193,11 @@ M = \begin{pmatrix} \tilde{A_I}\\0\end{pmatrix}\quad A = \begin{pmatrix} \tilde{
 where
 
 ```math
-\begin{align}
+\begin{align*}
     \tilde{A_I}\in\mathbb{R}^{N_I\times N}, (\tilde{A_I})_{ij} &= K(x_i, x_j)\\
     \tilde{A_L}\in\mathbb{R}^{N_I\times N}, (\tilde{A_L})_{ij} &= \mathcal{L}K(x_i, x_j)\\
     \tilde{A_B}\in\mathbb{R}^{N_B\times N}, (\tilde{A_B})_{ij} &= \mathcal{B}K(x_i, x_j).
-\end{align}
+\end{align*}
 ```
 
 The coefficients for the initial conditions can be computed from the initial condition $u_0(x)$ by solving the linear system
