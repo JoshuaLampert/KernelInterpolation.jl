@@ -62,9 +62,18 @@ respectively, i.e.
 (\tilde{A}_B)_{ij} = \mathcal{B}K(x_i, x_j), i = 1, \ldots, N_B, j = 1, \ldots, N.
 ```
 
-Since the kernel function is known and differentiable, we can compute the derivatives of $K$ analytically. Note, however, that the system matrix
-$A = \begin{pmatrix} \tilde{A}_I \\ \tilde{A}_B \end{pmatrix}$ is not invertible in general because it not symmetric anymore as it was the case in the classical interpolation.
-Thus, this approach is also called non-symmetric collocation.
+Since the kernel function is known and differentiable, we can compute the derivatives of $K$ analytically.
+
+!!! note
+    In KernelInterpolation.jl, the derivatives of the kernel function are computed using automatic differentiation (AD) by using
+    [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl). This allows for flexibility, simplicity, and easier extension, but it might be slower than computing
+    the derivatives analytically. If you are interested in a more efficient implementation, you can have a look at the test set "Differential operators" in the
+    [test suite of KernelInterpolation.jl](https://github.com/JoshuaLampert/KernelInterpolation.jl/blob/main/test/test_unit.jl). This test set not only shows how to use
+    analytical derivatives, but also how to define your own differential operators, which can be used to define custom PDEs.
+
+Note, however, that the system matrix $A = \begin{pmatrix} \tilde{A}_I \\ \tilde{A}_B \end{pmatrix}$ is not invertible in general because it not symmetric anymore as it
+was the case in the classical interpolation. Thus, this approach is also called non-symmetric collocation.
+
 Let us see how this can be implemented in KernelInterpolation.jl by solving the Poisson equation ``-\Delta u = f`` in an L-shaped domain. We start by defining the equation
 (thus the differential operator) and the right-hand side. KernelInterpolation.jl already provides a set of predefined differential operators and equations.
 
@@ -131,6 +140,7 @@ OUT = "out"
 ispath(OUT) || mkpath(OUT)
 vtk_save(joinpath(OUT, "poisson_2d_L_shape"), many_nodes, itp, x -> u(x, pde);
          keys = ["numerical", "analytical"])
+rm(joinpath(OUT, "poisson_2d_L_shape.vtu")) #clean up again # hide
 ```
 
 The resulting VTK file can be visualized with a tool like ParaView. After applying the filter "Warp by Scalar", setting the coloring accordingly, and changing the
@@ -138,9 +148,4 @@ The resulting VTK file can be visualized with a tool like ParaView. After applyi
 
 ![Poisson equation in an L shape domain](poisson_L_shape.png)
 
-TODO:
-
-* Explain basic setup and basics of collocation for stationary and time-dependent PDEs
-* Define custom differential operators and PDEs and solve them
-* Stationary (example Laplace in L shape) and time-dependent PDEs
-* AD vs analytic derivatives
+## Time-dependent PDEs
