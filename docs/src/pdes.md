@@ -47,19 +47,19 @@ written as
 
 ```math
 \begin{pmatrix}
-\tilde{A}_I \\ \tilde{A}_B
+\tilde{A}_L \\ \tilde{A}_B
 \end{pmatrix}
 c = \begin{pmatrix}
 f_{X_I} \\ g_{X_B}
 \end{pmatrix},
 ```
 
-where $\tilde{A}_I\in\mathbb{R}^{N_I\times N}$ and $\tilde{A}_B\in\mathbb{R}^{N_I\times N}$ are the matrices corresponding to the conditions at the interior and boundary nodes,
+where $\tilde{A}_L\in\mathbb{R}^{N_I\times N}$ and $\tilde{A}_B\in\mathbb{R}^{N_I\times N}$ are the matrices corresponding to the conditions at the interior and boundary nodes,
 respectively, i.e.
 
 ```math
 \begin{align*}
-    (\tilde{A}_I)_{ij} &= \mathcal{L}K(x_i, x_j), i = 1, \ldots, N_I, j = 1, \ldots, N \\
+    (\tilde{A}_L)_{ij} &= \mathcal{L}K(x_i, x_j), i = 1, \ldots, N_I, j = 1, \ldots, N \\
     (\tilde{A}_B)_{ij} &= \mathcal{B}K(x_i, x_j), i = 1, \ldots, N_B, j = 1, \ldots, N.
 \end{align*}
 ```
@@ -73,7 +73,7 @@ Since the kernel function is known and differentiable, we can compute the deriva
     [test suite of KernelInterpolation.jl](https://github.com/JoshuaLampert/KernelInterpolation.jl/blob/main/test/test_unit.jl). This test set not only shows how to use
     analytical derivatives, but also how to define your own differential operators, which can be used to define custom PDEs.
 
-Note, however, that the system matrix $A = \begin{pmatrix} \tilde{A}_I \\ \tilde{A}_B \end{pmatrix}$ is not invertible in general because it not symmetric anymore as it
+Note, however, that the system matrix $A = \begin{pmatrix} \tilde{A}_L \\ \tilde{A}_B \end{pmatrix}$ is not invertible in general because it not symmetric anymore as it
 was the case in the classical interpolation. Thus, this approach is also called non-symmetric collocation.
 
 Let us see how this can be implemented in KernelInterpolation.jl by solving the Poisson equation ``-\Delta u = f`` in an L-shaped domain. We start by defining the equation
