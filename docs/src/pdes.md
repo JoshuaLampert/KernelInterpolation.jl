@@ -160,7 +160,7 @@ an ordinary differential equation (ODE), which can be solved by some time integr
 ```
 
 where $\mathcal{L}$ is a linear differential operator of order $m$ and $f$ is a given function. The initial condition is given by $u(x, 0) = u_0(x)$. Boundary conditions
-are applied as before. Similar to the stationary case, we discretize the spatial part of the PDE by collocation and obtain a system of ODEs for the coefficients $c_i$ of
+are applied as before. Similar to the stationary case, we discretize the spatial part of the PDE by collocation and obtain a system of ODEs for the coefficients $c_j$ of
 the basis functions, i.e. now the coefficients depend on time:
 
 ```math
@@ -168,11 +168,11 @@ u(t, x) = \sum_{j = 1}^N c_j(t)K(x, x_j),
 ```
 
 where $c_j(t)$ are the coefficients at time $t$. We again divide the spatial domain in a set of points in the inner domain $X_I$ and at the boundary $X_B$. Plugging in
-the ansatz function into the PDE and the boundary conditions and evaluating at the nodes, we obtain the following system of ODEs and differential equations:
+the ansatz function into the PDE and the boundary conditions and evaluating at the nodes, we obtain the following system of ODEs and algebraic equations:
 
 ```math
 \begin{align*}
-    \partial_t u(t, x_i) &= \sum_{j = 1}^N \partial_t c_j(t)K(x_i, x_j) = -\sum_{j = 1}^Nc_j(t)\mathcal{L}K(x_i, x_j) + f(x_i), i = 1, \ldots, N_I \\
+    \partial_t u(t, x_i) &= \sum_{j = 1}^N \partial_t c_j(t)K(x_i, x_j) = -\sum_{j = 1}^Nc_j(t)\mathcal{L}K(x_i, x_j) + f(x_i), i = 1, \ldots, N_I, \\
     0 &= -\sum_{j = 1}^Nc_j(t)\mathcal{B}K(x_i, x_j) + g(x_i), i = N_I + 1, \ldots, N.
 \end{align*}
 ```
@@ -194,8 +194,8 @@ where
 
 ```math
 \begin{align*}
-    \tilde{A_I}\in\mathbb{R}^{N_I\times N}, (\tilde{A_I})_{ij} &= K(x_i, x_j)\\
-    \tilde{A_L}\in\mathbb{R}^{N_I\times N}, (\tilde{A_L})_{ij} &= \mathcal{L}K(x_i, x_j)\\
+    \tilde{A_I}\in\mathbb{R}^{N_I\times N}, (\tilde{A_I})_{ij} &= K(x_i, x_j),\\
+    \tilde{A_L}\in\mathbb{R}^{N_I\times N}, (\tilde{A_L})_{ij} &= \mathcal{L}K(x_i, x_j),\\
     \tilde{A_B}\in\mathbb{R}^{N_B\times N}, (\tilde{A_B})_{ij} &= \mathcal{B}K(x_i, x_j).
 \end{align*}
 ```
