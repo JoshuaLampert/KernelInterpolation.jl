@@ -54,7 +54,7 @@ f_{X_I} \\ g_{X_B}
 \end{pmatrix},
 ```
 
-where $\tilde{A}_I\in\mathbb{R}^{N_I\times N$ and $\tilde{A}_B\in\mathbb{R}^{N_I\times N$ are the matrices corresponding to the conditions at the interior and boundary nodes,
+where $\tilde{A}_I\in\mathbb{R}^{N_I\times N}$ and $\tilde{A}_B\in\mathbb{R}^{N_I\times N}$ are the matrices corresponding to the conditions at the interior and boundary nodes,
 respectively, i.e.
 
 ```math
@@ -66,7 +66,7 @@ Since the kernel function is known and differentiable, we can compute the deriva
 $A = \begin{pmatrix} \tilde{A}_I \\ \tilde{A}_B \end{pmatrix}$ is not invertible in general because it not symmetric anymore as it was the case in the classical interpolation.
 Thus, this approach is also called non-symmetric collocation.
 Let us see how this can be implemented in KernelInterpolation.jl by solving the Poisson equation ``-\Delta u = f`` in an L-shaped domain. We start by defining the equation
-(thus the differential operator) and the right-hand side. KernelInterpolation.jl provides already a set of predefined differential operators and equations.
+(thus the differential operator) and the right-hand side. KernelInterpolation.jl already provides a set of predefined differential operators and equations.
 
 ```@example poisson
 using KernelInterpolation
@@ -83,34 +83,59 @@ Next, we define the domain and the boundary of the L-shaped domain. We use a hom
 [`NodeSet`](@ref)s.
 
 ```@example poisson
-# domain
-x_min1 = (0.0, 0.0)
-x_max1 = (1 * pi, 1.0)
-x_min2 = (1 * pi, 0.0)
-x_max2 = (2 * pi, 1.0)
-x_min3 = (0.0, 1.0)
-x_max3 = (1 * pi, 2.0)
-N = 6
-nodeset1 = homogeneous_hypercube(N, x_min1, x_max1)
-nodeset2 = homogeneous_hypercube(N, x_min2, x_max2)
-nodeset3 = homogeneous_hypercube(N, x_min3, x_max3)
-nodeset = merge(nodeset1, nodeset2, nodeset3)
-unique!(nodeset)
-nodeset_inner = empty_nodeset(2)
-nodeset_boundary = empty_nodeset(2)
-for x in nodeset
-    if x[1] == 0.0 || x[2] == 0.0 || x[2] == 2.0 || x[1] == 2.0 * pi || (x[1] == 1.0 * pi && x[2] >= 1.0) || (x[2] == 1.0 && x[1] >= pi)
-        push!(nodeset_boundary, x)
-    else
-        push!(nodeset_inner, x)
+function create_L_shape(N)
+    x_min1 = (0.0, 0.0)
+    x_max1 = (1 * pi, 1.0)
+    x_min2 = (1 * pi, 0.0)
+    x_max2 = (2 * pi, 1.0)
+    x_min3 = (0.0, 1.0)
+    x_max3 = (1 * pi, 2.0)
+    nodeset1 = homogeneous_hypercube(N, x_min1, x_max1)
+    nodeset2 = homogeneous_hypercube(N, x_min2, x_max2)
+    nodeset3 = homogeneous_hypercube(N, x_min3, x_max3)
+    nodeset = merge(nodeset1, nodeset2, nodeset3)
+    unique!(nodeset)
+    nodeset_inner = empty_nodeset(2)
+    nodeset_boundary = empty_nodeset(2)
+    for x in nodeset
+        if x[1] == 0.0 || x[2] == 0.0 || x[2] == 2.0 || x[1] == 2.0 * pi || (x[1] == 1.0 * pi && x[2] >= 1.0) || (x[2] == 1.0 && x[1] >= pi)
+            push!(nodeset_boundary, x)
+        else
+            push!(nodeset_inner, x)
+        end
     end
+    return nodeset
 end
+nodeset = create_L_shape(6)
 ```
 
-Finally, we solve the PDE by collocation and visualize the results.
+Finally, we define the boundary condition, the kernel, and collect all necessary information in a [`SpatialDiscretization`](@ref), which can be solved by calling the
+[`solve_stationary`](@ref) function.
 
 ```@example poisson
+# Dirichlet boundary condition (here taken from analytical solution)
+g(x) = u(x, pde)
+
+kernel = WendlandKernel{2}(3, shape_parameter = 0.3)
+sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, kernel)
+itp = solve_stationary(sd)
 ```
+
+The result `itp` is an [`Interpolation`](@ref) object, which can be used to evaluate the solution at arbitrary points. We can save the solution on a finer grid
+to a VTK file and visualize it.
+
+```@example poisson
+many_nodes = create_L_shape(20)
+OUT = "out"
+ispath(OUT) || mkpath(OUT)
+vtk_save(joinpath(OUT, "poisson_2d_L_shape"), many_nodes, itp, x -> u(x, pde);
+         keys = ["numerical", "analytical"])
+```
+
+The resulting VTK file can be visualized with a tool like ParaView. After applying the filter "Warp by Scalar", setting the coloring accordingly, and changing the
+"Representation" to "Point Gaussian", we obtain the following visualization:
+
+![Poisson equation in an L shape domain](poisson_L_shape.png)
 
 TODO:
 
