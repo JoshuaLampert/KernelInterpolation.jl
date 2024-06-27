@@ -156,7 +156,7 @@ KernelInterpolation.jl also supports the solution of time-dependent PDEs. The id
 an ordinary differential equation (ODE), which can be solved by some time integration method (method of lines). The general form of a time-dependent PDE is
 
 ```math
-\partial u/\partial t + \mathcal{L}u = + f,
+\partial_t u + \mathcal{L}u = f,
 ```
 
 where $\mathcal{L}$ is a linear differential operator of order $m$ and $f$ is a given function. The initial condition is given by $u(x, 0) = u_0(x)$. Boundary conditions
@@ -172,8 +172,8 @@ the ansatz function into the PDE and the boundary conditions and evaluating at t
 
 ```math
 \begin{align}
-    \partial_t u(t, x_i) = \sum_{j = 1}^N \partial_t c_j(t)K(x_i, x_j) = -\sum_{j = 1}^Nc_j(t)\mathcal{L}K(x_i, x_j) + f(x_i), i = 1, \ldots, N_I \\
-    0 = -\sum_{j = 1}^Nc_j(t)\mathcal{B}K(x_i, x_j) + g(x_i), i = N_I + 1, \ldots, N.
+    \partial_t u(t, x_i) &= \sum_{j = 1}^N \partial_t c_j(t)K(x_i, x_j) = -\sum_{j = 1}^Nc_j(t)\mathcal{L}K(x_i, x_j) + f(x_i), i = 1, \ldots, N_I \\
+    0 &= -\sum_{j = 1}^Nc_j(t)\mathcal{B}K(x_i, x_j) + g(x_i), i = N_I + 1, \ldots, N.
 \end{align}
 ```
 
@@ -194,9 +194,9 @@ where
 
 ```math
 \begin{align}
-    \tilde{A_I}\in\mathbb{R}^{N_I\times N}, (\tilde{A_I})_{ij} = K(x_i, x_j)\\
-    \tilde{A_L}\in\mathbb{R}^{N_I\times N}, (\tilde{A_L})_{ij} = \mathcal{L}K(x_i, x_j)\\
-    \tilde{A_B}\in\mathbb{R}^{N_B\times N}, (\tilde{A_B})_{ij} = \mathcal{B}K(x_i, x_j).
+    \tilde{A_I}\in\mathbb{R}^{N_I\times N}, (\tilde{A_I})_{ij} &= K(x_i, x_j)\\
+    \tilde{A_L}\in\mathbb{R}^{N_I\times N}, (\tilde{A_L})_{ij} &= \mathcal{L}K(x_i, x_j)\\
+    \tilde{A_B}\in\mathbb{R}^{N_B\times N}, (\tilde{A_B})_{ij} &= \mathcal{B}K(x_i, x_j).
 \end{align}
 ```
 
