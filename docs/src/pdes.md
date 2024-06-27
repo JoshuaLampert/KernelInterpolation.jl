@@ -214,11 +214,11 @@ wide range of time integration methods. Note that this is a differential-algebra
 we are restricted to specialized time integration methods, which can handle DAEs. We recommend using the `Rodas5` method, which is a Rosenbrock method for stiff DAEs. See
 also the [documentation of OrdinaryDiffEq.jl](https://docs.sciml.ai/DiffEqDocs/latest/tutorials/dae_example/) for more information.
 
-In KernelInterpolation.jl, you can use the constructor [`Semidiscretization`](@ref) in a very similar way as [`SpatialDiscretization`](@ref), but with the additional
+In KernelInterpolation.jl, you can use the constructor of a [`Semidiscretization`](@ref) in a very similar way as [`SpatialDiscretization`](@ref), but with the additional
 initial condition. This can be turned into an `ODEProblem` object from the OrdinaryDiffEq.jl ecosystem by calling [`semidiscretize`](@ref). The resulting `ODEProblem`
 can then be solved by calling the [`solve`](https://docs.sciml.ai/DiffEqDocs/latest/basics/common_solver_opts/) function from OrdinaryDiffEq.jl. The resulting object is an
-`ODESolution` object, which can be transferred to a [`TemporalInterpolation`](@ref) by passing it to its constructor. This object acts similarly to an [`Interpolation`](@ref),
+`ODESolution` object, which can be transferred to a [`TemporalInterpolation`](@ref) by calling `TemporalInterpolation` on it. This object acts similarly to an [`Interpolation`](@ref),
 but has an additional time argument, e.g., `itp = titp(1.0)` gives an interpolation object `itp` from a temporal interpolation `titp` at time `t = 1.0`.
-For a complete example of a time-dependent PDE, see the, e.g., [example of the heat equation](https://github.com/JoshuaLampert/KernelInterpolation.jl/blob/main/examples/PDEs/heat_2d_basic.jl).
-KernelInterpolation.jl provides some callbacks that are can be passed to `solve` in order to call them during the time integration process, which can be used to monitor the solution
+For a complete example of a time-dependent PDE, see, e.g., [an example of the heat equation](https://github.com/JoshuaLampert/KernelInterpolation.jl/blob/main/examples/PDEs/heat_2d_basic.jl).
+KernelInterpolation.jl provides some callbacks that are can be passed to `solve` in order to call them during the time integration process. These can be used to monitor the solution
 or to save it to a file. To date, these are [`AliveCallback`](@ref), [`SaveSolutionCallback`](@ref), and [`SummaryCallback`](@ref).
