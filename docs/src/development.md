@@ -19,7 +19,7 @@ cd KernelInterpolation.jl
 mkdir run
 cd run
 julia --project=. -e 'using Pkg; Pkg.develop(PackageSpec(path=".."))' # Install local KernelInterpolation.jl clone
-julia --project=. -e 'using Pkg; Pkg.add(["Plots", "QuasiMonteCarlo"])' # Install additional packages
+julia --project=. -e 'using Pkg; Pkg.add(["Plots", "QuasiMonteCarlo", "OrdinaryDiffEq"])' # Install additional packages
 ```
 
 If you use other packages for executing KernelInterpolation.jl, you can add them to the project in the `run`
@@ -48,3 +48,6 @@ julia --project=docs --color=yes docs/make.jl
 ```
 
 The resulting `.html` files can then be found in `docs/build/` and you can look at them by opening them in a browser.
+For pull requests from the main repository (i.e. not from a fork), the documentation is automatically built and can
+be previewed under `https://joshualampert.github.io/KernelInterpolation.jl/previews/PRXXX/` where `XXX` is the number
+of the pull request.

@@ -20,11 +20,12 @@ makedocs(;
              "Guide" => [
                  "Sets of nodes" => "nodesets.md",
                  "Interpolation" => "interpolation.md",
-                 "Solving PDEs by collocation" => "pde.md"],
+                 "Solving PDEs by collocation" => "pdes.md"],
              "Development" => "development.md",
              "Reference" => "ref.md",
              "License" => "license.md"])
 
 deploydocs(;
            repo = "github.com/JoshuaLampert/KernelInterpolation.jl",
-           devbranch = "main")
+           devbranch = "main",
+           push_preview = true)
