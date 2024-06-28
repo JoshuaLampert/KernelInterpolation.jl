@@ -91,8 +91,6 @@ For more sophisticated examples also involving solving stationary or time-depend
 [documentation](https://joshualampert.github.io/KernelInterpolation.jl/dev/pdes).
 More examples can be found in the [`examples/`](https://github.com/JoshuaLampert/KernelInterpolation.jl/tree/main/examples) subdirectory.
 
-More examples can be found in the [`examples/`](https://github.com/JoshuaLampert/KernelInterpolation.jl/tree/main/examples) subdirectory.
-
 ### Visualization
 
 In order to visualize the results, you need to have [Plots.jl](https://github.com/JuliaPlots/Plots.jl) installed and loaded
