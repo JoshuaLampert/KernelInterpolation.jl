@@ -1,0 +1,14 @@
+{
+    "description": "Multivariate (generalized) scattered data interpolation with symmetric (conditionally) positive definite kernel functions in arbitrary dimension ",
+    "license": "MIT",
+    "title": "KernelInterpolation.jl",
+    "upload_type": "software",
+    "creators": [
+        {
+            "affiliation": "Applied Mathematics, University of Hamburg, Germany",
+            "name": "Lampert, Joshua",
+            "orcid": "0009-0007-0971-6709"
+        }
+    ],
+    "access_right": "open"
+}

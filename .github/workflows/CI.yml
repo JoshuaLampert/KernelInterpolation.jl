@@ -7,6 +7,7 @@ on:
     paths-ignore:
       - 'LICENSE.md'
       - 'README.md'
+      - '.zenodo.json'
       - '.github/workflows/CompatHelper.yml'
       - '.github/workflows/Documenter.yml'
       - '.github/workflows/Format-check.yml'
@@ -17,6 +18,7 @@ on:
     paths-ignore:
       - 'LICENSE.md'
       - 'README.md'
+      - '.zenodo.json'
       - '.github/workflows/CompatHelper.yml'
       - '.github/workflows/Documenter.yml'
       - '.github/workflows/Format-check.yml'
