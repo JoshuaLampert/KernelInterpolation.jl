@@ -5,6 +5,7 @@ on:
       - main
     tags: ['*']
     paths-ignore:
+      - 'CITATION.bib'
       - 'LICENSE.md'
       - 'README.md'
       - '.zenodo.json'
@@ -16,6 +17,7 @@ on:
       - 'docs/**'
   pull_request:
     paths-ignore:
+      - 'CITATION.bib'
       - 'LICENSE.md'
       - 'README.md'
       - '.zenodo.json'
