@@ -1,5 +1,5 @@
 {
-    "description": "Multivariate (generalized) scattered data interpolation with symmetric (conditionally) positive definite kernel functions in arbitrary dimension ",
+    "description": "Multivariate (generalized) scattered data interpolation with symmetric (conditionally) positive definite kernel functions in arbitrary dimension",
     "license": "MIT",
     "title": "KernelInterpolation.jl",
     "upload_type": "software",
