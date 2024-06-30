@@ -7,6 +7,7 @@
 [![Coveralls](https://coveralls.io/repos/github/JoshuaLampert/KernelInterpolation.jl/badge.svg?branch=main)](https://coveralls.io/github/JoshuaLampert/KernelInterpolation.jl?branch=main)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12599880.svg)](https://doi.org/10.5281/zenodo.12599880)
 
 **KernelInterpolation.jl** is a [Julia](https://julialang.org/) package that
 implements methods for multivariate interpolation in arbitrary dimension based on symmetric (conditionally) positive-definite kernels
@@ -124,6 +125,21 @@ julia> plot!(nodeset_fine, f, st = :surface)
 KernelInterpolation.jl also supports exporting (and importing) VTK files, which can be visualized using tools
 such as [ParaView](https://www.paraview.org/) or [VisIt](https://visit-dav.github.io/visit-website/). See the documentation
 for more details.
+
+## Referencing
+
+You can directly refer to KernelInterpolation.jl as
+```bibtex
+@misc{lampert2024kernel,
+  title={{K}ernel{I}nterpolation.jl: {M}ultivariate (generalized) scattered data interpolation
+         with symmetric (conditionally) positive definite kernel functions in arbitrary dimension},
+  author={Lampert, Joshua},
+  year={2024},
+  month={06},
+  howpublished={\url{https://github.com/JoshuaLampert/KernelInterpolation.jl}},
+  doi={10.5281/zenodo.12599880}
+}
+```
 
 ## Authors
 
