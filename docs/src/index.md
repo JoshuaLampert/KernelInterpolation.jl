@@ -1,5 +1,6 @@
 # KernelInterpolation.jl
 
+[![Docs-stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://JoshuaLampert.github.io/KernelInterpolation.jl/stable)
 [![Docs-dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JoshuaLampert.github.io/KernelInterpolation.jl/dev/)
 [![Build Status](https://github.com/JoshuaLampert/KernelInterpolation.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JoshuaLampert/KernelInterpolation.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![codecov](https://codecov.io/gh/JoshuaLampert/KernelInterpolation.jl/graph/badge.svg)](https://codecov.io/gh/JoshuaLampert/KernelInterpolation.jl)
@@ -17,12 +18,13 @@ stationary ones and time-dependent ones by using some time integration method fr
 
 If you have not yet installed Julia, then you first need to [download Julia](https://julialang.org/downloads/). Please
 [follow the instructions for your operating system](https://julialang.org/downloads/platform/). KernelInterpolation.jl
-works with Julia v1.10 and newer. You can install KernelInterpolation.jl by executing the following commands from the Julia REPL
+works with Julia v1.10 and newer. KernelInterpolation.jl is a registered Julia package. Therefore, you can install it by
+executing the following commands from the Julia REPL
 
 ```julia
 julia> using Pkg
 
-julia> Pkg.add(url="https://github.com/JoshuaLampert/KernelInterpolation.jl")
+julia> Pkg.add("KernelInterpolation")
 ```
 
 For visualizing the results, additionally you need to install [Plots.jl](https://github.com/JuliaPlots/Plots.jl), which can be done by
