@@ -95,7 +95,7 @@ points = Meshes.sample(sphere, sampler)
 nodes = NodeSet(collect(points))
 ```
 
-For more information on the available sampling algorithms in Meshes.jl, see the [documentation](https://juliageometry.github.io/Meshes.jl/stable/sampling/).
+For more information on the available sampling algorithms in Meshes.jl, see the [documentation](https://juliageometry.github.io/MeshesDocs/stable/algorithms/sampling/).
 In the documentation of Meshes.jl, you can also find information on how to create more complex geometries like ellipsoids, tori, and many more.
 In general, a `PointSet` from Meshes.jl or a `Vector` of `Point`s can be directly passed to the constructor of a [`NodeSet`](@ref) and vice versa can a
 [`NodeSet`](@ref) be passed to the constructor of a `PointSet`.
