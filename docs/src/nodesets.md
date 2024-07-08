@@ -88,10 +88,10 @@ Another possibility to create more advanced [`NodeSet`](@ref)s is by using the p
 algorithms defined therein. For example, we can create a regularly sampled set of nodes on the surface of a sphere by running:
 
 ```@example nodesets
-using Meshes: Sphere, Point, RegularSampling, sample
+using Meshes: Meshes, Sphere, Point, RegularSampling
 sphere = Sphere(Point(0.0, 0.0, 0.0), 1.0)
 sampler = RegularSampling(20, 30)
-points = sample(sphere, sampler)
+points = Meshes.sample(sphere, sampler)
 nodes = NodeSet(collect(points))
 ```
 
