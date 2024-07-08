@@ -47,7 +47,7 @@ EXAMPLES_DIR = joinpath(examples_dir(), "PDEs")
                               pde_test=true, atol=1e-6) # stability issues
     end
 
-    # Windows CI suddently takes much smaller time steps for some reason
+    # Windows CI suddenly takes much smaller time steps for some reason
     if !Sys.iswindows()
         @ki_testset "advection_3d_basic.jl" begin
             @test_include_example(joinpath(EXAMPLES_DIR, "advection_3d_basic.jl"),
