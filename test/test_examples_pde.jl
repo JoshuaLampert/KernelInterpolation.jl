@@ -48,7 +48,7 @@ EXAMPLES_DIR = joinpath(examples_dir(), "PDEs")
     end
 
     # Windows CI suddently takes much smaller time steps for some reason
-    if !Sys.iswindows
+    if !Sys.iswindows()
         @ki_testset "advection_3d_basic.jl" begin
             @test_include_example(joinpath(EXAMPLES_DIR, "advection_3d_basic.jl"),
                                 l2=0.055338785034078526, linf=0.004385483831323006,
