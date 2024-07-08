@@ -36,10 +36,10 @@ julia> using Pkg
 julia> Pkg.add("Plots")
 ```
 
-To create special node sets, you might also want to install [QuasiMonteCarlo.jl](https://github.com/SciML/QuasiMonteCarlo.jl) and
-for solving time-dependent partial differential equations [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl) in a
-similar way as above for Plots.jl. See the documentation for more examples on how to use these packages in combination with
-KernelInterpolation.jl.
+To create special node sets, you might also want to install [QuasiMonteCarlo.jl](https://github.com/SciML/QuasiMonteCarlo.jl) or
+[Meshes.jl](https://github.com/JuliaGeometry/Meshes.jl) and for solving time-dependent partial differential equations
+[OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl) in a similar way as above for Plots.jl. See the documentation for more
+examples on how to use these packages in combination with KernelInterpolation.jl.
 
 ## Usage
 
@@ -129,6 +129,7 @@ for more details.
 ## Referencing
 
 You can directly refer to KernelInterpolation.jl as
+
 ```bibtex
 @misc{lampert2024kernel,
   title={{K}ernel{I}nterpolation.jl: {M}ultivariate (generalized) scattered data interpolation
