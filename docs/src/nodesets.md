@@ -84,6 +84,22 @@ nodes_halton = NodeSet(nodes_matrix')
 
 For the available sampling algorithms in QuasiMonteCarlo.jl, see the [overview in the documentation](https://docs.sciml.ai/QuasiMonteCarlo/stable/samplers/).
 
+Another possibility to create more advanced [`NodeSet`](@ref)s is by using the package [Meshes.jl](https://github.com/JuliaGeometry/Meshes.jl) and the sampling
+algorithms defined therein. For example, we can create a regularly sampled set of nodes on the surface of a sphere by running:
+
+```@example nodesets
+using Meshes: Sphere, Point, RegularSampling, sample
+sphere = Sphere(Point(0.0, 0.0, 0.0), 1.0)
+sampler = RegularSampling(20, 30)
+points = sample(sphere, sampler)
+nodes = NodeSet(collect(points))
+```
+
+For more information on the available sampling algorithms in Meshes.jl, see the [documentation](https://juliageometry.github.io/Meshes.jl/stable/sampling/).
+In the documentation of Meshes.jl, you can also find information on how to create more complex geometries like ellipsoids, tori, and many more.
+In general, a `PointSet` from Meshes.jl or a `Vector` of `Point`s can be directly passed to the constructor of a [`NodeSet`](@ref) and vice versa can a
+[`NodeSet`](@ref) be passed to the constructor of a `PointSet`.
+
 More complicated [`NodeSet`](@ref)s consisting of different shapes can be created, e.g., by `merge`ing different [`NodeSet`](@ref)s.
 
 ## Visualizing [`NodeSet`](@ref)s
