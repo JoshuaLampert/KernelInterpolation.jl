@@ -38,6 +38,11 @@ function NodeSet(nodes::Vector{MVector{Dim, RealT}}) where {Dim, RealT}
     q = separation_distance(nodes)
     NodeSet{Dim, RealT}(nodes, q)
 end
+function NodeSet(nodes::Vector{SVector{Dim, RealT}}) where {Dim, RealT}
+    nodes = MVector.(nodes)
+    q = separation_distance(nodes)
+    NodeSet{Dim, RealT}(nodes, q)
+end
 function NodeSet(nodes::AbstractVector{Vector{RealT}}) where {RealT}
     n = length(nodes)
     @assert n > 0

@@ -211,7 +211,7 @@ c_0 = (u_0)_X.
 
 For the solution of the DAE system, KernelInterpolation.jl uses the library [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl), which already provides a
 wide range of time integration methods. Note that this is a differential-algebraic equation (DAE) system, which is more difficult to solve than a simple ODE system. Thus,
-we are restricted to specialized time integration methods, which can handle DAEs. We recommend using the `Rodas5` method, which is a Rosenbrock method for stiff DAEs. See
+we are restricted to specialized time integration methods, which can handle DAEs. We recommend using the `Rodas5P` method, which is a Rosenbrock method for stiff DAEs. See
 also the [documentation of OrdinaryDiffEq.jl](https://docs.sciml.ai/DiffEqDocs/latest/tutorials/dae_example/) for more information.
 
 In KernelInterpolation.jl, you can use the constructor of a [`Semidiscretization`](@ref) in a very similar way as [`SpatialDiscretization`](@ref), but with the additional

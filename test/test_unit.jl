@@ -5,6 +5,7 @@ using KernelInterpolation
 using LinearAlgebra: norm, Symmetric, I
 using OrdinaryDiffEq: solve, Rodas5P
 using StaticArrays: MVector
+using Meshes: Sphere, Point, PointSet, RegularSampling, sample
 using Plots
 
 include("test_util.jl")
@@ -553,6 +554,16 @@ include("test_util.jl")
         for node in nodeset14_1
             @test isapprox(norm(node), 1.0)
         end
+
+        # Meshes.jl extension
+        sphere = Sphere(Point(0.0, 0.0, 0.0), 1.0)
+        sampler = RegularSampling(5, 6)
+        points = sample(sphere, sampler)
+        nodeset_15 = @test_nowarn NodeSet(collect(points))
+        @test nodeset_15 isa NodeSet{3, Float64}
+        @test length(nodeset_15) == 32
+        ps = PointSet(Point(1.0, 2.0, 3.0), Point(4.0, 5.0, 6.0))
+        @test PointSet(NodeSet(ps)) == ps
     end
 
     @testset "Interpolation" begin
