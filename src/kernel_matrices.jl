@@ -110,7 +110,7 @@ end
 
 Compute the operator matrix ``L`` discretizing ``\mathcal{L}`` for a given kernel. The operator matrix is defined as
 ```math
-    L = A_\mathcal{L} * A^{-1},
+    L = A_\mathcal{L} A^{-1},
 ```
 where ``A_\mathcal{L}`` is the matrix of the differential operator (defined by the `equations`), and ``A`` the kernel matrix.
 

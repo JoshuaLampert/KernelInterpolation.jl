@@ -305,12 +305,12 @@ order(::WendlandKernel) = 0
 Wu kernel with
 ```math
     \phi_{l,k}(r) = \begin{cases}
-        p_{k,l}(\varepsilon r), \text{ if } 0\le \varepsilon r\le 1\\
+        p_{l,k}(\varepsilon r), \text{ if } 0\le \varepsilon r\le 1\\
         0, \text{ if } \varepsilon r > 1
     \end{cases},
 ```
 where ``\varepsilon`` is the shape parameter, ``k\le l``, and ``p`` is a polynomial
-of degree ``4l - 2k + 1```. The Wu kernel is positive definite for `Dim\le 2k + 1`
+of degree ``4l - 2k + 1``. The Wu kernel is positive definite for `Dim\le 2k + 1`
 and compactly supported. See Fasshauer (2007), pp. 88--90 and Wu (1995).
 
 See also [`RadialSymmetricKernel`](@ref).
