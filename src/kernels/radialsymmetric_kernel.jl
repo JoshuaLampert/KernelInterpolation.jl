@@ -43,7 +43,7 @@ function Phi(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
 end
 
 function (kernel::RadialSymmetricKernel)(x, y)
-    @assert length(x) == length(y) "x and y must have the same length"
+    @assert length(x)==length(y) "x and y must have the same length"
     return Phi(kernel, x .- y)
 end
 
@@ -263,7 +263,7 @@ struct WendlandKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function WendlandKernel{Dim}(k::Int; shape_parameter = 1.0, d::Int = Dim) where {Dim}
-    @assert d <= Dim "d has to be smaller or equal to Dim"
+    @assert d<=Dim "d has to be smaller or equal to Dim"
     @assert k in 0:3 "kernel only implemented for k in 0:3"
     WendlandKernel{Dim, typeof(shape_parameter)}(k, shape_parameter, d)
 end
@@ -331,7 +331,7 @@ struct WuKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function WuKernel{Dim}(l::Int, k::Int; shape_parameter = 1.0) where {Dim}
-    @assert l >= k "l has to be bigger or equal to k"
+    @assert l>=k "l has to be bigger or equal to k"
     @assert l in 0:3 "kernel only implemented for l in 0:3"
     WuKernel{Dim, typeof(shape_parameter)}(l, k, shape_parameter)
 end
@@ -370,11 +370,15 @@ function phi(kernel::WuKernel, r::Real)
         end
     elseif kernel.l == 3
         if kernel.k == 0
-            return 1 / 5 * (1 - a_r)^7 * (5 * a_r^6 + 35 * a_r^5 + 101 * a_r^4 + 147 * a_r^3 + 101 * a_r^2 + 35 * a_r + 5)
+            return 1 / 5 * (1 - a_r)^7 *
+                   (5 * a_r^6 + 35 * a_r^5 + 101 * a_r^4 + 147 * a_r^3 + 101 * a_r^2 +
+                    35 * a_r + 5)
         elseif kernel.k == 1
-            return 1 / 6 * (1 - a_r)^6 * (5 * a_r^5 + 30 * a_r^4 + 72 * a_r^3 + 82 * a_r^2 + 36 * a_r + 6)
+            return 1 / 6 * (1 - a_r)^6 *
+                   (5 * a_r^5 + 30 * a_r^4 + 72 * a_r^3 + 82 * a_r^2 + 36 * a_r + 6)
         elseif kernel.k == 2
-            return 1 / 8 * (1 - a_r)^5 * (5 * a_r^4 + 25 * a_r^3 + 48 * a_r^2 + 40 * a_r + 8)
+            return 1 / 8 * (1 - a_r)^5 *
+                   (5 * a_r^4 + 25 * a_r^3 + 48 * a_r^2 + 40 * a_r + 8)
         elseif kernel.k == 3
             return 1 / 16 * (1 - a_r)^4 * (5 * a_r^3 + 20 * a_r^2 + 29 * a_r + 16)
         end
@@ -636,7 +640,7 @@ struct RieszKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function RieszKernel{Dim}(beta; shape_parameter = 1.0) where {Dim}
-    @assert 0 < beta  < 2 "beta has to be in (0, 2)"
+    @assert 0<beta<2 "beta has to be in (0, 2)"
     RieszKernel{Dim, typeof(shape_parameter)}(beta, shape_parameter)
 end
 
