@@ -43,7 +43,7 @@ function Phi(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
 end
 
 function (kernel::RadialSymmetricKernel)(x, y)
-    @assert length(x) == length(y)
+    @assert length(x) == length(y) "x and y must have the same length"
     return Phi(kernel, x .- y)
 end
 
@@ -241,9 +241,9 @@ Wendland kernel with
         0, \text{ if } \varepsilon r > 1
     \end{cases},
 ```
-where ``\varepsilon`` is the shape parameter and ``p`` is a polynomial. The
-Wendland kernel is positive definite and compactly supported.
-See Wendland (2004), p. 129.
+where ``\varepsilon`` is the shape parameter and ``p`` is a polynomial with
+minimal degree. The Wendland kernel is positive definite for `d\le Dim` and
+compactly supported. See Wendland (2004), p. 129 or Fasshauer (2007), pp. 87--88.
 
 See also [`RadialSymmetricKernel`](@ref).
 
@@ -251,6 +251,10 @@ See also [`RadialSymmetricKernel`](@ref).
   Scattered Data Approximation
   Cambridge University Press
   [DOI: 10.1017/CBO9780511617539](https://doi.org/10.1017/CBO9780511617539)
+- Gregory Fasshauer (2007)
+  Meshfree Approximation Methods with MATLAB
+  World Scientific
+  [DOI: 10.1142/6437](https://doi.org/10.1142/6437)
 """
 struct WendlandKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     k::Int
@@ -259,8 +263,8 @@ struct WendlandKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function WendlandKernel{Dim}(k::Int; shape_parameter = 1.0, d::Int = Dim) where {Dim}
-    @assert d <= Dim
-    @assert k in 0:3
+    @assert d <= Dim "d has to be smaller or equal to Dim"
+    @assert k in 0:3 "kernel only implemented for k in 0:3"
     WendlandKernel{Dim, typeof(shape_parameter)}(k, shape_parameter, d)
 end
 
@@ -296,11 +300,94 @@ end
 order(::WendlandKernel) = 0
 
 @doc raw"""
+	WuKernel{Dim}(l, k; shape_parameter = 1.0)
+
+Wu kernel with
+```math
+    \phi_{l,k}(r) = \begin{cases}
+        p_{k,l}(\varepsilon r), \text{ if } 0\le \varepsilon r\le 1\\
+        0, \text{ if } \varepsilon r > 1
+    \end{cases},
+```
+where ``\varepsilon`` is the shape parameter, ``k\le l``, and ``p`` is a polynomial
+of degree ``4l - 2k + 1```. The Wu kernel is positive definite for `Dim\le 2k + 1`
+and compactly supported. See Fasshauer (2007), pp. 88--90 and Wu (1995).
+
+See also [`RadialSymmetricKernel`](@ref).
+
+- Gregory Fasshauer (2007)
+  Meshfree Approximation Methods with MATLAB
+  World Scientific
+  [DOI: 10.1142/6437](https://doi.org/10.1142/6437)
+- Zongmin Wu (1995)
+  Compactly supported positive definite radial functions
+  Advances in Computational Mathematics
+  [DOI: 10.1007/BF03177517](https://doi.org/10.1007/BF03177517)
+"""
+struct WuKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
+    l::Int
+    k::Int
+    shape_parameter::RealT
+end
+
+function WuKernel{Dim}(l::Int, k::Int; shape_parameter = 1.0) where {Dim}
+    @assert l >= k "l has to be bigger or equal to k"
+    @assert l in 0:3 "kernel only implemented for l in 0:3"
+    WuKernel{Dim, typeof(shape_parameter)}(l, k, shape_parameter)
+end
+
+function get_name(kernel::WuKernel)
+    string(nameof(typeof(kernel))) * string(kernel.l) * "," * string(kernel.k) * "{" *
+    string(dim(kernel)) * "}"
+end
+
+function Base.show(io::IO, kernel::WuKernel{Dim}) where {Dim}
+    print(io, "WuKernel{", Dim, "}(l = ", kernel.l, ", k = ", kernel.k,
+          ", shape_parameter = ", kernel.shape_parameter, ")")
+end
+
+function phi(kernel::WuKernel, r::Real)
+    a_r = kernel.shape_parameter * r
+    if a_r >= 1
+        return 0.0
+    end
+    if kernel.l == 0
+        # k = 0
+        return 1 - a_r
+    elseif kernel.l == 1
+        if kernel.k == 0
+            return (1 - a_r)^3 * (a_r^2 + 3 * a_r + 1)
+        elseif kernel.k == 1
+            return 1 / 2 * (1 - a_r)^2 * (a_r + 2)
+        end
+    elseif kernel.l == 2
+        if kernel.k == 0
+            return (1 - a_r)^5 * (a_r^4 + 5 * a_r^3 + 9 * a_r^2 + 5 * a_r + 1)
+        elseif kernel.k == 1
+            return 1 / 4 * (1 - a_r)^4 * (3 * a_r^3 + 12 * a_r^2 + 16 * a_r + 4)
+        elseif kernel.k == 2
+            return 1 / 8 * (1 - a_r)^3 * (3 * a_r^2 + 9 * a_r + 8)
+        end
+    elseif kernel.l == 3
+        if kernel.k == 0
+            return 1 / 5 * (1 - a_r)^7 * (5 * a_r^6 + 35 * a_r^5 + 101 * a_r^4 + 147 * a_r^3 + 101 * a_r^2 + 35 * a_r + 5)
+        elseif kernel.k == 1
+            return 1 / 6 * (1 - a_r)^6 * (5 * a_r^5 + 30 * a_r^4 + 72 * a_r^3 + 82 * a_r^2 + 36 * a_r + 6)
+        elseif kernel.k == 2
+            return 1 / 8 * (1 - a_r)^5 * (5 * a_r^4 + 25 * a_r^3 + 48 * a_r^2 + 40 * a_r + 8)
+        elseif kernel.k == 3
+            return 1 / 16 * (1 - a_r)^4 * (5 * a_r^3 + 20 * a_r^2 + 29 * a_r + 16)
+        end
+    end
+end
+order(::WuKernel) = 0
+
+@doc raw"""
     RadialCharacteristicKernel{Dim}(beta = 2.0; shape_parameter = 1.0)
 
-Radial characteristic function kernel function with
+Radial characteristic function (or also called truncated power or Askey) kernel function with
 ```math
-    \phi(r) = (1 - (\varepsilon r)^2)^\beta_+,
+    \phi(r) = (1 - \varepsilon r)^\beta_+,
 ```
 where ``\varepsilon`` is the shape parameter. The radial characteristic function is
 positive definite if ``\beta\ge (d + 1)/2``. It is compactly supported.
@@ -549,8 +636,7 @@ struct RieszKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function RieszKernel{Dim}(beta; shape_parameter = 1.0) where {Dim}
-    @assert beta > 0
-    @assert beta < 2
+    @assert 0 < beta  < 2 "beta has to be in (0, 2)"
     RieszKernel{Dim, typeof(shape_parameter)}(beta, shape_parameter)
 end
 

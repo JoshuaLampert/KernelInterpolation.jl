@@ -78,6 +78,22 @@ include("test_util.jl")
             @test isapprox(kernel6(x, y), expected_differences[k + 1])
         end
 
+        expected_values = [0.5, 0.34375, 0.3125, 0.201171875, 0.240234375, 0.20703125, 0.1150146484375, 0.14461263020833331, 0.169677734375, 0.14111328125]
+        expected_differences = [0.6971304755630894, 0.6777128254016545, 0.5595868163344161, 0.5741858708746038, 0.5922403769292889, 0.46589172653038635, 0.47839230403264094, 0.5106135476269533, 0.5197783607481103, 0.39497468985502254]
+        i = 1
+        for l in 0:3
+            for k in 0:l
+                kernel6_1 = @test_nowarn WuKernel{2}(l, k)
+                @test_nowarn println(kernel6_1)
+                @test_nowarn display(kernel6_1)
+                @test order(kernel6_1) == 0
+                @test isapprox(phi(kernel6_1, 0.0), 1.0)
+                @test isapprox(phi(kernel6_1, 0.5), expected_values[i])
+                @test isapprox(kernel6_1(x, y), expected_differences[i])
+                i += 1
+            end
+        end
+
         kernel7 = @test_nowarn RadialCharacteristicKernel{2}()
         @test_nowarn println(kernel7)
         @test_nowarn display(kernel7)
