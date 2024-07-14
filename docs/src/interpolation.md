@@ -244,7 +244,8 @@ kernels already defined, which can be used in an analogous way. For an overview 
 | [`PolyharmonicSplineKernel`](@ref) | ``\phi_k(r) = \begin{cases} r^k, &\text{ if } k \text{ odd}\\ r^k\log{r}, &\text{ if } k \text{ even} \end{cases}, k\in\mathbb{N}`` | ``\left\lceil{\frac{k}{2}}\right\rceil`` for odd ``k`` and ``\frac{k}{2} + 1`` for even ``k`` | ``C^{k - 1}`` for odd ``k`` and ``C^k`` for even ``k``
 | [`ThinPlateSplineKernel`](@ref) | ``\phi(r) = r^2\log{r}`` | 2 | ``C^2``
 | [`WendlandKernel`](@ref) | ``\phi_{d,k}(r) = \begin{cases}p_{d,k}(r), &\text{ if } 0\le r\le 1\\0, &\text{ else}\end{cases}, d, k\in\mathbb{N}`` for some polynomial ``p_{d,k}``| ``0`` | ``C^{2k}``
-| [`RadialCharacteristicKernel`](@ref) | ``\phi(r) = (1 - r^2)^\beta_+, \beta\ge(d + 1)/2`` | ``0`` | ``C^0``
+| [`WuKernel`](@ref) | ``\phi_{l,k}(r) = \begin{cases}p_{l,k}(r), &\text{ if } 0\le r\le 1\\0, &\text{ else}\end{cases}, l, k\in\mathbb{N}`` for some polynomial ``p_{l,k}``| ``0`` | ``C^{2(l - k)}``
+| [`RadialCharacteristicKernel`](@ref) | ``\phi(r) = (1 - r)^\beta_+, \beta\ge(d + 1)/2`` | ``0`` | ``C^0``
 | [`MaternKernel`](@ref) | ``\phi_{\nu}(r) = \frac{2^{1 - \nu}}{\Gamma(\nu)}\left(\sqrt{2\nu}r\right)^\nu K_{\nu}\left(\sqrt{2\nu}r\right), \nu > 0`` | ``0`` | ``C^{2(\nu - 1)}``
 | [`RieszKernel`](@ref) | ``\phi(r) = -r^\beta, 0 < \beta < 2`` | ``1`` | ``C^\infty``
 

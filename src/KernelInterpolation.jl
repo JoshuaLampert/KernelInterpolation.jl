@@ -32,7 +32,7 @@ include("util.jl")
 
 export get_name
 export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
-       PolyharmonicSplineKernel, ThinPlateSplineKernel, WendlandKernel,
+       PolyharmonicSplineKernel, ThinPlateSplineKernel, WendlandKernel, WuKernel,
        RadialCharacteristicKernel, MaternKernel, Matern12Kernel, Matern32Kernel,
        Matern52Kernel, Matern72Kernel, RieszKernel,
        TransformationKernel, ProductKernel, SumKernel
