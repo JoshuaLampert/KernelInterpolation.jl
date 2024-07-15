@@ -246,7 +246,7 @@ kernels already defined, which can be used in an analogous way. For an overview 
 | [`WendlandKernel`](@ref) | ``\phi_{d,k}(r) = \begin{cases}p_{d,k}(r), &\text{ if } 0\le r\le 1\\0, &\text{ else}\end{cases}, d, k\in\mathbb{N}`` for some polynomial ``p_{d,k}``| ``0`` | ``C^{2k}``
 | [`WuKernel`](@ref) | ``\phi_{l,k}(r) = \begin{cases}p_{l,k}(r), &\text{ if } 0\le r\le 1\\0, &\text{ else}\end{cases}, l, k\in\mathbb{N}`` for some polynomial ``p_{l,k}``| ``0`` | ``C^{2(l - k)}``
 | [`RadialCharacteristicKernel`](@ref) | ``\phi(r) = (1 - r)^\beta_+, \beta\ge(d + 1)/2`` | ``0`` | ``C^0``
-| [`MaternKernel`](@ref) | ``\phi_{\nu}(r) = \frac{2^{1 - \nu}}{\Gamma(\nu)}\left(\sqrt{2\nu}r\right)^\nu K_{\nu}\left(\sqrt{2\nu}r\right), \nu > 0`` | ``0`` | ``C^{2(\nu - 1)}``
+| [`MaternKernel`](@ref) | ``\phi_{\nu}(r) = \frac{2^{1 - \nu}}{\Gamma(\nu)}\left(\sqrt{2\nu}r\right)^\nu K_{\nu}\left(\sqrt{2\nu}r\right), \nu > 0`` | ``0`` | ``C^{2(\lceil\nu\rceil - 1)}``
 | [`RieszKernel`](@ref) | ``\phi(r) = -r^\beta, 0 < \beta < 2`` | ``1`` | ``C^\infty``
 
 Kernels can be composed by using [`SumKernel`](@ref) and [`ProductKernel`](@ref). Anisotropic kernels can be created by using [`TransformationKernel`](@ref),
