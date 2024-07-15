@@ -395,7 +395,7 @@ Radial characteristic function (or also called truncated power or Askey) kernel 
 ```
 where ``\varepsilon`` is the shape parameter. The radial characteristic function is
 positive definite if ``\beta\ge (d + 1)/2``. It is compactly supported.
-See Wendland (2004), p. 80.
+See Wendland (2004), p. 80, Iske (2018), p. 281.
 
 See also [`RadialSymmetricKernel`](@ref).
 
@@ -403,6 +403,10 @@ See also [`RadialSymmetricKernel`](@ref).
   Scattered Data Approximation
   Cambridge University Press
   [DOI: 10.1017/CBO9780511617539](https://doi.org/10.1017/CBO9780511617539)
+- Armin Iske (2018)
+  Approximation Theory and Algorithms for Data Analysis
+  Texts in Applied Mathematics (Springer)
+  [DOI: 10.1007/978-3-030-05228-7](https://doi.org/10.1007/978-3-030-05228-7)
 """
 struct RadialCharacteristicKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     beta::RealT
