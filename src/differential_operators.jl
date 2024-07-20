@@ -23,7 +23,7 @@ Partial derivative operator with respect to the `i`-th component.
 The operator can be called with a [`RadialSymmetricKernel`](@ref) and points
 `x` and `y` to evaluate the derivative of the `kernel` at `x - y`.
 It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
-the first partial derivative of the interpolation at `x` in `the `i``th direction. Note that this
+the first partial derivative of the interpolation at `x` in the `i`-th direction. Note that this
 is only supported for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
 """
 struct PartialDerivative <: AbstractDifferentialOperator
