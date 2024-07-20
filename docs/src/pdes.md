@@ -85,7 +85,7 @@ non-symmetric collocation.
 
 Let us see how this can be implemented in KernelInterpolation.jl by solving the Poisson equation ``-\Delta u = f`` in an L-shaped
 domain. We start by defining the equation (thus the differential operator) and the right-hand side. KernelInterpolation.jl already
-provides a set of predefined [differential operators](@ref api-diffops) and [equations](@ref api-stateq).
+provides a set of predefined [differential operators](@ref api-diffops) and [equations](@ref api-equations).
 
 ```@example poisson
 using KernelInterpolation

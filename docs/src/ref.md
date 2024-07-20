@@ -4,132 +4,77 @@
 CurrentModule = KernelInterpolation
 ```
 
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["KernelInterpolation.jl"]
+```
+
 ## [Kernel functions](@id api-kernels)
 
-```@docs
-AbstractKernel
-get_name
-RadialSymmetricKernel
-Phi
-phi
-GaussKernel
-MultiquadricKernel
-InverseMultiquadricKernel
-PolyharmonicSplineKernel
-ThinPlateSplineKernel
-WendlandKernel
-WuKernel
-RadialCharacteristicKernel
-MaternKernel
-Matern12Kernel
-Matern32Kernel
-Matern52Kernel
-Matern72Kernel
-RieszKernel
-SumKernel
-ProductKernel
-TransformationKernel
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = [joinpath("kernels", "kernels.jl"), joinpath("kernels", "radialsymmetric.jl"), joinpath("kernels", "special_kernels.jl")]
 ```
 
 ## Node sets
 
-```@docs
-NodeSet
-empty_nodeset
-separation_distance
-values_along_dim
-distance_matrix
-random_hypercube
-random_hypercube_boundary
-homogeneous_hypercube
-homogeneous_hypercube_boundary
-random_hypersphere
-random_hypersphere_boundary
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["nodes.jl"]
 ```
 
 ## Interpolation
 
-```@docs
-Interpolation
-TemporalInterpolation
-interpolate
-kernel_inner_product
-kernel_norm
-dim
-interpolation_kernel
-nodeset
-coefficients
-kernel_coefficients
-polynomial_coefficients
-polynomial_basis
-polyvars
-order
-system_matrix
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["interpolation.jl"]
 ```
 
 ## [Differential Operators](@id api-diffops)
 
-```@docs
-PartialDerivative
-Gradient
-Laplacian
-EllipticOperator
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["differential_operators.jl"]
 ```
 
-## [Stationary partial differential equations](@id api-stateq)
+## [Partial differential equations](@id api-equations)
 
-```@docs
-PoissonEquation
-EllipticEquation
-```
-
-## Time-dependent partial differential equations
-
-```@docs
-AdvectionEquation
-HeatEquation
-AdvectionDiffusionEquation
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["equations.jl"]
 ```
 
 ## Discretization
 
-```@docs
-SpatialDiscretization
-solve_stationary
-Semidiscretization
-semidiscretize
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["discretization.jl"]
 ```
 
 ## Kernel matrices
 
-```@docs
-kernel_matrix
-polynomial_matrix
-pde_matrix
-pde_boundary_matrix
-operator_matrix
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["kernel_matrices.jl"]
 ```
 
 ## [Callbacks](@id api-callbacks)
 
-```@docs
-AliveCallback
-SummaryCallback
-SaveSolutionCallback
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = [joinpath("callbacks_step", "alive.jl"), joinpath("callbacks_step", "summary.jl"), joinpath("callbacks_step", "save_solution.jl")]
 ```
 
 ## Input/Output
 
-```@docs
-vtk_read
-vtk_save
-add_to_pvd
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["io.jl"]
 ```
 
 ## Utilities
 
-```@docs
-examples_dir
-get_examples
-default_example
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["util.jl"]
 ```
