@@ -21,6 +21,8 @@ makedocs(;
                  "Sets of nodes" => "nodesets.md",
                  "Interpolation" => "interpolation.md",
                  "Solving PDEs by collocation" => "pdes.md"],
+             "Tutorials" => [
+                 "1D interpolation and differentiation" => "tutorial_differentiating_interpolation.md"],
              "Development" => "development.md",
              "Reference" => "ref.md",
              "License" => "license.md"])
