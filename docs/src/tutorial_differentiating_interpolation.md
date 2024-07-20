@@ -13,7 +13,7 @@ f(x) = \exp(\sin(2x^2)) + 0.1(x - \pi/2)^2
 
 between `x = -3` and `x = 3`. For simplicity, we take 25 equidistant points in the interval `[-3, 3]` as interpolation points.
 
-```example diff-itp
+```@example diff-itp
 using KernelInterpolation
 f(x) = exp(sin(2*x[1]^2)) + 0.1*(x[1] - pi/2)^2
 x_min = -3
@@ -26,14 +26,14 @@ values = f.(nodeset)
 Next, we choose the kernel (radial basis function) for the interpolation. We use the Gaussian kernel with a fixed
 shape parameter of 0.5 and interpolate the function values.
 
-```example diff-itp
+```@example diff-itp
 kernel = GaussKernel{1}(shape_parameter = 0.5)
 itp = interpolate(nodeset, values, kernel)
 ```
 
 Let's plot the interpolated function and the original function on a finer grid to see how well the interpolation works.
 
-```example diff-itp
+```@example diff-itp
 using Plots
 many_nodes = NodeSet(LinRange(x_min, x_max, 200))
 plot(many_nodes, f, label = "Original function")
@@ -51,7 +51,7 @@ Uhh, that doesn't look too good. What happened?
 We used the [`GaussKernel`](@ref) with a rather small shape parameter of 0.5, which leads to an ill-conditioned
 linear system of equations. We can inspect the condition number of the interpolation matrix to confirm this.
 
-```example diff-itp
+```@example diff-itp
 using LinearAlgebra
 A = system_matrix(itp)
 cond(A)
@@ -67,7 +67,7 @@ the [`WendlandKernel`](@ref) usually lead to better condition numbers.
 Here, we choose to increase the shape parameter of the Gaussian kernel to 1.8, which makes the interpolation more localized.
 Note, however, that you might need to choose another kernel if you increase the number of interpolation points.
 
-```example diff-itp
+```@example diff-itp
 kernel = GaussKernel{1}(shape_parameter = 1.8)
 itp = interpolate(nodeset, values, kernel)
 plot(many_nodes, f, label = "Original function")
@@ -82,7 +82,7 @@ We can see a much better agreement between the original function and the interpo
 undershoots, but this is expected due to the oscillatory nature of the function and the limited number of interpolation
 points. Let's confirm that increasing the shape parameter improved the condition number of the interpolation matrix.
 
-```example diff-itp
+```@example diff-itp
 A = system_matrix(itp)
 cond(A)
 ```
@@ -114,7 +114,7 @@ derivative in the ``i``-th direction of the interpolation is then given by
 KernelInterpolation.jl already provides some common differential operators. For example, we can compute the first derivative
 of the interpolation `itp` at a specific point `x` by using the `PartialDerivative` operator.
 
-```example diff-itp
+```@example diff-itp
 d1 = PartialDerivative(1)
 x = 0.0
 itp_dx = d1(itp, x)
@@ -122,7 +122,7 @@ itp_dx = d1(itp, x)
 
 Let's plot the first derivative of the interpolated function and compare it to the analytical first derivative.
 
-```example diff-itp
+```@example diff-itp
 itp_dx_many_nodes = d1.(Ref(itp), many_nodes)
 f_dx(x) = 4*exp(sin(2*x[1]^2))*x[1]*cos(2*x[1]^2) + 0.2*x[1] - pi/10
 plot(many_nodes, f_dx, label = "Derivative of original function")
