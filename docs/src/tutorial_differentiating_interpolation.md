@@ -23,7 +23,8 @@ nodeset = NodeSet(LinRange(x_min, x_max, n))
 values = f.(nodeset)
 ```
 
-Next, we choose the kernel (radial basis function) for the interpolation. We use the Gaussian kernel with a fixed shape parameter of 0.5 and interpolate the function values.
+Next, we choose the kernel (radial basis function) for the interpolation. We use the Gaussian kernel with a fixed
+shape parameter of 0.5 and interpolate the function values.
 
 ```example diff-itp
 kernel = GaussKernel{1}(shape_parameter = 0.5)
