@@ -11,15 +11,16 @@ We start by defining a simple one-dimensional interpolation problem. We will int
 f(x) = \exp(\sin(2x^2)) + 0.1(x - \pi/2)^2
 ```
 
-between `x = -3` and `x = 3`. For simplicity, we take 25 equidistant points in the interval `[-3, 3]` as interpolation points.
+between ``x = -3`` and ``x = 3``. For simplicity, we take 25 equidistant points in the interval ``[-3, 3]``
+as interpolation points.
 
 ```@example diff-itp
 using KernelInterpolation
 f(x) = exp(sin(2*x[1]^2)) + 0.1*(x[1] - pi/2)^2
 x_min = -3
 x_max = 3
-n = 25
-nodeset = NodeSet(LinRange(x_min, x_max, n))
+N = 25
+nodeset = NodeSet(LinRange(x_min, x_max, N))
 values = f.(nodeset)
 ```
 
@@ -95,15 +96,15 @@ Sometimes, we are not only interested in interpolating a function, but also in c
 in the simplest case, where no polynomial augmentation is used, the interpolation `itp` represents a linear combination
 
 ```math
-s(x) = \sum_{j = 1}^n c_j\phi(\|x - x_j\|)
+s(x) = \sum_{j = 1}^N c_j\phi(\|x - x_j\|_2)
 ```
 
 with ``\phi`` given by the radial basis function, in this case the Gaussian. Because we know ``\phi`` and its derivatives,
 we can compute the derivatives of ``s`` by differentiating the kernel function. For a general dimension ``d``, the partial
-derivative in the ``i``-th direction of the interpolation is then given by
+derivative in the ``i``-th direction, ``i\in\{1,\ldots,d}``, of the interpolation is then given by
 
 ```math
-\frac{\partial s}{\partial x_i}(x) = \sum_{j = 1}^n c_j\frac{\partial \phi}{\partial x_i}(\|x - x_j\|).
+\frac{\partial s}{\partial x_i}(x) = \sum_{j = 1}^N c_j\frac{\partial \phi}{\partial x_i}(\|x - x_j\|_2).
 ```
 
 !!! note
@@ -112,7 +113,7 @@ derivative in the ``i``-th direction of the interpolation is then given by
     simplicity, and easier extension, but it might be slower than computing the derivatives analytically.
 
 KernelInterpolation.jl already provides some common differential operators. For example, we can compute the first derivative
-of the interpolation `itp` at a specific point `x` by using the `PartialDerivative` operator.
+of the interpolation `itp` at a specific point `x` by using the [`PartialDerivative`](@ref) operator.
 
 ```@example diff-itp
 d1 = PartialDerivative(1)
