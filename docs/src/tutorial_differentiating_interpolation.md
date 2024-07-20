@@ -112,8 +112,9 @@ derivative in the ``i``-th direction, ``i\in\{1,\ldots,d\}``, of the interpolati
     differentiation (AD) by using [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl). This allows for flexibility,
     simplicity, and easier extension, but it might be slower than computing the derivatives analytically.
 
-KernelInterpolation.jl already provides some common differential operators. For example, we can compute the first derivative
-of the interpolation `itp` at a specific point `x` by using the [`PartialDerivative`](@ref) operator.
+KernelInterpolation.jl already provides some [common differential operators](@ref api-diffops). For example,
+we can compute the first derivative of the interpolation `itp` at a specific point `x` by using the
+[`PartialDerivative`](@ref) operator.
 
 ```@example diff-itp
 d1 = PartialDerivative(1)
