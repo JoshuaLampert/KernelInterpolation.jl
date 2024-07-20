@@ -130,6 +130,6 @@ add_to_pvd
 
 ```@docs
 examples_dir
-get_example
+get_examples
 default_example
 ```
