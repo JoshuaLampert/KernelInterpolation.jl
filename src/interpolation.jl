@@ -137,7 +137,7 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
 are enforced. Returns an [`Interpolation`](@ref) object.
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
-                     kernel = GaussKernel{Dim}(),
+                     kernel = GaussKernel{Dim}();
                      m = order(kernel)) where {Dim, RealT}
     @assert dim(kernel) == Dim
     n = length(nodeset)
@@ -186,9 +186,20 @@ function (diff_op_or_pde::Union{AbstractDifferentialOperator, AbstractStationary
     kernel = interpolation_kernel(itp)
     xs = nodeset(itp)
     c = kernel_coefficients(itp)
-    s = 0
+    s = zero(eltype(x))
     for j in eachindex(c)
         s += c[j] * diff_op_or_pde(kernel, x, xs[j])
+    end
+    return s
+end
+
+function (g::Gradient)(itp::Interpolation, x)
+    kernel = interpolation_kernel(itp)
+    xs = nodeset(itp)
+    c = kernel_coefficients(itp)
+    s = zero(x)
+    for j in eachindex(c)
+        s += c[j] * g(kernel, x, xs[j])
     end
     return s
 end

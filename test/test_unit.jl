@@ -693,12 +693,27 @@ include("test_util.jl")
 
         # 1D interpolation and evaluation
         nodes = NodeSet(LinRange(0.0, 1.0, 10))
-        f(x) = sinpi.(x[1])
+        f(x) = sinpi(x[1])
         ff = f.(nodes)
-        kernel = Matern12Kernel{1}()
+        kernel = Matern52Kernel{1}()
         itp = @test_nowarn interpolate(nodes, ff, kernel)
-        @test isapprox(itp([0.12345]), 0.3751444089323994)
-        @test isapprox(itp(0.12345), 0.3751444089323994) # Evaluate at scalar input
+        @test isapprox(itp([0.12345]), 0.3783014037753514)
+        @test isapprox(itp(0.12345), 0.3783014037753514) # Evaluate at scalar input
+
+        # Applying operators to the interpolation
+        f_prime(x) = pi * cospi(x[1])
+        many_nodes = NodeSet(LinRange(0.0, 1.0, 50))
+        d1 = PartialDerivative(1)
+        d1_itp = @test_nowarn d1.(Ref(itp), many_nodes)
+        for i in eachindex(many_nodes)
+            @test isapprox(d1_itp[i], f_prime(many_nodes[i]), atol = 0.1)
+        end
+        g = Gradient()
+        g_itp = @test_nowarn g.(Ref(itp), many_nodes)
+        for i in eachindex(many_nodes)
+            @test isapprox(g_itp[i][1], d1_itp[i])
+        end
+
         # TODO: test convergence orders of condition numbers depending on separation distance
     end
 
@@ -706,6 +721,12 @@ include("test_util.jl")
         l = @test_nowarn Laplacian()
         @test_nowarn println(l)
         @test_nowarn display(l)
+        d1 = @test_nowarn PartialDerivative(1)
+        @test_nowarn println(d1)
+        @test_nowarn display(d1)
+        d2 = @test_nowarn PartialDerivative(2)
+        @test_nowarn println(d2)
+        @test_nowarn display(d2)
         g = @test_nowarn Gradient()
         @test_nowarn println(g)
         @test_nowarn display(g)
@@ -754,6 +775,8 @@ include("test_util.jl")
         x1 = [0.4, 0.6]
         @test isapprox(l(kernel, x1), AnalyticalLaplacian()(kernel, x1))
         @test isapprox(g(kernel, x1), [-0.17561908618411226, -0.2634286292761684])
+        @test isapprox(d1(kernel, x1), -0.17561908618411226)
+        @test isapprox(d2(kernel, x1), -0.2634286292761684)
         @test isapprox(el(kernel, x1), 0.6486985764273818)
         @test isapprox(el_l(kernel, x1), -AnalyticalLaplacian()(kernel, x1))
         kernel = GaussKernel{3}(shape_parameter = 0.5)

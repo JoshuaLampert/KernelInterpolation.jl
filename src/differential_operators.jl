@@ -17,10 +17,35 @@ function save_call(D::AbstractDifferentialOperator, kernel::RadialSymmetricKerne
 end
 
 """
+    PartialDerivative(i)
+
+Partial derivative operator with respect to the `i`-th component.
+The operator can be called with a [`RadialSymmetricKernel`](@ref) and points
+`x` and `y` to evaluate the derivative of the `kernel` at `x - y`.
+It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
+the `i`-th partial derivative of the interpolation at `x`. Note that this is only supported
+for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
+"""
+struct PartialDerivative <: AbstractDifferentialOperator
+    i::Int
+end
+
+function Base.show(io::IO, operator::PartialDerivative)
+    print(io, "∂_{x_", operator.i, "}")
+end
+
+function (operator::PartialDerivative)(kernel::RadialSymmetricKernel, x)
+    return ForwardDiff.gradient(x -> Phi(kernel, x), x)[operator.i]
+end
+
+"""
     Gradient()
 
 The gradient operator. It can be called with a [`RadialSymmetricKernel`](@ref) and points
 `x` and `y` to evaluate the gradient of the `kernel` at `x - y`.
+It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
+the gradient of the interpolation at `x`. Note that this is only supported
+for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
 """
 struct Gradient <: AbstractDifferentialOperator
 end
@@ -38,6 +63,9 @@ end
 
 The Laplacian operator. It can be called with a [`RadialSymmetricKernel`](@ref) and points
 `x` and `y` to evaluate the Laplacian of the `kernel` at `x - y`.
+It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
+the Laplacian of the interpolation at `x`. Note that this is only supported
+for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
 """
 struct Laplacian <: AbstractDifferentialOperator
 end
@@ -54,14 +82,19 @@ end
 @doc raw"""
     EllipticOperator(A, b, c)
 
-Linear second-order elliptic operator with matrix ``A(x)\in\mathbb{R}^{d\times d}``, vector ``b(x)\in\mathbb{R}^d``, and scalar ``c(x)``.
+Linear second-order elliptic operator with matrix ``A(x)\in\mathbb{R}^{d\times d}``, vector
+``b(x)\in\mathbb{R}^d``, and scalar ``c(x)``.
 The operator is defined as
 ```math
     \mathcal{L}u = -\sum_{i,j = 1}^d a_{ij}(x)\partial_{x_i,x_j}^2u + \sum_{i = 1}^db_i(x)\partial_{x_i}u + c(x)u.
 ```
-`A`, `b` and `c` are space-dependent functions returning a matrix, a vector, and a scalar, respectively. The matrix `A` should be symmetric and
-positive definite for any input `x`.
-The operator can be called with a [`RadialSymmetricKernel`](@ref) and points `x` and `y` to evaluate the operator of the `kernel` at `x - y`.
+`A`, `b` and `c` are space-dependent functions returning a matrix, a vector, and a scalar,
+respectively. The matrix `A` should be symmetric and positive definite for any input `x`.
+The operator can be called with a [`RadialSymmetricKernel`](@ref) and points `x` and `y` to
+evaluate the operator of the `kernel` at `x - y`.
+It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
+the elliptic operator of the interpolation at `x`. Note that this is only supported
+for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
 """
 struct EllipticOperator{AType, BType, CType} <:
        AbstractDifferentialOperator where {AType, BType, CType}

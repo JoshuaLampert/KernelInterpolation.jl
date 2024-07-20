@@ -37,7 +37,7 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        Matern52Kernel, Matern72Kernel, RieszKernel,
        TransformationKernel, ProductKernel, SumKernel
 export phi, Phi, order
-export Gradient, Laplacian, EllipticOperator
+export PartialDerivative, Gradient, Laplacian, EllipticOperator
 export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation,
        AdvectionDiffusionEquation
 export SpatialDiscretization, Semidiscretization, semidiscretize
