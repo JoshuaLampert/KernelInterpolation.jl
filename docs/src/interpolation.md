@@ -233,8 +233,9 @@ to visualize the interpolant are the `Delaunay2D` filter to create a surface plo
 
 ## Overview of kernels and adding a custom kernel
 
-In the previous example, we used the [`ThinPlateSplineKernel`](@ref), which is a predefined kernel in KernelInterpolation.jl. There are a number of different
-kernels already defined, which can be used in an analogous way. For an overview of the existing radial-symmetric kernels, see the following table.
+In the previous example, we used the [`ThinPlateSplineKernel`](@ref), which is a predefined kernel in KernelInterpolation.jl.
+There is a number of different [kernels already defined](@ref api-kernels), which can be used in an analogous way. For an
+overview of the existing radial-symmetric kernels, see the following table.
 
 | Kernel name | Formula | Order | Smoothness
 | --- | --- | --- | ---

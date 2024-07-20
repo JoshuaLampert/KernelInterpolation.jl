@@ -1,3 +1,14 @@
+"""
+    KernelInterpolation
+
+**KernelInterpolation.jl** is a Julia package that implements methods for multivariate interpolation in arbitrary
+dimension based on symmetric (conditionally) positive-definite kernels with a focus on radial basis functions.
+It can be used for classical interpolation of scattered data, as well as for generalized (Hermite-Birkhoff)
+interpolation by using a meshfree collocation approach. This can be used to solve partial differential equations
+both stationary ones and time-dependent ones by using some time integration method from OrdinaryDiffEq.jl.
+
+See also: [KernelInterpolation.jl](https://github.com/JoshuaLampert/KernelInterpolation.jl)
+"""
 module KernelInterpolation
 
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
