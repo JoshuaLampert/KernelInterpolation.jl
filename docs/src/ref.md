@@ -4,7 +4,7 @@
 CurrentModule = KernelInterpolation
 ```
 
-## Kernel functions
+## [Kernel functions](@id api-kernels)
 
 ```@docs
 AbstractKernel
@@ -76,7 +76,7 @@ Laplacian
 EllipticOperator
 ```
 
-## Stationary partial differential equations
+## [Stationary partial differential equations](@id api-stateq)
 
 ```@docs
 PoissonEquation
@@ -110,7 +110,7 @@ pde_boundary_matrix
 operator_matrix
 ```
 
-## Callbacks
+## [Callbacks](@id api-callbacks)
 
 ```@docs
 AliveCallback
