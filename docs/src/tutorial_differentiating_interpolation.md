@@ -1,7 +1,7 @@
 # One-dimensional interpolation and differentiation
 
-In this tutorial, we will create a simple one-dimensional interpolation and show how to apply differential operators on the
-resulting [`Interpolation`](@ref) object.
+In this tutorial, we will create a simple one-dimensional interpolation, investigate how to tune the interpolation method,
+and show how to apply differential operators on the resulting [`Interpolation`](@ref) object.
 
 ## Define problem setup and perform interpolation
 
