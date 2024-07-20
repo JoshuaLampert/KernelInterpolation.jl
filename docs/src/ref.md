@@ -13,7 +13,7 @@ Pages = ["KernelInterpolation.jl"]
 
 ```@autodocs
 Modules = [KernelInterpolation]
-Pages = [joinpath("kernels", "kernels.jl"), joinpath("kernels", "radialsymmetric.jl"), joinpath("kernels", "special_kernels.jl")]
+Pages = [joinpath("kernels", "kernels.jl"), joinpath("kernels", "radialsymmetric_kernel.jl"), joinpath("kernels", "special_kernel.jl")]
 ```
 
 ## Node sets
