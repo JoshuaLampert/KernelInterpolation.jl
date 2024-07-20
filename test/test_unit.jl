@@ -693,12 +693,27 @@ include("test_util.jl")
 
         # 1D interpolation and evaluation
         nodes = NodeSet(LinRange(0.0, 1.0, 10))
-        f(x) = sinpi.(x[1])
+        f(x) = sinpi(x[1])
         ff = f.(nodes)
-        kernel = Matern12Kernel{1}()
+        kernel = Matern52Kernel{1}()
         itp = @test_nowarn interpolate(nodes, ff, kernel)
-        @test isapprox(itp([0.12345]), 0.3751444089323994)
-        @test isapprox(itp(0.12345), 0.3751444089323994) # Evaluate at scalar input
+        @test isapprox(itp([0.12345]), 0.3783014037753514)
+        @test isapprox(itp(0.12345), 0.3783014037753514) # Evaluate at scalar input
+
+        # Applying operators to the interpolation
+        f_prime(x) = pi * cospi(x[1])
+        many_nodes = NodeSet(LinRange(0.0, 1.0, 50))
+        d1 = PartialDerivative(1)
+        d1_itp = @test_nowarn d1.(Ref(itp), many_nodes)
+        for i in eachindex(many_nodes)
+            @test isapprox(d1_itp[i], f_prime(many_nodes[i]), atol = 0.1)
+        end
+        g = Gradient()
+        g_itp = @test_nowarn g.(Ref(itp), many_nodes)
+        for i in eachindex(many_nodes)
+            @test isapprox(g_itp[i][1], d1_itp[i])
+        end
+
         # TODO: test convergence orders of condition numbers depending on separation distance
     end
 
