@@ -101,7 +101,7 @@ s(x) = \sum_{j = 1}^N c_j\phi(\|x - x_j\|_2)
 
 with ``\phi`` given by the radial basis function, in this case the Gaussian. Because we know ``\phi`` and its derivatives,
 we can compute the derivatives of ``s`` by differentiating the kernel function. For a general dimension ``d``, the partial
-derivative in the ``i``-th direction, ``i\in\{1,\ldots,d}``, of the interpolation is then given by
+derivative in the ``i``-th direction, ``i\in\{1,\ldots,d\}``, of the interpolation is then given by
 
 ```math
 \frac{\partial s}{\partial x_i}(x) = \sum_{j = 1}^N c_j\frac{\partial \phi}{\partial x_i}(\|x - x_j\|_2).
