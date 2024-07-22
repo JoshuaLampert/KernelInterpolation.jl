@@ -66,7 +66,7 @@ Note that this is only an estimate. The true fill distance is ``\sqrt{2}/2\appro
 ``(0.5, 0.5)^T``). The estimate can be improved by taking a finer evaluation grid.
 
 Next to [`homogeneous_hypercube`](@ref), KernelInterpolation.jl provides additional convenience functions to create specific commonly
-used [`NodeSet`](@ref)s. These are [`homogeneous_hypercube`](@ref) to create equally spaced nodes at the boundary of a hypercube,
+used [`NodeSet`](@ref)s. These are [`homogeneous_hypercube_boundary`](@ref) to create equally spaced nodes at the boundary of a hypercube,
 [`random_hypercube`](@ref) and [`random_hypercube_boundary`](@ref) to create random uniformly distributed nodes inside or at the
 boundary of a hypercube, and [`random_hypersphere`](@ref) and [`random_hypersphere_boundary`](@ref) for random uniformly distributed
 nodes inside or at the boundary of a hypersphere. Note that the first argument `n` of the `homogeneous_*` functions denotes the number
@@ -74,7 +74,7 @@ of points __along each dimension__, while for the `random_*` function it denotes
 
 Other sampling methods for hypercubes of any dimension can be obtained by using the package [QuasiMonteCarlo.jl](https://docs.sciml.ai/QuasiMonteCarlo/stable/).
 We can simply pass the (transposed) result of any sampling algorithm from QuasiMonteCarlo.jl to the constructor of [`NodeSet`](@ref).
-To create 500 Halton points in a box bounded by ``[-1.0, -1.0, -1.0]`` and ``[2.0, 2.0, 2.0]`` we can, e.g., run:
+To create, e.g., 500 Halton points in a box bounded by ``[-1.0, -1.0, -1.0]`` and ``[2.0, 2.0, 2.0]`` we can run:
 
 ```@example nodesets
 using QuasiMonteCarlo: sample, HaltonSample
