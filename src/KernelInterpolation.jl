@@ -29,7 +29,7 @@ using TypedPolynomials: Variable, monomials, degree
 using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
                 CollectionFile
 
-include("kernels/kernels.jl")
+    include("kernels/kernels.jl")
 include("nodes.jl")
 include("differential_operators.jl")
 include("equations.jl")
