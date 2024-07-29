@@ -8,7 +8,7 @@ using KernelInterpolation: KernelInterpolation
 val(u) = u.val
 val(p::Point) = val.(to(p))
 
-function KernelInterpolation.NodeSet(points::Vector{P}) where P <: Point
+function KernelInterpolation.NodeSet(points::Vector{P}) where {P <: Point}
     return KernelInterpolation.NodeSet(val.(points))
 end
 
