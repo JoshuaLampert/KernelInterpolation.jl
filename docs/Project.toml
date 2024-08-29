@@ -7,6 +7,6 @@ QuasiMonteCarlo = "8a4e6c94-4038-4cdc-81c3-7e6ffdb2a71b"
 
 [compat]
 Documenter = "1"
-Meshes = "0.46, 0.47, 0.48, 0.49"
+Meshes = "0.46, 0.47, 0.48, 0.49, 0.50"
 Plots = "1.9"
 QuasiMonteCarlo = "0.3"
