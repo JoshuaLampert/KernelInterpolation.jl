@@ -140,37 +140,3 @@ macro test_nowarn_mod(expr, additional_ignore_content = String[])
         end
     end
 end
-
-"""
-    @ki_testset "name of the testset" #= code to test #=
-
-Similar to `@testset`, but wraps the code inside a temporary module to avoid
-namespace pollution.
-"""
-macro ki_testset(name, expr)
-    @assert name isa String
-    mod = gensym(name)
-    quote
-        local time_start = time_ns()
-        @eval module $mod
-        using Test
-        using KernelInterpolation
-        using LinearAlgebra: norm # We use `norm` in all `@ki_testset`s
-        include(@__FILE__)
-        # We define `EXAMPLES_DIR` in (nearly) all test modules and use it to
-        # get the path to the examples to be tested. However, that's not required
-        # and we want to fail gracefully if it's not defined.
-        try
-            import ..EXAMPLES_DIR
-        catch
-            nothing
-        end
-        @testset $name $expr
-        end
-        local time_stop = time_ns()
-        flush(stdout)
-        @info("Testset "*$name*" finished in "
-              *string(1.0e-9 * (time_stop - time_start))*" seconds.\n")
-        nothing
-    end
-end
