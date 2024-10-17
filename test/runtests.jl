@@ -1,9 +1,15 @@
-using KernelInterpolation
-using Test
+using TestItems
+using TestItemRunner
 
-@testset "KernelInterpolation.jl" begin
-    include("test_aqua.jl")
-    include("test_unit.jl")
-    include("test_examples_interpolation.jl")
-    include("test_examples_pde.jl")
+@run_package_tests
+
+@testsnippet Setup begin
+    include("test_util.jl")
+end
+
+@testsnippet AdditionalImports begin
+    using LinearAlgebra: norm, Symmetric, I
+    using OrdinaryDiffEq: solve, Rodas5P
+    using StaticArrays: MVector
+    using Meshes: Meshes, Sphere, Point, PointSet, RegularSampling
 end
