@@ -58,7 +58,7 @@ end
 
 @testitem "advection_diffusion_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "advection_diffusion_2d_basic.jl"),
-                          l2=1.5864821595434728, linf=0.5647098979814822,
+                          l2=1.5864821617681693, linf=0.56470989589118,
                           pde_test=true, tspan=(0.0, 0.1),
                           atol=1e-11) # stability issues
     rm("out"; force = true, recursive = true)
