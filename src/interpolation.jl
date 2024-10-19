@@ -19,6 +19,7 @@ struct Interpolation{Kernel, Dim, RealT, A, Monomials, PolyVars} <:
        AbstractInterpolation{Kernel, Dim, RealT}
     kernel::Kernel
     nodeset::NodeSet{Dim, RealT}
+    centers::NodeSet{Dim, RealT}
     c::Vector{RealT}
     system_matrix::A
     ps::Monomials
@@ -136,7 +137,8 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
 ```
 are enforced. Returns an [`Interpolation`](@ref) object.
 """
-function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
+function interpolate(nodeset::NodeSet{Dim, RealT}, centers::NodeSet{Dim, RealT},
+                     values::Vector{RealT},
                      kernel = GaussKernel{Dim}();
                      m = order(kernel)) where {Dim, RealT}
     @assert dim(kernel) == Dim
@@ -146,14 +148,21 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
     ps = monomials(xx, 0:(m - 1))
     q = length(ps)
 
-    k_matrix = kernel_matrix(nodeset, kernel)
+    k_matrix = kernel_matrix(nodeset, centers, kernel)
     p_matrix = polynomial_matrix(nodeset, ps)
     system_matrix = [k_matrix p_matrix
                      transpose(p_matrix) zeros(q, q)]
     b = [values; zeros(q)]
     symmetric_system_matrix = Symmetric(system_matrix)
     c = symmetric_system_matrix \ b
-    return Interpolation(kernel, nodeset, c, symmetric_system_matrix, ps, xx)
+    return Interpolation(kernel, nodeset, centers, c, symmetric_system_matrix, ps, xx)
+end
+
+function interpolate(nodeset::NodeSet{Dim, RealT},
+                     values::Vector{RealT},
+                     kernel = GaussKernel{Dim}();
+                     m = order(kernel)) where {Dim, RealT}
+    interpolate(nodeset, nodeset, values, kernel; m = m)
 end
 
 # Evaluate interpolant
@@ -274,7 +283,8 @@ function (titp::TemporalInterpolation)(t)
     # Do not support additional polynomial basis for now
     xx = polyvars(dim(semi))
     ps = monomials(xx, 0:-1)
-    itp = Interpolation(kernel, merge(nodeset_inner, nodeset_boundary), c,
+    nodeset = merge(nodeset_inner, nodeset_boundary)
+    itp = Interpolation(kernel, nodeset, nodeset, c,
                         semi.cache.mass_matrix, ps, xx)
     return itp
 end
