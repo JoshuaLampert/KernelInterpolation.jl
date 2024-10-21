@@ -118,3 +118,14 @@ end
     @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_condition.jl"),
                           ns=5:10)
 end
+
+@testitem "least_squares_2d.jl" setup=[
+    Setup,
+    AdditionalImports,
+    InterpolationExamples
+] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "least_squares_2d.jl"),
+                          l2=1.2759520194191292, linf=0.19486087346749836,
+                          l2_ls=0.5375130503454387, linf_ls=0.06810374254243684,
+                          interpolation_test=false, least_square_test=true)
+end

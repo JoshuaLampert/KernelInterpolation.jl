@@ -106,13 +106,13 @@ end
     elseif dim(nodeset) == 2
         if training_nodes
             @series begin
-                x = values_along_dim(itp.nodeset, 1)
-                y = values_along_dim(itp.nodeset, 2)
+                x = values_along_dim(itp.centers, 1)
+                y = values_along_dim(itp.centers, 2)
                 seriestype := :scatter
                 markershape --> :star
                 markersize --> 10
                 label --> "training nodes"
-                x, y, itp.(itp.nodeset)
+                x, y, itp.(itp.centers)
             end
         end
         @series begin
