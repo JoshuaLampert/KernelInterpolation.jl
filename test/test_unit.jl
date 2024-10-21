@@ -675,8 +675,36 @@ end
     @test length(polynomial_basis(itp)) ==
           binomial(order(itp) - 1 + dim(nodes), dim(nodes))
     @test system_matrix(itp) isa Symmetric
+    @test size(system_matrix(itp)) == (7, 7)
     @test isapprox(itp([0.5, 0.5]), 1.0)
     @test isapprox(kernel_norm(itp), 0.0)
+
+    # Least squares approximation
+    centers = NodeSet([0.0 0.0
+                       1.0 0.0
+                       0.0 1.0])
+    itp = @test_nowarn interpolate(nodes, centers, ff, kernel)
+    expected_coefficients = [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0]
+    coeffs = coefficients(itp)
+    @test length(coeffs) == length(expected_coefficients)
+    for i in eachindex(coeffs)
+        @test isapprox(coeffs[i], expected_coefficients[i], atol = 1e-15)
+    end
+    @test order(itp) == order(kernel)
+    @test length(kernel_coefficients(itp)) == length(itp.centers)
+    @test length(polynomial_coefficients(itp)) == order(itp) + 1
+    @test length(polynomial_basis(itp)) ==
+          binomial(order(itp) - 1 + dim(nodes), dim(nodes))
+    @test system_matrix(itp) isa Matrix
+    @test size(system_matrix(itp)) == (7, 6)
+    @test isapprox(itp([0.5, 0.5]), 1.0)
+    @test isapprox(kernel_norm(itp), 0.0, atol = 1e-15)
 
     # 1D interpolation and evaluation
     nodes = NodeSet(LinRange(0.0, 1.0, 10))

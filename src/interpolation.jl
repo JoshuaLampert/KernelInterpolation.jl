@@ -19,6 +19,7 @@ struct Interpolation{Kernel, Dim, RealT, A, Monomials, PolyVars} <:
        AbstractInterpolation{Kernel, Dim, RealT}
     kernel::Kernel
     nodeset::NodeSet{Dim, RealT}
+    centers::NodeSet{Dim, RealT}
     c::Vector{RealT}
     system_matrix::A
     ps::Monomials
@@ -69,7 +70,7 @@ interpolant.
 
 See also [`coefficients`](@ref) and [`polynomial_coefficients`](@ref).
 """
-kernel_coefficients(itp::Interpolation) = itp.c[eachindex(nodeset(itp))]
+kernel_coefficients(itp::Interpolation) = itp.c[eachindex(itp.centers)]
 
 """
     polynomial_coefficients(itp::Interpolation)
@@ -79,7 +80,7 @@ interpolant.
 
 See also [`coefficients`](@ref) and [`kernel_coefficients`](@ref).
 """
-polynomial_coefficients(itp::Interpolation) = itp.c[(length(nodeset(itp)) + 1):end]
+polynomial_coefficients(itp::Interpolation) = itp.c[(length(itp.centers) + 1):end]
 
 """
     polynomial_basis(itp::Interpolation)
@@ -121,7 +122,7 @@ or collocation is used.
 system_matrix(itp::Interpolation) = itp.system_matrix
 
 @doc raw"""
-    interpolate(nodeset, values, kernel = GaussKernel{dim(nodeset)}(), m = order(kernel))
+    interpolate(nodeset, centers = nodeset, values, kernel = GaussKernel{dim(nodeset)}(), m = order(kernel))
 
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
 and polynomials up to a order `m` (i.e. degree - 1), i.e., determine the coefficients ``c_j`` and ``d_k`` in the expansion
@@ -135,8 +136,10 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
     \sum_{j = 1}^N c_jp_k(x_j) = 0, \quad k = 1,\ldots, Q = \begin{pmatrix}m - 1 + d\\d\end{pmatrix}
 ```
 are enforced. Returns an [`Interpolation`](@ref) object.
+If `centers` is provided, the interpolant is a least squares approximation with the centers used for the basis.
 """
-function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
+function interpolate(nodeset::NodeSet{Dim, RealT},
+                     values::Vector{RealT},
                      kernel = GaussKernel{Dim}();
                      m = order(kernel)) where {Dim, RealT}
     @assert dim(kernel) == Dim
@@ -149,24 +152,46 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT},
     k_matrix = kernel_matrix(nodeset, kernel)
     p_matrix = polynomial_matrix(nodeset, ps)
     system_matrix = [k_matrix p_matrix
-                     transpose(p_matrix) zeros(q, q)]
+                     p_matrix' zeros(q, q)]
     b = [values; zeros(q)]
     symmetric_system_matrix = Symmetric(system_matrix)
     c = symmetric_system_matrix \ b
-    return Interpolation(kernel, nodeset, c, symmetric_system_matrix, ps, xx)
+    return Interpolation(kernel, nodeset, nodeset, c, symmetric_system_matrix, ps, xx)
+end
+
+# Least squares approximation
+function interpolate(nodeset::NodeSet{Dim, RealT}, centers::NodeSet{Dim, RealT},
+                     values::Vector{RealT},
+                     kernel = GaussKernel{Dim}();
+                     m = order(kernel)) where {Dim, RealT}
+    @assert dim(kernel) == Dim
+    n = length(nodeset)
+    @assert length(values) == n
+    xx = polyvars(Dim)
+    ps = monomials(xx, 0:(m - 1))
+    q = length(ps)
+
+    k_matrix = kernel_matrix(nodeset, centers, kernel)
+    p_matrix1 = polynomial_matrix(nodeset, ps)
+    p_matrix2 = polynomial_matrix(centers, ps)
+    system_matrix = [k_matrix p_matrix1
+                     p_matrix2' zeros(q, q)]
+    b = [values; zeros(q)]
+    c = system_matrix \ b
+    return Interpolation(kernel, nodeset, centers, c, system_matrix, ps, xx)
 end
 
 # Evaluate interpolant
 function (itp::Interpolation)(x)
     s = 0
     kernel = interpolation_kernel(itp)
-    xs = nodeset(itp)
+    xis = itp.centers
     c = kernel_coefficients(itp)
     d = polynomial_coefficients(itp)
     ps = polynomial_basis(itp)
     xx = polyvars(itp)
     for j in eachindex(c)
-        s += c[j] * kernel(x, xs[j])
+        s += c[j] * kernel(x, xis[j])
     end
 
     for k in eachindex(d)
@@ -184,22 +209,22 @@ end
 function (diff_op_or_pde::Union{AbstractDifferentialOperator, AbstractStationaryEquation})(itp::Interpolation,
                                                                                            x)
     kernel = interpolation_kernel(itp)
-    xs = nodeset(itp)
+    xis = itp.centers
     c = kernel_coefficients(itp)
     s = zero(eltype(x))
     for j in eachindex(c)
-        s += c[j] * diff_op_or_pde(kernel, x, xs[j])
+        s += c[j] * diff_op_or_pde(kernel, x, xis[j])
     end
     return s
 end
 
 function (g::Gradient)(itp::Interpolation, x)
     kernel = interpolation_kernel(itp)
-    xs = nodeset(itp)
+    xis = itp.centers
     c = kernel_coefficients(itp)
     s = zero(x)
     for j in eachindex(c)
-        s += c[j] * g(kernel, x, xs[j])
+        s += c[j] * g(kernel, x, xis[j])
     end
     return s
 end
@@ -223,8 +248,8 @@ function kernel_inner_product(itp1, itp2)
     @assert kernel == interpolation_kernel(itp2)
     c_f = kernel_coefficients(itp1)
     c_g = kernel_coefficients(itp2)
-    xs = nodeset(itp1)
-    xis = nodeset(itp2)
+    xs = itp1.centers
+    xis = itp2.centers
     s = 0
     for i in eachindex(c_f)
         for j in eachindex(c_g)
@@ -274,7 +299,8 @@ function (titp::TemporalInterpolation)(t)
     # Do not support additional polynomial basis for now
     xx = polyvars(dim(semi))
     ps = monomials(xx, 0:-1)
-    itp = Interpolation(kernel, merge(nodeset_inner, nodeset_boundary), c,
+    nodeset = merge(nodeset_inner, nodeset_boundary)
+    itp = Interpolation(kernel, nodeset, nodeset, c,
                         semi.cache.mass_matrix, ps, xx)
     return itp
 end

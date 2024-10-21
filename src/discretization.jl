@@ -53,7 +53,8 @@ function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, Rea
     # Do not support additional polynomial basis for now
     xx = polyvars(Dim)
     ps = monomials(xx, 0:-1)
-    return Interpolation(kernel, merge(nodeset_inner, nodeset_boundary), c, system_matrix,
+    nodeset = merge(nodeset_inner, nodeset_boundary)
+    return Interpolation(kernel, nodeset, nodeset, c, system_matrix,
                          ps, xx)
 end
 
