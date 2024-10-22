@@ -83,7 +83,7 @@ The least squares matrix is defined as
 ```math
     A = \begin{pmatrix}K & P_1\\P_2' & 0\end{pmatrix},
 ```
-where ``K`` is the [`regularize!`](@ref)d [`kernel matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)`
+where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)`
 for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref)` for the `centers`.
 """
 function least_squares_matrix(nodeset, centers, kernel, ps, reg)
