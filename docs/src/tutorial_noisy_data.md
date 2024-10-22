@@ -53,21 +53,59 @@ savefig("interpolation_noisy.png") # hide
 nothing # hide
 ```
 
+![Interpolation of noisy function values](interpolation_noisy.png)
+
 We can see that the interpolation looks much rougher than the original Franke function. This is expected since we fit the noisy data too closely.
 Therefore, we would like to find a way how to stabilize the approximation and reduce the influence of the noise.
 
 ## Use regularization to stabilize the approximation
 
-The first possibility to stabilize the approximation is to use regularization. One of the simplest regularization techniques is the L2-regularization.
+The first possibility to stabilize the approximation is to use regularization. One of the simplest regularization techniques is the L2-regularization
+(or also known as ridge regression).
 One way to motivate the L2-regularization is to consider the interpolation problem as a minimization problem. We can write the interpolation problem as
 
 ```math
 \min_{c \in \mathbb{R}^N} \frac{1}{2}c^TAc
 ```
 
-with constraints ``Ac = f``, where `A` is the interpolation matrix and `f` the function values.
+subject to the constraint ``Ac = f``, where `A` is the interpolation matrix and `f` the function values. This problem can be solved with the help of Lagrange multipliers
+and it turns out the solution simply is `c = A^{-1}f` as we already know. The idea of L2-regularization is to relax the condition ``Ac = f`` and instead of enforcing the
+equality, we penalize the deviation from the equality by adding the L2-norm of the difference. This leads to the minimization problem
+
+```math
+\min_{c \in \mathbb{R}^N} \frac{1}{2}c^TAc + \frac{1}{2\lambda}\|Ac - f\|_2^2.
+```
+
+Computing the gradient of this expression with respect to `c` and setting it to zero, we obtain the regularized solution
+
+```math
+c = (A + \lambda I)^{-1}f
+```
+
+assuming the regularity and symmetry of the interpolation matrix `A`. The parameter `\lambda` is a regularization parameter that controls the trade-off between
+the interpolation error and the regularization term. The larger `\lambda` is, the more the interpolation is regularized, which leads to a smoother approximation.
+In practice, this means that we only change the interpolation matrix by adding a constant to the diagonal. Note that the polynomial augmentation is not affected by
+the regularization. In KernelInterpolation.jl, we can pass a regularizer to the `interpolate` function.
+
+```@example noisy-itp
+λ = 0.01
+itp_reg = interpolate(nodeset, values, kernel, regularizer = L2Regularizer(λ))
+```
+
+Plotting the regularized interpolation, we can see that the approximation is much smoother than the unregularized interpolation and thus much closer to the underlying
+target function.
+
+```@example noisy-itp
+surface(itp_reg, colorbar = false)
+savefig("interpolation_noisy_regularized.png") # hide
+nothing # hide
+```
+
+![Regularized interpolation of noisy function values](interpolation_noisy_regularized.png)
 
 ## Use least-squares approximation to fit noisy data
+
+TODO: Compare condition numbers
 
 [^Fasshauer2007]:
     Fasshauer (2007):
