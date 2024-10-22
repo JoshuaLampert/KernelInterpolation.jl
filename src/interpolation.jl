@@ -141,10 +141,8 @@ If `centers` is provided, the interpolant is a least squares approximation with 
 A regularization can be applied to the kernel matrix using the `reg` argument, cf. [`regularize!`](@ref).
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, centers::NodeSet{Dim, RealT},
-                     values::Vector{RealT},
-                     kernel = GaussKernel{Dim}();
-                     m = order(kernel),
-                     reg = NoRegularization()) where {Dim, RealT}
+                     values::Vector{RealT}, kernel = GaussKernel{Dim}();
+                     m = order(kernel), reg = NoRegularization()) where {Dim, RealT}
     @assert dim(kernel) == Dim
     n = length(nodeset)
     @assert length(values) == n
@@ -162,7 +160,8 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, centers::NodeSet{Dim, RealT},
     return Interpolation(kernel, nodeset, centers, c, system_matrix, ps, xx)
 end
 
-function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT}, kernel = GaussKernel{Dim}();
+function interpolate(nodeset::NodeSet{Dim, RealT},
+                     values::Vector{RealT}, kernel = GaussKernel{Dim}();
                      kwargs...) where {Dim, RealT}
     interpolate(nodeset, nodeset, values, kernel; kwargs...)
 end
