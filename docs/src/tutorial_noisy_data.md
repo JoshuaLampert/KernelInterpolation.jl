@@ -33,7 +33,7 @@ nodeset = random_hypercube(N; dim = 2)
 values = f.(nodeset) .+ 0.03 * randn(N)
 ```
 
-As kernel, let's use the ['ThinPlateSplineKernel`](@ref), which uses linear augmentation. We start by performing the interpolation
+As kernel, let's use the [`ThinPlateSplineKernel`](@ref), which uses linear augmentation. We start by performing the interpolation
 based on the noisy data.
 
 ```@example noisy-itp
@@ -58,7 +58,14 @@ Therefore, we would like to find a way how to stabilize the approximation and re
 
 ## Use regularization to stabilize the approximation
 
-The first possibility to stabilize the approximation is to use regularization.
+The first possibility to stabilize the approximation is to use regularization. One of the simplest regularization techniques is the L2-regularization.
+One way to motivate the L2-regularization is to consider the interpolation problem as a minimization problem. We can write the interpolation problem as
+
+```math
+\min_{c \in \mathbb{R}^N} \frac{1}{2}c^TAc
+```
+
+with constraints ``Ac = f``, where `A` is the interpolation matrix and `f` the function values.
 
 ## Use least-squares approximation to fit noisy data
 
