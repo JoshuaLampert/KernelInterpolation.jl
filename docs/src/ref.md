@@ -30,6 +30,13 @@ Modules = [KernelInterpolation]
 Pages = ["interpolation.jl"]
 ```
 
+## Regularization
+
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["regularization.jl"]
+```
+
 ## [Differential Operators](@id api-diffops)
 
 ```@autodocs
