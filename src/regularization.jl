@@ -11,7 +11,7 @@ abstract type AbstractRegularization end
 
 Apply the regularization `reg` to the matrix `A` in place.
 """
-function regularize!(A, ::AbstractRegularization) end
+function regularize! end
 
 """
     NoRegularization()
