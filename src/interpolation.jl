@@ -116,8 +116,7 @@ Return the system matrix, i.e., the matrix ``A`` in the linear system
     Ac = f,
 ```
 where ``c`` are the coefficients of the kernel interpolant and ``f`` the vector
-of known values. The exact form of ``A`` differs depending on  whether classical interpolation
-or collocation is used.
+of known values. The exact form of ``A`` differs depending on which method is used.
 """
 system_matrix(itp::Interpolation) = itp.system_matrix
 
@@ -137,7 +136,9 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
     \sum_{j = 1}^N c_jp_k(x_j) = 0, \quad k = 1,\ldots, Q = \begin{pmatrix}m - 1 + d\\d\end{pmatrix}
 ```
 are enforced. Returns an [`Interpolation`](@ref) object.
+
 If `centers` is provided, the interpolant is a least squares approximation with the centers used for the basis.
+
 A regularization can be applied to the kernel matrix using the `reg` argument, cf. [`regularize!`](@ref).
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, centers::NodeSet{Dim, RealT},
