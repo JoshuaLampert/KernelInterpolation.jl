@@ -129,3 +129,14 @@ end
                           l2_ls=0.5375130503454387, linf_ls=0.06810374254243684,
                           interpolation_test=false, least_square_test=true)
 end
+
+@testitem "regularization_2d.jl" setup=[
+    Setup,
+    AdditionalImports,
+    InterpolationExamples
+] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "regularization_2d.jl"),
+                          l2=1.2759520194191292, linf=0.19486087346749836,
+                          l2_reg=0.40908417484986226, linf_reg=0.034926306286874445,
+                          interpolation_test=false, regularization_test=true)
+end

@@ -122,7 +122,8 @@ or collocation is used.
 system_matrix(itp::Interpolation) = itp.system_matrix
 
 @doc raw"""
-    interpolate(nodeset, centers = nodeset, values, kernel = GaussKernel{dim(nodeset)}(), m = order(kernel))
+    interpolate(nodeset, centers = nodeset, values, kernel = GaussKernel{dim(nodeset)}();
+                m = order(kernel), reg = NoRegularization())
 
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
 and polynomials up to a order `m` (i.e. degree - 1), i.e., determine the coefficients ``c_j`` and ``d_k`` in the expansion
@@ -137,33 +138,13 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
 ```
 are enforced. Returns an [`Interpolation`](@ref) object.
 If `centers` is provided, the interpolant is a least squares approximation with the centers used for the basis.
+A regularization can be applied to the kernel matrix using the `reg` argument, cf. [`regularize!`](@ref).
 """
-function interpolate(nodeset::NodeSet{Dim, RealT},
-                     values::Vector{RealT},
-                     kernel = GaussKernel{Dim}();
-                     m = order(kernel)) where {Dim, RealT}
-    @assert dim(kernel) == Dim
-    n = length(nodeset)
-    @assert length(values) == n
-    xx = polyvars(Dim)
-    ps = monomials(xx, 0:(m - 1))
-    q = length(ps)
-
-    k_matrix = kernel_matrix(nodeset, kernel)
-    p_matrix = polynomial_matrix(nodeset, ps)
-    system_matrix = [k_matrix p_matrix
-                     p_matrix' zeros(q, q)]
-    b = [values; zeros(q)]
-    symmetric_system_matrix = Symmetric(system_matrix)
-    c = symmetric_system_matrix \ b
-    return Interpolation(kernel, nodeset, nodeset, c, symmetric_system_matrix, ps, xx)
-end
-
-# Least squares approximation
 function interpolate(nodeset::NodeSet{Dim, RealT}, centers::NodeSet{Dim, RealT},
                      values::Vector{RealT},
                      kernel = GaussKernel{Dim}();
-                     m = order(kernel)) where {Dim, RealT}
+                     m = order(kernel),
+                     reg = NoRegularization()) where {Dim, RealT}
     @assert dim(kernel) == Dim
     n = length(nodeset)
     @assert length(values) == n
@@ -171,14 +152,19 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, centers::NodeSet{Dim, RealT},
     ps = monomials(xx, 0:(m - 1))
     q = length(ps)
 
-    k_matrix = kernel_matrix(nodeset, centers, kernel)
-    p_matrix1 = polynomial_matrix(nodeset, ps)
-    p_matrix2 = polynomial_matrix(centers, ps)
-    system_matrix = [k_matrix p_matrix1
-                     p_matrix2' zeros(q, q)]
+    if nodeset == centers
+        system_matrix = interpolation_matrix(nodeset, kernel, ps, reg)
+    else
+        system_matrix = least_squares_matrix(nodeset, centers, kernel, ps, reg)
+    end
     b = [values; zeros(q)]
     c = system_matrix \ b
     return Interpolation(kernel, nodeset, centers, c, system_matrix, ps, xx)
+end
+
+function interpolate(nodeset::NodeSet{Dim, RealT}, values::Vector{RealT}, kernel = GaussKernel{Dim}();
+                     kwargs...) where {Dim, RealT}
+    interpolate(nodeset, nodeset, values, kernel; kwargs...)
 end
 
 # Evaluate interpolant

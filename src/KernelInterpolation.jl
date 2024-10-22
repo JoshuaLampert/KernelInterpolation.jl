@@ -13,7 +13,7 @@ module KernelInterpolation
 
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
 using ForwardDiff: ForwardDiff
-using LinearAlgebra: Symmetric, norm, tr, muladd, dot
+using LinearAlgebra: Symmetric, norm, tr, muladd, dot, diagind
 using Printf: @sprintf
 using ReadVTK: VTKFile, get_points, get_point_data, get_data
 using RecipesBase: RecipesBase, @recipe, @series
@@ -34,6 +34,7 @@ include("nodes.jl")
 include("differential_operators.jl")
 include("equations.jl")
 include("kernel_matrices.jl")
+include("regularization.jl")
 include("interpolation.jl")
 include("discretization.jl")
 include("callbacks_step/callbacks_step.jl")
@@ -52,6 +53,7 @@ export PartialDerivative, Gradient, Laplacian, EllipticOperator
 export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation,
        AdvectionDiffusionEquation
 export SpatialDiscretization, Semidiscretization, semidiscretize
+export NoRegularization, L2Regularization
 export NodeSet, empty_nodeset, separation_distance, dim, eachdim, values_along_dim,
        distance_matrix, random_hypercube, random_hypercube_boundary, homogeneous_hypercube,
        homogeneous_hypercube_boundary, random_hypersphere, random_hypersphere_boundary
