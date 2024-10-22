@@ -22,7 +22,8 @@ makedocs(;
                  "Interpolation" => "interpolation.md",
                  "Solving PDEs by collocation" => "pdes.md"],
              "Tutorials" => [
-                 "1D interpolation and differentiation" => "tutorial_differentiating_interpolation.md"],
+                 "1D interpolation and differentiation" => "tutorial_differentiating_interpolation.md",
+                 "Dealing with noisy data" => "tutorial_noisy_data.md"],
              "Development" => "development.md",
              "Reference" => "ref.md",
              "License" => "license.md"])
