@@ -55,6 +55,48 @@ function polynomial_matrix(nodeset, ps)
     return A
 end
 
+"""
+    interpolation_matrix(nodeset, kernel, ps, reg)
+
+Return the interpolation matrix for the `nodeset`, `kernel`, polynomials `ps`, and regularization `reg`.
+The interpolation matrix is defined as
+```math
+    A = \begin{pmatrix}K & P\\P^T & 0\end{pmatrix},
+```
+where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref) and ``P`` the [`polynomial_matrix`](@ref)`.
+"""
+function interpolation_matrix(nodeset, kernel, ps, reg)
+    q = length(ps)
+    k_matrix = kernel_matrix(nodeset, kernel)
+    regularize!(k_matrix, reg)
+    p_matrix = polynomial_matrix(nodeset, ps)
+    system_matrix = [k_matrix p_matrix
+                     p_matrix' zeros(q, q)]
+    return Symmetric(system_matrix)
+end
+
+"""
+    least_squares_matrix(nodeset, centers, kernel, ps, reg)
+
+Return the least squares matrix for the `nodeset`, `centers`, `kernel`, polynomials `ps`, and regularization `reg`.
+The least squares matrix is defined as
+```math
+    A = \begin{pmatrix}K & P_1\\P_2' & 0\end{pmatrix},
+```
+where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)`
+for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref)` for the `centers`.
+"""
+function least_squares_matrix(nodeset, centers, kernel, ps, reg)
+    q = length(ps)
+    k_matrix = kernel_matrix(nodeset, centers, kernel)
+    regularize!(k_matrix, reg)
+    p_matrix1 = polynomial_matrix(nodeset, ps)
+    p_matrix2 = polynomial_matrix(centers, ps)
+    system_matrix = [k_matrix p_matrix1
+                     p_matrix2' zeros(q, q)]
+    return system_matrix
+end
+
 @doc raw"""
     pde_matrix(diff_op_or_pde, nodeset1, nodeset2, kernel)
 

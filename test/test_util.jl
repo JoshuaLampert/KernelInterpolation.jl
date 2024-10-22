@@ -1,6 +1,5 @@
 """
     test_include_example(example; l2=nothing, linf=nothing,
-                         l2_ls=nothing, linf_ls=nothing,
                          atol=1e-12, rtol=sqrt(eps()),
                          kwargs...)
 
@@ -12,16 +11,21 @@ macro test_include_example(example, args...)
     local linf = get_kwarg(args, :linf, nothing)
     local l2_ls = get_kwarg(args, :l2_ls, nothing)
     local linf_ls = get_kwarg(args, :linf_ls, nothing)
+    local l2_reg = get_kwarg(args, :l2_reg, nothing)
+    local linf_reg = get_kwarg(args, :linf_reg, nothing)
     local atol = get_kwarg(args, :atol, 1e-12)
     local rtol = get_kwarg(args, :rtol, sqrt(eps()))
     local interpolation_test = get_kwarg(args, :interpolation_test, true)
     local least_square_test = get_kwarg(args, :least_square_test, false)
+    local regularization_test = get_kwarg(args, :regularization_test, false)
     local pde_test = get_kwarg(args, :pde_test, false)
     local kwargs = Pair{Symbol, Any}[]
     for arg in args
         if (arg.head == :(=) &&
-            !(arg.args[1] in (:l2, :linf, :l2_ls, :linf_ls, :atol, :rtol,
-                              :interpolation_test, :least_square_test, :pde_test)))
+            !(arg.args[1] in (:l2, :linf, :l2_ls, :linf_ls, :l2_reg, :linf_reg,
+                              :atol, :rtol,
+                              :interpolation_test, :least_square_test, :regularization_test,
+                              :pde_test)))
             push!(kwargs, Pair(arg.args...))
         end
     end
@@ -53,6 +57,13 @@ macro test_include_example(example, args...)
                     @test isapprox(norm(many_values .- many_values_ls), $l2_ls;
                                    atol = $atol, rtol = $rtol)
                     @test isapprox(norm(many_values .- many_values_ls, Inf), $linf_ls;
+                                   atol = $atol, rtol = $rtol)
+                end
+                if $regularization_test
+                    many_values_reg = itp_reg.(many_nodes)
+                    @test isapprox(norm(many_values .- many_values_reg), $l2_reg;
+                                   atol = $atol, rtol = $rtol)
+                    @test isapprox(norm(many_values .- many_values_reg, Inf), $linf_reg;
                                    atol = $atol, rtol = $rtol)
                 end
             else

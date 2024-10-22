@@ -654,6 +654,7 @@ end
     @test isapprox(kernel_norm(itp), 2.5193566316951626)
 
     # Conditionally positive definite kernel
+    # Interpolation
     kernel = ThinPlateSplineKernel{dim(nodes)}()
     itp = @test_nowarn interpolate(nodes, ff, kernel)
     expected_coefficients = [
@@ -678,6 +679,22 @@ end
     @test size(system_matrix(itp)) == (7, 7)
     @test isapprox(itp([0.5, 0.5]), 1.0)
     @test isapprox(kernel_norm(itp), 0.0)
+
+    # Regularization
+    itp = @test_nowarn interpolate(nodes, ff, kernel, reg = L2Regularization(1e-3))
+    coeffs = coefficients(itp)
+    @test length(coeffs) == length(expected_coefficients)
+    for i in eachindex(coeffs)
+        @test isapprox(coeffs[i], expected_coefficients[i], atol = 1e-15)
+    end
+    @test order(itp) == order(kernel)
+    @test length(kernel_coefficients(itp)) == length(nodes)
+    @test length(polynomial_coefficients(itp)) == order(itp) + 1
+    @test length(polynomial_basis(itp)) ==
+          binomial(order(itp) - 1 + dim(nodes), dim(nodes))
+    @test system_matrix(itp) isa Symmetric
+    @test size(system_matrix(itp)) == (7, 7)
+    @test isapprox(itp([0.5, 0.5]), 1.0)
 
     # Least squares approximation
     centers = NodeSet([0.0 0.0
