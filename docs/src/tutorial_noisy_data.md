@@ -105,6 +105,29 @@ nothing # hide
 
 ## Use least-squares approximation to fit noisy data
 
+As an alternative to using regularization, we can also use least-squares fitting to approximate the noisy data. The idea of least-squares approximation is to use
+another set of nodes to construct the RBF basis than we use for the interpolation. This means we construct another `NodeSet` consisting of the `centers` for the
+basis functions, which is smaller than the `nodeset` we use for the interpolation. If the nodeset is given by ``X = \{x_1, \ldots, x_N\}`` and the `centers` are
+``\Xi = \{\xi_1, \ldots, \xi_M\}`` with ``M \le N``, we obtain a rectangular system matrix ``A\in\mathbb{R}^{N\times M}`` with ``A_{ij} = K(x_j, \xi_k)`` for ``j = 1, \ldots, N`` and
+``k = 1, \ldots, M``. The overdetermined system ``Ac = f`` can be solved by the least-squares method. Again, only the kernel matrix part is affected by the least-squares
+approximation and the polynomial augmentation is not changed. In KernelInterpolation.jl, we can pass `centers` to the `interpolate` function.
+
+```@example noisy-itp
+M = 81
+centers = random_hypercube(M; dim = 2)
+ls = interpolate(nodeset, centers, values, kernel)
+```
+
+We plot the least-squares approximation and, again, see a better fit to the underlying target function.
+
+```@example noisy-itp
+surface(ls, colorbar = false)
+savefig("interpolation_noisy_least_squares.png") # hide
+nothing # hide
+```
+
+![Least squares approximation of noisy function values](interpolation_noisy_least_squares.png)
+
 TODO: Compare condition numbers
 
 [^Fasshauer2007]:
