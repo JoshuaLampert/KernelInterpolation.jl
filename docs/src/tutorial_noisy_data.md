@@ -30,7 +30,8 @@ end
 
 N = 1089
 nodeset = random_hypercube(N; dim = 2)
-values = f.(nodeset) .+ 0.03 * randn(N)
+values = f.(nodeset)
+values_noisy = values .+ 0.03 * randn(N)
 ```
 
 As kernel, let's use the [`ThinPlateSplineKernel`](@ref), which uses linear augmentation. We start by performing the interpolation
@@ -38,7 +39,7 @@ based on the noisy data.
 
 ```@example noisy-itp
 kernel = ThinPlateSplineKernel{dim(nodeset)}()
-itp = interpolate(nodeset, values, kernel)
+itp = interpolate(nodeset, values_noisy, kernel)
 ```
 
 We plot the resulting interpolation and compare it to the original Franke function.
@@ -89,7 +90,7 @@ the regularization. In KernelInterpolation.jl, we can pass a regularizer to the 
 
 ```@example noisy-itp
 λ = 0.01
-itp_reg = interpolate(nodeset, values, kernel, regularization = L2Regularization(λ))
+itp_reg = interpolate(nodeset, values_noisy, kernel, regularization = L2Regularization(λ))
 ```
 
 Plotting the regularized interpolation, we can see that the approximation is much smoother than the unregularized interpolation and thus much closer to the underlying
@@ -106,13 +107,13 @@ nothing # hide
 We compare the stability of the regularized and unregularized interpolation by looking a the condition numbers of the two system matrices.
 
 ```@example noisy-itp
-using LinearAlgebra: cond
+using LinearAlgebra
 A_itp = system_matrix(itp)
 A_itp_reg = system_matrix(itp_reg)
 cond(A_itp), cond(A_itp_reg)
 ```
 
-We can see that the condition number is drastically reduced from 1.5e8 to 1.5e4 by using regularization. This means that the regularized interpolation is much
+We can see that the condition number is drastically reduced from around `1.5e8` to `1.5e4` by using regularization. This means that the regularized interpolation is much
 more stable and less sensitive to the noise in the data.
 
 ## Use least-squares approximation to fit noisy data
@@ -127,7 +128,7 @@ approximation and the polynomial augmentation is not changed. In KernelInterpola
 ```@example noisy-itp
 M = 81
 centers = random_hypercube(M; dim = 2)
-ls = interpolate(nodeset, centers, values, kernel)
+ls = interpolate(nodeset, centers, values_noisy, kernel)
 ```
 
 We plot the least-squares approximation and, again, see a better fit to the underlying target function.
@@ -139,6 +140,17 @@ nothing # hide
 ```
 
 ![Least squares approximation of noisy function values](interpolation_noisy_least_squares.png)
+
+Finally, we compare the error of the three methods to the true data without noise:
+
+```@example noisy-itp
+values_itp = itp.(nodeset)
+values_itp_reg = itp_reg.(nodeset)
+values_ls = ls.(nodeset)
+norm(values_itp .- values), norm(values_itp_reg .- values), norm(values_ls .- values)
+```
+
+which confirms our findings above as the errors of the stabilized schemes are smaller than the error of the unregularized interpolation.
 
 [^Fasshauer2007]:
     Fasshauer (2007):
