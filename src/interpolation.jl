@@ -143,7 +143,8 @@ A regularization can be applied to the kernel matrix using the `regularization` 
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, centers::NodeSet{Dim, RealT},
                      values::Vector{RealT}, kernel = GaussKernel{Dim}();
-                     m = order(kernel), regularization = NoRegularization()) where {Dim, RealT}
+                     m = order(kernel),
+                     regularization = NoRegularization()) where {Dim, RealT}
     @assert dim(kernel) == Dim
     n = length(nodeset)
     @assert length(values) == n
