@@ -151,6 +151,8 @@ norm(values_itp .- values), norm(values_itp_reg .- values), norm(values_ls .- va
 ```
 
 which confirms our findings above as the errors of the stabilized schemes are smaller than the error of the unregularized interpolation.
+Note that we did not put much effort in optimizing the regularization parameter or the number of centers for the least-squares approximation
+and that there is still room for improvement.
 
 [^Fasshauer2007]:
     Fasshauer (2007):
