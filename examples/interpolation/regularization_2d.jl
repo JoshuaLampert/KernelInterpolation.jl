@@ -14,7 +14,7 @@ nodeset = random_hypercube(n; dim = 2)
 values = f.(nodeset) .+ 0.03 * randn(n)
 
 kernel = ThinPlateSplineKernel{dim(nodeset)}()
-itp_reg = interpolate(nodeset, values, kernel, reg = L2Regularization(1e-2))
+itp_reg = interpolate(nodeset, values, kernel, regularization = L2Regularization(1e-2))
 itp = interpolate(nodeset, values, kernel)
 
 N = 40

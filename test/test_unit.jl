@@ -681,7 +681,8 @@ end
     @test isapprox(kernel_norm(itp), 0.0)
 
     # Regularization
-    itp = @test_nowarn interpolate(nodes, ff, kernel, reg = L2Regularization(1e-3))
+    itp = @test_nowarn interpolate(nodes, ff, kernel,
+                                   regularization = L2Regularization(1e-3))
     coeffs = coefficients(itp)
     @test length(coeffs) == length(expected_coefficients)
     for i in eachindex(coeffs)

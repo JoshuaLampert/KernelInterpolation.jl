@@ -56,19 +56,19 @@ function polynomial_matrix(nodeset, ps)
 end
 
 """
-    interpolation_matrix(nodeset, kernel, ps, reg)
+    interpolation_matrix(nodeset, kernel, ps, regularization)
 
-Return the interpolation matrix for the `nodeset`, `kernel`, polynomials `ps`, and regularization `reg`.
+Return the interpolation matrix for the `nodeset`, `kernel`, polynomials `ps`, and `regularization`.
 The interpolation matrix is defined as
 ```math
     A = \begin{pmatrix}K & P\\P^T & 0\end{pmatrix},
 ```
 where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref) and ``P`` the [`polynomial_matrix`](@ref)`.
 """
-function interpolation_matrix(nodeset, kernel, ps, reg)
+function interpolation_matrix(nodeset, kernel, ps, regularization)
     q = length(ps)
     k_matrix = kernel_matrix(nodeset, kernel)
-    regularize!(k_matrix, reg)
+    regularize!(k_matrix, regularization)
     p_matrix = polynomial_matrix(nodeset, ps)
     system_matrix = [k_matrix p_matrix
                      p_matrix' zeros(q, q)]
@@ -76,9 +76,9 @@ function interpolation_matrix(nodeset, kernel, ps, reg)
 end
 
 """
-    least_squares_matrix(nodeset, centers, kernel, ps, reg)
+    least_squares_matrix(nodeset, centers, kernel, ps, regularization)
 
-Return the least squares matrix for the `nodeset`, `centers`, `kernel`, polynomials `ps`, and regularization `reg`.
+Return the least squares matrix for the `nodeset`, `centers`, `kernel`, polynomials `ps`, and `regularization`.
 The least squares matrix is defined as
 ```math
     A = \begin{pmatrix}K & P_1\\P_2' & 0\end{pmatrix},
@@ -86,10 +86,10 @@ The least squares matrix is defined as
 where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)`
 for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref)` for the `centers`.
 """
-function least_squares_matrix(nodeset, centers, kernel, ps, reg)
+function least_squares_matrix(nodeset, centers, kernel, ps, regularization)
     q = length(ps)
     k_matrix = kernel_matrix(nodeset, centers, kernel)
-    regularize!(k_matrix, reg)
+    regularize!(k_matrix, regularization)
     p_matrix1 = polynomial_matrix(nodeset, ps)
     p_matrix2 = polynomial_matrix(centers, ps)
     system_matrix = [k_matrix p_matrix1
