@@ -8,7 +8,7 @@ fitting to deal with noisy data. Most of the code for this tutorial is also avai
 ## Define problem setup and perform interpolation
 
 We start by defining a simple two-dimensional interpolation problem. We will use the famous Franke function as the
-target function and add some noise to the function values. The Franke's function is defined as
+target function and add some noise to the function values. The Franke function is defined as
 
 ```math
 f(x, y) = \frac{3}{4}\exp\left(-\frac{(9x - 2)^2}{4} - \frac{(9y - 2)^2}{4}\right) + \frac{3}{4}\exp\left(-\frac{(9x + 1)^2}{49} - \frac{9y + 1}{10}\right) + \frac{1}{2}\exp\left(-\frac{(9x - 7)^2}{4} - \frac{(9y - 3)^2}{4}\right) - \frac{1}{5}\exp\left(-(9x - 4)^2 - (9y - 7)^2\right).
@@ -77,7 +77,7 @@ equality, we penalize the deviation from the equality by adding the L2-norm of t
 \min_{c \in \mathbb{R}^N} \frac{1}{2}c^TAc + \frac{1}{2\lambda}\|Ac - f\|_2^2.
 ```
 
-Computing the gradient of this expression with respect to `c` and setting it to zero, we obtain the regularized solution
+Computing the gradient of this expression with respect to ``c`` and setting it to zero, we obtain the regularized solution
 
 ```math
 c = (A + \lambda I)^{-1}f
