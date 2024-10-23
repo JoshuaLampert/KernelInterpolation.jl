@@ -89,7 +89,7 @@ the regularization. In KernelInterpolation.jl, we can pass a regularizer to the 
 
 ```@example noisy-itp
 λ = 0.01
-itp_reg = interpolate(nodeset, values, kernel, regularizer = L2Regularization(λ))
+itp_reg = interpolate(nodeset, values, kernel, regularization = L2Regularization(λ))
 ```
 
 Plotting the regularized interpolation, we can see that the approximation is much smoother than the unregularized interpolation and thus much closer to the underlying

@@ -122,7 +122,7 @@ system_matrix(itp::Interpolation) = itp.system_matrix
 
 @doc raw"""
     interpolate(nodeset, centers = nodeset, values, kernel = GaussKernel{dim(nodeset)}();
-                m = order(kernel), reg = NoRegularization())
+                m = order(kernel), regularization = NoRegularization())
 
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
 and polynomials up to a order `m` (i.e. degree - 1), i.e., determine the coefficients ``c_j`` and ``d_k`` in the expansion
@@ -139,11 +139,11 @@ are enforced. Returns an [`Interpolation`](@ref) object.
 
 If `centers` is provided, the interpolant is a least squares approximation with the centers used for the basis.
 
-A regularization can be applied to the kernel matrix using the `reg` argument, cf. [`regularize!`](@ref).
+A regularization can be applied to the kernel matrix using the `regularization` argument, cf. [`regularize!`](@ref).
 """
 function interpolate(nodeset::NodeSet{Dim, RealT}, centers::NodeSet{Dim, RealT},
                      values::Vector{RealT}, kernel = GaussKernel{Dim}();
-                     m = order(kernel), reg = NoRegularization()) where {Dim, RealT}
+                     m = order(kernel), regularization = NoRegularization()) where {Dim, RealT}
     @assert dim(kernel) == Dim
     n = length(nodeset)
     @assert length(values) == n
@@ -152,9 +152,9 @@ function interpolate(nodeset::NodeSet{Dim, RealT}, centers::NodeSet{Dim, RealT},
     q = length(ps)
 
     if nodeset == centers
-        system_matrix = interpolation_matrix(nodeset, kernel, ps, reg)
+        system_matrix = interpolation_matrix(nodeset, kernel, ps, regularization)
     else
-        system_matrix = least_squares_matrix(nodeset, centers, kernel, ps, reg)
+        system_matrix = least_squares_matrix(nodeset, centers, kernel, ps, regularization)
     end
     b = [values; zeros(q)]
     c = system_matrix \ b
