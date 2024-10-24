@@ -128,9 +128,8 @@ function Semidiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
                             initial_condition,
                             kernel = GaussKernel{Dim}()) where {Dim, RealT}
     return Semidiscretization(equations, nodeset_inner, boundary_condition,
-                              nodeset_boundary,
-                              initial_condition, merge(nodeset_inner, nodeset_boundary),
-                              kernel)
+                              nodeset_boundary, merge(nodeset_inner, nodeset_boundary),
+                              initial_condition, kernel)
 end
 
 function Base.show(io::IO, semi::Semidiscretization)
