@@ -121,7 +121,7 @@ of known values. The exact form of ``A`` differs depending on which method is us
 system_matrix(itp::Interpolation) = itp.system_matrix
 
 @doc raw"""
-    interpolate(nodeset, centers = nodeset, values, kernel = GaussKernel{dim(nodeset)}();
+    interpolate(nodeset, [centers,] values, kernel = GaussKernel{dim(nodeset)}();
                 m = order(kernel), regularization = NoRegularization())
 
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
@@ -138,6 +138,7 @@ maximum degree of `m - 1`. If `m = 0`, no polynomial is added. The additional co
 are enforced. Returns an [`Interpolation`](@ref) object.
 
 If `centers` is provided, the interpolant is a least squares approximation with the centers used for the basis.
+Otherwise, `centers` is set to `nodeset`.
 
 A regularization can be applied to the kernel matrix using the `regularization` argument, cf. [`regularize!`](@ref).
 """
@@ -281,13 +282,13 @@ end
 function (titp::TemporalInterpolation)(t)
     ode_sol = titp.ode_sol
     semi = ode_sol.prob.p
-    @unpack kernel, nodeset_inner, boundary_condition, nodeset_boundary = semi.spatial_discretization
+    @unpack kernel, nodeset_inner, boundary_condition, nodeset_boundary, centers = semi.spatial_discretization
     c = ode_sol(t)
     # Do not support additional polynomial basis for now
     xx = polyvars(dim(semi))
     ps = monomials(xx, 0:-1)
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    itp = Interpolation(kernel, nodeset, nodeset, c,
+    itp = Interpolation(kernel, nodeset, centers, c,
                         semi.cache.mass_matrix, ps, xx)
     return itp
 end
