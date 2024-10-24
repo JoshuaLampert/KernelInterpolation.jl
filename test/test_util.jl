@@ -109,6 +109,8 @@ macro test_include_example(example, args...)
             end
         end
         println("═"^100)
+        # Clean up
+        rm("out"; force = true, recursive = true)
     end
 end
 
