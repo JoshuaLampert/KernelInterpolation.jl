@@ -1,23 +1,22 @@
 module KernelInterpolationMeshesExt
 
-using Meshes: Meshes, Point, PointSet, to
-using KernelInterpolation: KernelInterpolation
+using Meshes: Meshes, Point, PointSet, to, ustrip
+using KernelInterpolation: KernelInterpolation, NodeSet
 
 # Meshes.jl uses Unitful.jl for units, which is not available in KernelInterpolation.jl
 # Thus, we need to remove the units from the Point struct
-val(u) = u.val
-val(p::Point) = val.(to(p))
+uto(p::Point) = ustrip(to(p))
 
 function KernelInterpolation.NodeSet(points::Vector{P}) where {P <: Point}
-    return KernelInterpolation.NodeSet(val.(points))
+    return NodeSet(uto.(points))
 end
 
 function KernelInterpolation.NodeSet(points::PointSet)
-    return KernelInterpolation.NodeSet(points.geoms)
+    return NodeSet(parent(points))
 end
 
 function Meshes.PointSet(nodes::KernelInterpolation.NodeSet)
-    return Meshes.PointSet(Tuple.(nodes.nodes))
+    return PointSet(Tuple.(nodes.nodes))
 end
 
 end
