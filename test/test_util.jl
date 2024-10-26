@@ -71,12 +71,14 @@ macro test_include_example(example, args...)
                 # assumes `many_nodes`, `nodes_inner` and `nodeset_boundary` are defined in the example
                 # if `u` is defined, it is used to compare the solution (analytical solution or initial condition) using the l2 and linf norms
                 if pde isa KernelInterpolation.AbstractStationaryEquation
-                    rhs_values = KernelInterpolation.rhs(nodeset_inner, pde)
-                    for i in eachindex(nodeset_inner)
-                        @test isapprox(pde(itp, nodeset_inner[i]), rhs_values[i],
-                                       atol = $atol, rtol = $rtol)
+                    if !$least_square_test
+                        rhs_values = KernelInterpolation.rhs(nodeset_inner, pde)
+                        for i in eachindex(nodeset_inner)
+                            @test isapprox(pde(itp, nodeset_inner[i]), rhs_values[i],
+                                           atol = $atol, rtol = $rtol)
+                        end
+                        values_boundary = g.(nodeset_boundary)
                     end
-                    values_boundary = g.(nodeset_boundary)
                     # Because of some namespace issues
                     itp2 = itp
 
@@ -95,8 +97,10 @@ macro test_include_example(example, args...)
                     error("Unknown PDE type")
                 end
 
-                for (node, value) in zip(nodeset_boundary, values_boundary)
-                    @test isapprox(itp2(node), value, atol = $atol, rtol = $rtol)
+                if !$least_square_test
+                    for (node, value) in zip(nodeset_inner, values_inner)
+                        @test isapprox(itp2(node), value, atol = $atol, rtol = $rtol)
+                    end
                 end
 
                 if @isdefined many_values

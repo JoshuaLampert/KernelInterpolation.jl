@@ -19,8 +19,8 @@ end
 
 @testitem "anisotropic_elliptic_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "anisotropic_elliptic_2d_basic.jl"),
-                          l2=0.3680733486177618, linf=0.09329545570900866,
-                          pde_test=true)
+                          l2=0.6820834994466024, linf=0.10747754142379007,
+                          pde_test=true, least_square_test=true)
 end
 
 @testitem "heat_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
