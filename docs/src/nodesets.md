@@ -162,7 +162,8 @@ rm("nodes_halton.vtu") #clean up again # hide
 all(nodes_halton2 .== nodes_halton)
 ```
 
-Lastly, you can convert any `NodeSet` to a `PointSet` from Meshes.jl by calling `PointSet(nodes)` and use the plotting capabilities of Meshes.jl, which uses [Makie.jl](https://docs.makie.org/stable/) as backend. For more information, we
+Lastly, you can convert any `NodeSet` to a `PointSet` from Meshes.jl by calling `PointSet(nodes)` and use the plotting
+capabilities of Meshes.jl, which uses [Makie.jl](https://docs.makie.org/stable/) as backend. For more information, we
 refer to the [documentation of Meshes.jl](https://juliageometry.github.io/MeshesDocs/stable/visualization/).
 
 ```@example nodesets
