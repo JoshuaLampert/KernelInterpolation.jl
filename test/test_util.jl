@@ -98,7 +98,7 @@ macro test_include_example(example, args...)
                 end
 
                 if !$least_square_test
-                    for (node, value) in zip(nodeset_inner, values_inner)
+                    for (node, value) in zip(nodeset_boundary, values_boundary)
                         @test isapprox(itp2(node), value, atol = $atol, rtol = $rtol)
                     end
                 end
