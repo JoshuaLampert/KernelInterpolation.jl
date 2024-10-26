@@ -104,7 +104,7 @@ More complicated [`NodeSet`](@ref)s consisting of different shapes can be create
 
 ## Visualizing [`NodeSet`](@ref)s
 
-To visualize a [`NodeSet`](@ref), there are currently two possibilities. The first one uses [Plots.jl](https://docs.juliaplots.org/stable/).
+To visualize a [`NodeSet`](@ref), there are currently three possibilities. The first one uses [Plots.jl](https://docs.juliaplots.org/stable/).
 After installing and loading Plots.jl, we can then simply call `plot` on any 1D, 2D, or 3D [`NodeSet`](@ref) to plot it.
 
 ```@example nodesets
@@ -161,3 +161,17 @@ nodes_halton2, _ = vtk_read("nodes_halton.vtu")
 rm("nodes_halton.vtu") #clean up again # hide
 all(nodes_halton2 .== nodes_halton)
 ```
+
+Lastly, you can convert any `NodeSet` to a `PointSet` from Meshes.jl by calling `PointSet(nodes)` and use the plotting capabilities of Meshes.jl, which uses [Makie.jl](https://docs.makie.org/stable/) as backend. For more information, we
+refer to the [documentation of Meshes.jl](https://juliageometry.github.io/MeshesDocs/stable/visualization/).
+
+```@example nodesets
+using Meshes: PointSet
+import GLMakie
+points = PointSet(nodes_halton)
+viz(points)
+savefig("nodes_halton_Makie.png") # hide
+nothing # Avoid showing the path # hide
+```
+
+![Makie plot](nodes_halton_Makie.png)
