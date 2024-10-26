@@ -167,7 +167,7 @@ capabilities of Meshes.jl, which uses [Makie.jl](https://docs.makie.org/stable/)
 refer to the [documentation of Meshes.jl](https://juliageometry.github.io/MeshesDocs/stable/visualization/).
 
 ```@example nodesets
-using Meshes: PointSet
+using Meshes: PointSet, viz
 import CairoMakie
 points = PointSet(nodes_halton)
 viz(points)
