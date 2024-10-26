@@ -168,7 +168,7 @@ refer to the [documentation of Meshes.jl](https://juliageometry.github.io/Meshes
 
 ```@example nodesets
 using Meshes: PointSet
-import GLMakie
+import CairoMakie
 points = PointSet(nodes_halton)
 viz(points)
 savefig("nodes_halton_Makie.png") # hide
