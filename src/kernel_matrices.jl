@@ -120,7 +120,7 @@ function pde_matrix(diff_op_or_pde, nodeset1, nodeset2, kernel)
 end
 
 @doc raw"""
-    pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
+    pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, [centers,] kernel)
 
 Compute the matrix of a partial differential equation (or differential operator) with a given kernel. The matrix is defined as
 ```math
@@ -135,16 +135,21 @@ and ``\tilde A`` is the kernel matrix for the boundary nodes:
     \tilde A_{ij} = K(x_i, \xi_j),
 ```
 where ``\mathcal{L}`` is the differential operator (defined by the `equations`), ``K`` the `kernel`, ``x_i`` are the nodes
-in `nodeset_boundary` and ``\xi_j`` are the nodes in union of `nodeset_inner` and `nodeset_boundary`.
+in `nodeset_boundary` and ``\xi_j`` are the `centers`. By default, `centers` is set to `merge(nodeset_inner, nodeset_boundary)`.
 
 See also [`pde_matrix`](@ref) and [`kernel_matrix`](@ref).
 """
-function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
-    nodeset = merge(nodeset_inner, nodeset_boundary)
-    pd_matrix = pde_matrix(diff_op_or_pde, nodeset_inner, nodeset, kernel)
-    b_matrix = kernel_matrix(nodeset_boundary, nodeset, kernel)
+function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, centers,
+                             kernel)
+    pd_matrix = pde_matrix(diff_op_or_pde, nodeset_inner, centers, kernel)
+    b_matrix = kernel_matrix(nodeset_boundary, centers, kernel)
     return [pd_matrix
             b_matrix]
+end
+
+function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
+    pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
+                        merge(nodeset_inner, nodeset_boundary), kernel)
 end
 
 @doc raw"""
