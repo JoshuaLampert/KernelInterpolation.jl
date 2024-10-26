@@ -23,6 +23,12 @@ end
                           pde_test=true, least_square_test=true)
 end
 
+@testitem "poisson_3d_ball.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "poisson_3d_ball.jl"),
+                          l2=1.2489160956571945, linf=0.1351008043671812,
+                          pde_test=true)
+end
+
 @testitem "heat_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "heat_2d_basic.jl"),
                           l2=0.8163804581267793, linf=0.07510840007130493,
