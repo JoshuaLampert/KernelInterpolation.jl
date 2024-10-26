@@ -171,7 +171,7 @@ using Meshes: PointSet, viz
 import CairoMakie
 points = PointSet(nodes_halton)
 viz(points)
-savefig("nodes_halton_Makie.png") # hide
+save("nodes_halton_Makie.png", CairoMakie.current_figure()) # hide
 nothing # Avoid showing the path # hide
 ```
 
