@@ -58,6 +58,7 @@ function NodeSet(nodes::AbstractVector{RealT}) where {RealT}
     @assert length(nodes) > 0
     return NodeSet([[node] for node in nodes])
 end
+NodeSet(nodeset::NodeSet) = nodeset
 
 """
     empty_nodeset(Dim, RealT = Float64)

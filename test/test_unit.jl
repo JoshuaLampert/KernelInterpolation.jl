@@ -197,6 +197,7 @@ end
                                      1.0 0.0
                                      0.0 1.0
                                      1.0 1.0])
+    @test NodeSet(nodeset1) == nodeset1
     @test_nowarn println(nodeset1)
     @test_nowarn display(nodeset1)
     @test eltype(nodeset1) == Float64
