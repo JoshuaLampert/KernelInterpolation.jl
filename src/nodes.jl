@@ -119,9 +119,11 @@ end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, ::Type{T}, n::Int) where {Dim, RealT, T}
     NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}, n), Inf)
 end
-Base.getindex(nodeset::NodeSet, i::Int) = getindex(nodeset.nodes, i)
-Base.getindex(nodeset::NodeSet, is::UnitRange) = nodeset.nodes[is]
+Base.getindex(nodeset::NodeSet, i::Int) = nodeset.nodes[i]
+Base.getindex(nodeset::NodeSet, is::AbstractVector) = nodeset.nodes[is]
+Base.firstindex(nodeset::NodeSet) = firstindex(nodeset.nodes)
 Base.lastindex(nodeset::NodeSet) = lastindex(nodeset.nodes)
+Base.keys(nodeset::NodeSet) = keys(nodeset.nodes)
 function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::MVector{Dim, RealT},
                         i::Int) where {Dim, RealT}
     nodeset.nodes[i] = v
