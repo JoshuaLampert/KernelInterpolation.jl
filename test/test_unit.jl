@@ -206,7 +206,7 @@ end
     @test length(nodeset1) == 4
     @test size(nodeset1) == (4, 2)
     @test axes(nodeset1) == (1:4,)
-    @test eachindex(nodeset1) == 1:4
+    @test eachindex(nodeset1) == firstindex(nodeset1):lastindex(nodeset1)
     @test keys(nodeset1) == 1:4
     for node in nodeset1
         @test node isa MVector{2, Float64}
