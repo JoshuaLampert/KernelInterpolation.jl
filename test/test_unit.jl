@@ -197,6 +197,7 @@ end
                                      1.0 0.0
                                      0.0 1.0
                                      1.0 1.0])
+    @test NodeSet(nodeset1) == nodeset1
     @test_nowarn println(nodeset1)
     @test_nowarn display(nodeset1)
     @test eltype(nodeset1) == Float64
@@ -205,7 +206,8 @@ end
     @test length(nodeset1) == 4
     @test size(nodeset1) == (4, 2)
     @test axes(nodeset1) == (1:4,)
-    @test eachindex(nodeset1) == 1:4
+    @test eachindex(nodeset1) == firstindex(nodeset1):lastindex(nodeset1)
+    @test keys(nodeset1) == 1:4
     for node in nodeset1
         @test node isa MVector{2, Float64}
     end
