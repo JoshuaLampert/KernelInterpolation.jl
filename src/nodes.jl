@@ -192,11 +192,9 @@ Compute the distance matrix between two [`NodeSet`](@ref)s, which is a matrix ``
 `nodeset1` and ``\xi_j`` are the nodes on `nodeset2`.
 """
 function distance_matrix(nodeset1::NodeSet, nodeset2::NodeSet)
-    n1 = length(nodeset1)
-    n2 = length(nodeset2)
-    D = zeros(n1, n2)
-    for i in 1:n1
-        for j in 1:n2
+    D = zeros(eltype(nodeset1), n1, n2)
+    for i in eachindex(nodeset1)
+        for j in eachindex(nodeset2)
             D[i, j] = norm(nodeset1[i] - nodeset2[j])
         end
     end
