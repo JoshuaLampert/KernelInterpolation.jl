@@ -26,6 +26,10 @@
                 nodes2d = homogeneous_hypercube(5; dim = 2)
                 @test_nowarn plot!(nodes2d)
             end
+            kernel1 = GaussKernel{dim}(shape_parameter = 0.5)
+            basis = StandardBasis(nodes, kernel1)
+            @test_nowarn plot(basis, nodes_fine)
+            @test_throws DimensionMismatch plot(basis, random_hypercube(5; dim = dim + 1))
         end
     end
 end
