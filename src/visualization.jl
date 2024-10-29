@@ -106,13 +106,13 @@ end
     elseif dim(nodeset) == 2
         if training_nodes
             @series begin
-                x = values_along_dim(itp.centers, 1)
-                y = values_along_dim(itp.centers, 2)
+                x = values_along_dim(centers(itp), 1)
+                y = values_along_dim(centers(itp), 2)
                 seriestype := :scatter
                 markershape --> :star
                 markersize --> 10
                 label --> "training nodes"
-                x, y, itp.(itp.centers)
+                x, y, itp.(centers(itp))
             end
         end
         @series begin
@@ -176,4 +176,17 @@ end
 
 @recipe function f(nodeset::NodeSet, f::Function)
     nodeset, f.(nodeset)
+end
+
+@recipe function f(basis::AbstractBasis, nodeset::NodeSet = centers(basis))
+    if dim(nodeset) != dim(basis)
+        throw(DimensionMismatch("The dimension of the node set and the basis must be the same"))
+    end
+    for i in 1:length(basis)
+        @series begin
+            label --> nothing
+            seriestype --> :surface
+            nodeset, basis[i]
+        end
+    end
 end

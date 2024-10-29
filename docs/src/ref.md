@@ -23,6 +23,13 @@ Modules = [KernelInterpolation]
 Pages = ["nodes.jl"]
 ```
 
+## Bases
+
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["basis.jl"]
+```
+
 ## Interpolation
 
 ```@autodocs

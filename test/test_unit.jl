@@ -609,6 +609,17 @@ end
     @test PointSet(NodeSet(ps)) == ps
 end
 
+@testitem "Basis" setup=[Setup, AdditionalImports] begin
+    nodeset = NodeSet([0.0 0.0
+                       1.0 0.0
+                       0.0 1.0
+                       1.0 1.0])
+    kernel = GaussKernel{dim(nodeset)}(shape_parameter = 0.5)
+    basis = @test_nowarn StandardBasis(nodeset, kernel)
+    @test isapprox(stack(basis.(nodeset)), kernel_matrix(basis))
+    @test isapprox(stack(basis.(nodeset)), kernel.(distance_matrix(nodeset, nodeset)))
+end
+
 @testitem "Interpolation" setup=[Setup, AdditionalImports] begin
     nodes = NodeSet([0.0 0.0
                      1.0 0.0

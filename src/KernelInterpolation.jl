@@ -31,10 +31,11 @@ using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
 
 include("kernels/kernels.jl")
 include("nodes.jl")
+include("basis.jl")
+include("regularization.jl")
 include("differential_operators.jl")
 include("equations.jl")
 include("kernel_matrices.jl")
-include("regularization.jl")
 include("interpolation.jl")
 include("discretization.jl")
 include("callbacks_step/callbacks_step.jl")
@@ -48,6 +49,7 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        RadialCharacteristicKernel, MaternKernel, Matern12Kernel, Matern32Kernel,
        Matern52Kernel, Matern72Kernel, RieszKernel,
        TransformationKernel, ProductKernel, SumKernel
+export StandardBasis
 export phi, Phi, order
 export PartialDerivative, Gradient, Laplacian, EllipticOperator
 export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation,
