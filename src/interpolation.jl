@@ -160,7 +160,8 @@ Otherwise, `nodeset` is set to `centers(basis)` or `centers`.
 
 A regularization can be applied to the kernel matrix using the `regularization` argument, cf. [`regularize!`](@ref).
 """
-function interpolate(basis::AbstractBasis, values::Vector{RealT}, nodeset::NodeSet{Dim} = centers(basis);
+function interpolate(basis::AbstractBasis, values::Vector{RealT},
+                     nodeset::NodeSet{Dim} = centers(basis);
                      m = order(basis),
                      regularization = NoRegularization()) where {Dim, RealT}
     @assert dim(basis) == Dim
