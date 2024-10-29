@@ -128,7 +128,7 @@ approximation and the polynomial augmentation is not changed. In KernelInterpola
 ```@example noisy-itp
 M = 81
 centers = random_hypercube(M; dim = 2)
-ls = interpolate(nodeset, centers, values_noisy, kernel)
+ls = interpolate(centers, nodeset, values_noisy, kernel)
 ```
 
 We plot the least-squares approximation and, again, see a better fit to the underlying target function.

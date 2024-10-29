@@ -54,10 +54,10 @@ The standard basis for a function space defined by a kernel and a [`NodeSet`](@r
 The basis functions are given by
 
 ```math
-    \Phi_i(x) = K(x, x_i)
+    b_j(x) = K(x, x_j)
 ```
 
-where `K` is the kernel and `x_i` are the nodes in `centers`.
+where `K` is the kernel and `x_j` are the nodes in `centers`.
 """
 struct StandardBasis{Kernel} <: AbstractBasis
     centers::NodeSet
