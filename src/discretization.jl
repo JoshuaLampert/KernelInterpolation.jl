@@ -109,10 +109,11 @@ end
 
 function Semidiscretization(spatial_discretization::SpatialDiscretization,
                             initial_condition)
-    @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, centers, kernel = spatial_discretization
+    @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis = spatial_discretization
+    @unpack centers, kernel = basis
     @assert length(centers)==length(nodeset_inner) + length(nodeset_boundary) "The number of centers must be equal to the number of inner and boundary nodes."
-    k_matrix_inner = kernel_matrix(nodeset_inner, centers, kernel)
-    k_matrix_boundary = kernel_matrix(nodeset_boundary, centers, kernel)
+    k_matrix_inner = kernel_matrix(centers, nodeset_inner, kernel)
+    k_matrix_boundary = kernel_matrix(centers, nodeset_boundary, kernel)
     # whole kernel matrix is not needed for rhs, but for initial condition
     k_matrix = [k_matrix_inner
                 k_matrix_boundary]
@@ -146,8 +147,11 @@ function Semidiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
 end
 
 function Base.show(io::IO, semi::Semidiscretization)
+    N_i = length(semi.spatial_discretization.nodeset_inner)
+    N_b = length(semi.spatial_discretization.nodeset_boundary)
+    k = interpolation_kernel(semi.spatial_discretization.basis)
     print(io,
-          "Semidiscretization with $(dim(semi)) dimensions, $(length(semi.spatial_discretization.nodeset_inner)) inner nodes, $(length(semi.spatial_discretization.nodeset_boundary)) boundary nodes, and kernel $(semi.spatial_discretization.kernel)")
+          "Semidiscretization with $(dim(semi)) dimensions, $N_i inner nodes, $N_b boundary nodes, and kernel $k")
 end
 
 dim(semi::Semidiscretization) = dim(semi.spatial_discretization)
