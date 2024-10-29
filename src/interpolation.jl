@@ -298,8 +298,11 @@ end
 function Base.show(io::IO, titp::TemporalInterpolation)
     sd = titp.ode_sol.prob.p.spatial_discretization
     tspan = titp.ode_sol.prob.tspan
+    N_i = length(sd.nodeset_inner)
+    N_b = length(sd.nodeset_boundary)
+    k = interpolation_kernel(sd.basis)
     return print(io,
-                 "Temporal interpolation with $(length(sd.nodeset_inner)) inner nodes, $(length(sd.nodeset_boundary)) boundary nodes, kernel $(sd.kernel), and time span $tspan")
+                 "Temporal interpolation with $N_i inner nodes, $N_b boundary nodes, kernel $k, and time span $tspan")
 end
 
 function (titp::TemporalInterpolation)(t)

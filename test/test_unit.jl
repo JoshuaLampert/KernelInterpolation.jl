@@ -714,7 +714,7 @@ end
     centers = NodeSet([0.0 0.0
                        1.0 0.0
                        0.0 1.0])
-    itp = @test_nowarn interpolate(nodes, centers, ff, kernel)
+    itp = @test_nowarn interpolate(centers, nodes, ff, kernel)
     expected_coefficients = [
         0.0,
         0.0,
@@ -728,7 +728,7 @@ end
         @test isapprox(coeffs[i], expected_coefficients[i], atol = 1e-15)
     end
     @test order(itp) == order(kernel)
-    @test length(kernel_coefficients(itp)) == length(itp.centers)
+    @test length(kernel_coefficients(itp)) == length(KernelInterpolation.centers(itp))
     @test length(polynomial_coefficients(itp)) == order(itp) + 1
     @test length(polynomial_basis(itp)) ==
           binomial(order(itp) - 1 + dim(nodes), dim(nodes))
