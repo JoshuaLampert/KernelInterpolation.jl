@@ -22,11 +22,11 @@ struct SpatialDiscretization{Dim, RealT, Equations, BoundaryCondition,
                                    boundary_condition,
                                    nodeset_boundary::NodeSet{Dim, RealT},
                                    basis::AbstractBasis) where {Dim,
-                                                                       RealT}
+                                                                RealT}
         new{Dim, RealT, typeof(equations), typeof(boundary_condition),
             typeof(basis)}(equations, nodeset_inner,
-                            boundary_condition, nodeset_boundary,
-                            basis)
+                           boundary_condition, nodeset_boundary,
+                           basis)
     end
 end
 
