@@ -616,7 +616,8 @@ end
                        1.0 1.0])
     kernel = GaussKernel{dim(nodeset)}(shape_parameter = 0.5)
     basis = @test_nowarn StandardBasis(nodeset, kernel)
-    @test_throws DimensionMismatch StandardBasis(nodeset, GaussKernel{1}(shape_parameter = 0.5))
+    @test_throws DimensionMismatch StandardBasis(nodeset,
+                                                 GaussKernel{1}(shape_parameter = 0.5))
     @test_nowarn println(basis)
     @test_nowarn display(basis)
     A = kernel_matrix(basis)
@@ -643,7 +644,8 @@ end
     @test nodeset(itp) == nodes
     @test dim(itp) == dim(kernel)
     @test dim(itp) == dim(nodes)
-    @test system_matrix(itp) == KernelInterpolation.interpolation_matrix(nodes, kernel, itp.ps)
+    @test system_matrix(itp) ==
+          KernelInterpolation.interpolation_matrix(nodes, kernel, itp.ps)
     # Saving the interpolation and the function to a VTK file
     @test_nowarn vtk_save("itp", nodes, f, itp, ff; keys = ["f", "itp", "f2"])
     nodes2, point_data = @test_nowarn vtk_read("itp.vtu")
@@ -732,7 +734,8 @@ end
         1.0,
         1.0]
     coeffs = coefficients(itp)
-    @test system_matrix(itp) == KernelInterpolation.least_squares_matrix(centers, nodes, kernel, itp.ps)
+    @test system_matrix(itp) ==
+          KernelInterpolation.least_squares_matrix(centers, nodes, kernel, itp.ps)
     @test length(coeffs) == length(expected_coefficients)
     for i in eachindex(coeffs)
         @test isapprox(coeffs[i], expected_coefficients[i], atol = 1e-15)
