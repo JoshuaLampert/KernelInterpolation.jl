@@ -66,7 +66,7 @@ The interpolation matrix is defined as
 ```math
     A = \begin{pmatrix}K & P\\P^T & 0\end{pmatrix},
 ```
-where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref) and ``P`` the [`polynomial_matrix`](@ref)`.
+where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref) and ``P`` the [`polynomial_matrix`](@ref).
 If a node set of `centers` and a `kernel` are given, the interpolation matrix is computed for the [`StandardBasis`](@ref).
 """
 function interpolation_matrix(basis::AbstractBasis, ps,
@@ -94,7 +94,7 @@ The least squares matrix is defined as
 ```math
     A = \begin{pmatrix}K & P_1\\P_2' & 0\end{pmatrix},
 ```
-where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)`
+where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)
 for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref)` for the `centers`.
 If a `nodeset` and `kernel` are given, the least squares matrix is computed for the [`StandardBasis`](@ref).
 """
