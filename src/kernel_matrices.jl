@@ -57,7 +57,7 @@ function polynomial_matrix(nodeset::NodeSet, ps)
     return A
 end
 
-"""
+@doc raw"""
     interpolation_matrix(centers, kernel, ps, regularization = NoRegularization())
     interpolation_matrix(basis, ps, regularization)
 
@@ -85,14 +85,14 @@ function interpolation_matrix(centers::NodeSet, kernel::AbstractKernel, ps,
     interpolation_matrix(StandardBasis(centers, kernel), ps, regularization)
 end
 
-"""
+@doc raw"""
     least_squares_matrix(basis, nodeset, ps, regularization = NoRegularization())
     least_squares_matrix(centers, nodeset, kernel, ps, regularization = NoRegularization())
 
 Return the least squares matrix for the `basis`, `nodeset`, polynomials `ps`, and `regularization`.
 The least squares matrix is defined as
 ```math
-    A = \begin{pmatrix}K & P_1\\P_2' & 0\end{pmatrix},
+    A = \begin{pmatrix}K & P_1\\P_2^T & 0\end{pmatrix},
 ```
 where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)
 for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref)` for the `centers`.
