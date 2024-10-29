@@ -161,7 +161,7 @@ See also [`pde_matrix`](@ref) and [`kernel_matrix`](@ref).
 function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, centers,
                              kernel)
     pd_matrix = pde_matrix(diff_op_or_pde, nodeset_inner, centers, kernel)
-    b_matrix = kernel_matrix(nodeset_boundary, centers, kernel)
+    b_matrix = kernel_matrix(centers, nodeset_boundary, kernel)
     return [pd_matrix
             b_matrix]
 end
