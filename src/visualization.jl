@@ -185,7 +185,7 @@ end
     for i in 1:length(basis)
         @series begin
             label --> nothing
-            seriestype --> :surface
+            seriestype --> (dim(basis) == 1 ? :line : :surface)
             nodeset, basis[i]
         end
     end
