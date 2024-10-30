@@ -13,7 +13,8 @@ merge!(nodeset, nodeset_boundary)
 values = f.(nodeset)
 
 kernel = InverseMultiquadricKernel{dim(nodeset)}()
-itp = interpolate(nodeset, values, kernel)
+basis = StandardBasis(nodeset, kernel)
+itp = interpolate(basis, values)
 
 N = 500
 many_nodes = random_hypersphere(N, r, center)
