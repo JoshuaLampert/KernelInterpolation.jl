@@ -1,35 +1,37 @@
 @doc raw"""
-    kernel_matrix(nodeset1, nodeset2, kernel)
+    kernel_matrix(basis, nodeset = centers(basis))
+    kernel_matrix(nodeset1[, nodeset2], kernel)
 
-Return the kernel matrix for the nodeset and kernel. The kernel matrix is defined as
+Return the kernel matrix for the `nodes` and `kernel`. The kernel matrix is defined as
 ```math
-    A_{ij} = K(x_i, \xi_j),
+    A_{ij} = b_j(x_i),
 ```
-where ``x_i`` are the nodes in the `nodeset1`, ``\xi_j`` are the nodes in the `nodeset2`,
-and ``K`` the `kernel`.
+where ``b_i`` are the basis function in the `basis` and `x_i` are the nodes in the `nodeset`.
+If two nodesets and a `kernel` are given, the kernel matrix is computed for the [`StandardBasis`](@ref) meaning
+```math
+    A_{ij} = K(\xi_j, x_i),
+```
+where ``\xi_j`` are the nodes/centers in `nodeset1`, ``x_i`` are the nodes in `nodeset2`, and `K` is the `kernel`.
+If `nodeset2` is not given, it defaults to `nodeset1`.
 """
-function kernel_matrix(nodeset1, nodeset2, kernel)
-    n = length(nodeset1)
-    m = length(nodeset2)
-    A = Matrix{eltype(nodeset1)}(undef, n, m)
+function kernel_matrix(basis::AbstractBasis, nodeset::NodeSet = centers(basis))
+    n = length(nodeset)
+    m = length(basis)
+    A = Matrix{eltype(nodeset)}(undef, n, m)
     for i in 1:n
         for j in 1:m
-            A[i, j] = kernel(nodeset1[i], nodeset2[j])
+            A[i, j] = basis[j](nodeset[i])
         end
     end
     return A
 end
 
-"""
-    kernel_matrix(nodeset, kernel)
+function kernel_matrix(nodeset1::NodeSet{Dim}, nodeset2::NodeSet{Dim},
+                       kernel::AbstractKernel{Dim}) where {Dim}
+    kernel_matrix(StandardBasis(nodeset1, kernel), nodeset2)
+end
 
-Return the kernel matrix for the nodeset and kernel. The kernel matrix is defined as
-```math
-    A_{ij} = K(x_i, x_j),
-```
-where ``x_i`` are the nodes in the `nodeset` and ``K`` the `kernel`.
-"""
-function kernel_matrix(nodeset, kernel)
+function kernel_matrix(nodeset::NodeSet, kernel::AbstractKernel)
     kernel_matrix(nodeset, nodeset, kernel)
 end
 
@@ -42,7 +44,7 @@ Return the polynomial matrix for the nodeset and polynomials. The polynomial mat
 ```
 where ``x_i`` are the nodes in the `nodeset` and ``p_j`` the polynomials.
 """
-function polynomial_matrix(nodeset, ps)
+function polynomial_matrix(nodeset::NodeSet, ps)
     n = length(nodeset)
     q = length(ps)
     A = Matrix{eltype(nodeset)}(undef, n, q)
@@ -55,46 +57,63 @@ function polynomial_matrix(nodeset, ps)
     return A
 end
 
-"""
-    interpolation_matrix(nodeset, kernel, ps, regularization)
+@doc raw"""
+    interpolation_matrix(centers, kernel, ps, regularization = NoRegularization())
+    interpolation_matrix(basis, ps, regularization)
 
-Return the interpolation matrix for the `nodeset`, `kernel`, polynomials `ps`, and `regularization`.
+Return the interpolation matrix for the `basis`, polynomials `ps`, and `regularization`.
 The interpolation matrix is defined as
 ```math
     A = \begin{pmatrix}K & P\\P^T & 0\end{pmatrix},
 ```
-where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref) and ``P`` the [`polynomial_matrix`](@ref)`.
+where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref) and ``P`` the [`polynomial_matrix`](@ref).
+If a node set of `centers` and a `kernel` are given, the interpolation matrix is computed for the [`StandardBasis`](@ref).
 """
-function interpolation_matrix(nodeset, kernel, ps, regularization)
+function interpolation_matrix(basis::AbstractBasis, ps,
+                              regularization::AbstractRegularization = NoRegularization())
     q = length(ps)
-    k_matrix = kernel_matrix(nodeset, kernel)
+    k_matrix = kernel_matrix(basis)
     regularize!(k_matrix, regularization)
-    p_matrix = polynomial_matrix(nodeset, ps)
+    p_matrix = polynomial_matrix(centers(basis), ps)
     system_matrix = [k_matrix p_matrix
                      p_matrix' zeros(q, q)]
     return Symmetric(system_matrix)
 end
 
-"""
-    least_squares_matrix(nodeset, centers, kernel, ps, regularization)
+function interpolation_matrix(centers::NodeSet, kernel::AbstractKernel, ps,
+                              regularization::AbstractRegularization = NoRegularization())
+    interpolation_matrix(StandardBasis(centers, kernel), ps, regularization)
+end
 
-Return the least squares matrix for the `nodeset`, `centers`, `kernel`, polynomials `ps`, and `regularization`.
+@doc raw"""
+    least_squares_matrix(basis, nodeset, ps, regularization = NoRegularization())
+    least_squares_matrix(centers, nodeset, kernel, ps, regularization = NoRegularization())
+
+Return the least squares matrix for the `basis`, `nodeset`, polynomials `ps`, and `regularization`.
 The least squares matrix is defined as
 ```math
-    A = \begin{pmatrix}K & P_1\\P_2' & 0\end{pmatrix},
+    A = \begin{pmatrix}K & P_1\\P_2^T & 0\end{pmatrix},
 ```
-where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)`
+where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)
 for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref)` for the `centers`.
+If a `nodeset` and `kernel` are given, the least squares matrix is computed for the [`StandardBasis`](@ref).
 """
-function least_squares_matrix(nodeset, centers, kernel, ps, regularization)
+function least_squares_matrix(basis::AbstractBasis, nodeset::NodeSet, ps,
+                              regularization::AbstractRegularization = NoRegularization())
     q = length(ps)
-    k_matrix = kernel_matrix(nodeset, centers, kernel)
+    k_matrix = kernel_matrix(basis, nodeset)
     regularize!(k_matrix, regularization)
     p_matrix1 = polynomial_matrix(nodeset, ps)
-    p_matrix2 = polynomial_matrix(centers, ps)
+    p_matrix2 = polynomial_matrix(centers(basis), ps)
     system_matrix = [k_matrix p_matrix1
                      p_matrix2' zeros(q, q)]
     return system_matrix
+end
+
+function least_squares_matrix(centers::NodeSet, nodeset::NodeSet, kernel::AbstractKernel,
+                              ps,
+                              regularization::AbstractRegularization = NoRegularization())
+    least_squares_matrix(StandardBasis(centers, kernel), nodeset, ps, regularization)
 end
 
 @doc raw"""
@@ -142,7 +161,7 @@ See also [`pde_matrix`](@ref) and [`kernel_matrix`](@ref).
 function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, centers,
                              kernel)
     pd_matrix = pde_matrix(diff_op_or_pde, nodeset_inner, centers, kernel)
-    b_matrix = kernel_matrix(nodeset_boundary, centers, kernel)
+    b_matrix = kernel_matrix(centers, nodeset_boundary, kernel)
     return [pd_matrix
             b_matrix]
 end

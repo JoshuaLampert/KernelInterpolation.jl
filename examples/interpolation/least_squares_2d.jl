@@ -16,7 +16,7 @@ M = 81
 centers = random_hypercube(M; dim = 2)
 
 kernel = ThinPlateSplineKernel{dim(nodeset)}()
-ls = interpolate(nodeset, centers, values, kernel)
+ls = interpolate(StandardBasis(centers, kernel), values, nodeset)
 itp = interpolate(nodeset, values, kernel)
 
 N = 40
