@@ -85,10 +85,12 @@ already includes polynomial augmentation of degree `m` defaulting to `order(kern
 which means that the [`kernel_matrix`](@ref) of this basis is the identity matrix making it suitable for interpolation. Since the
 basis already includes polynomials no additional polynomial augmentation is needed for interpolation with this basis.
 """
-struct LagrangeBasis{Kernel, I <: AbstractInterpolation} <: AbstractBasis
+struct LagrangeBasis{Kernel, I <: AbstractInterpolation, Monomials, PolyVars} <: AbstractBasis
     centers::NodeSet
     kernel::Kernel
     basis_functions::Vector{I}
+    ps::Monomials
+    xx::PolyVars
     function LagrangeBasis(centers::NodeSet, kernel::Kernel;
                            m = order(kernel)) where {Kernel}
         if dim(kernel) != dim(centers)
@@ -105,7 +107,10 @@ struct LagrangeBasis{Kernel, I <: AbstractInterpolation} <: AbstractBasis
             values[i] = 1.0
             basis_functions[i] = interpolate(centers, values, kernel; m = m)
         end
-        new{typeof(kernel), eltype(basis_functions)}(centers, kernel, basis_functions)
+        # All basis functions have same polynomials
+        ps = first(basis_functions).ps
+        xx = first(basis_functions).xx
+        new{typeof(kernel), eltype(basis_functions), typeof(ps), typeof(xx)}(centers, kernel, basis_functions, ps, xx)
     end
 end
 
