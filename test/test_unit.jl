@@ -627,6 +627,37 @@ end
     for (i, b) in enumerate(basis)
         @test b.(nodeset) == basis_functions[i].(nodeset)
     end
+
+    kernel = ThinPlateSplineKernel{dim(nodeset)}()
+    basis = @test_nowarn LagrangeBasis(nodeset, kernel)
+    @test_throws DimensionMismatch LagrangeBasis(nodeset,
+                                                 GaussKernel{1}(shape_parameter = 0.5))
+    @test_nowarn println(basis)
+    @test_nowarn display(basis)
+    A = kernel_matrix(basis)
+    @test isapprox(stack(basis.(nodeset)), A)
+    @test isapprox(A, I)
+    basis_functions = collect(basis)
+    for (i, b) in enumerate(basis)
+        @test b.(nodeset) == basis_functions[i].(nodeset)
+    end
+    # Test for Theorem 11.1 in Wendland's book
+    stdbasis = StandardBasis(nodeset, kernel)
+    R(x) = stdbasis(x)
+    function S(x)
+        v = zeros(length(basis.ps))
+        for i in eachindex(v)
+            v[i] = basis.ps[i](basis.xx => x)
+        end
+        return v
+    end
+    b(x) = [R(x); S(x)]
+    K = KernelInterpolation.interpolation_matrix(stdbasis, basis.ps)
+    x = rand(dim(nodeset))
+    uv = K \ b(x)
+    u = basis(x)
+    # Difficult to test for v
+    @test isapprox(u, uv[1:length(u)])
 end
 
 @testitem "Interpolation" setup=[Setup, AdditionalImports] begin
@@ -749,6 +780,29 @@ end
     @test size(system_matrix(itp)) == (7, 6)
     @test isapprox(itp([0.5, 0.5]), 1.0)
     @test isapprox(kernel_norm(itp), 0.0, atol = 1e-15)
+
+    # Least squares with LagrangeBasis (not really recommended because you still need to solve a linear system)
+    basis = LagrangeBasis(centers, kernel)
+    basis_functions = collect(basis)
+    # There is no RBF part
+    for b in basis_functions
+        @test isapprox(kernel_coefficients(b), zeros(length(centers)))
+    end
+    itp = interpolate(basis, ff, nodes)
+    coeffs = coefficients(itp)
+    # Polynomial coefficients add up correctly
+    expected_coefficients = [
+        0.0,
+        1.0,
+        1.0]
+    for i in eachindex(expected_coefficients)
+        coeff = 0.0
+        for (j, b) in enumerate(basis_functions)
+            coeff += coeffs[j] * polynomial_coefficients(b)[i]
+        end
+        @test isapprox(coeff, expected_coefficients[i], atol = 1e-15)
+    end
+    @test isapprox(itp([0.5, 0.5]), 1.0)
 
     # 1D interpolation and evaluation
     nodes = NodeSet(LinRange(0.0, 1.0, 10))

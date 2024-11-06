@@ -62,7 +62,7 @@ end
     interpolation_matrix(basis, ps, regularization)
 
 Return the interpolation matrix for the `basis`, polynomials `ps`, and `regularization`.
-The interpolation matrix is defined as
+For the [`StandardBasis`](@ref), the interpolation matrix is defined as
 ```math
     A = \begin{pmatrix}K & P\\P^T & 0\end{pmatrix},
 ```
@@ -80,6 +80,12 @@ function interpolation_matrix(basis::AbstractBasis, ps,
     return Symmetric(system_matrix)
 end
 
+# This should be the same as `kernel_matrix(basis)`
+function interpolation_matrix(::LagrangeBasis, ps,
+                              ::AbstractRegularization = NoRegularization())
+    return I
+end
+
 function interpolation_matrix(centers::NodeSet, kernel::AbstractKernel, ps,
                               regularization::AbstractRegularization = NoRegularization())
     interpolation_matrix(StandardBasis(centers, kernel), ps, regularization)
@@ -90,7 +96,7 @@ end
     least_squares_matrix(centers, nodeset, kernel, ps, regularization = NoRegularization())
 
 Return the least squares matrix for the `basis`, `nodeset`, polynomials `ps`, and `regularization`.
-The least squares matrix is defined as
+For the [`StandardBasis`](@ref), the least squares matrix is defined as
 ```math
     A = \begin{pmatrix}K & P_1\\P_2^T & 0\end{pmatrix},
 ```
@@ -108,6 +114,13 @@ function least_squares_matrix(basis::AbstractBasis, nodeset::NodeSet, ps,
     system_matrix = [k_matrix p_matrix1
                      p_matrix2' zeros(q, q)]
     return system_matrix
+end
+
+function least_squares_matrix(basis::LagrangeBasis, nodeset::NodeSet, ps,
+                              regularization::AbstractRegularization = NoRegularization())
+    k_matrix = kernel_matrix(basis, nodeset)
+    regularize!(k_matrix, regularization)
+    return k_matrix
 end
 
 function least_squares_matrix(centers::NodeSet, nodeset::NodeSet, kernel::AbstractKernel,

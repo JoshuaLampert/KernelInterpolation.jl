@@ -71,3 +71,54 @@ struct StandardBasis{Kernel} <: AbstractBasis
 end
 
 Base.getindex(basis::StandardBasis, i) = x -> basis.kernel(x, centers(basis)[i])
+
+@doc raw"""
+    LagrangeBasis(centers, kernel, m = order(kernel))
+
+The Lagrange (or cardinal) basis with respect to a kernel and a [`NodeSet`](@ref) of `centers`. This basis
+already includes polynomial augmentation of degree `m` defaulting to `order(kernel)`. The basis functions are given such that
+
+```math
+    b_j(x_i) = \delta_{ij},
+```
+
+which means that the [`kernel_matrix`](@ref) of this basis is the identity matrix making it suitable for interpolation. Since the
+basis already includes polynomials no additional polynomial augmentation is needed for interpolation with this basis.
+"""
+struct LagrangeBasis{Kernel, I <: AbstractInterpolation, Monomials, PolyVars} <:
+       AbstractBasis
+    centers::NodeSet
+    kernel::Kernel
+    basis_functions::Vector{I}
+    ps::Monomials
+    xx::PolyVars
+    function LagrangeBasis(centers::NodeSet, kernel::Kernel;
+                           m = order(kernel)) where {Kernel}
+        if dim(kernel) != dim(centers)
+            throw(DimensionMismatch("The dimension of the kernel and the centers must be the same"))
+        end
+        K = length(centers)
+        values = zeros(K)
+        values[1] = 1.0
+        b = interpolate(centers, values, kernel; m = m)
+        basis_functions = Vector{typeof(b)}(undef, K)
+        basis_functions[1] = b
+        for i in 2:K
+            values[i - 1] = 0.0
+            values[i] = 1.0
+            basis_functions[i] = interpolate(centers, values, kernel; m = m)
+        end
+        # All basis functions have same polynomials
+        ps = first(basis_functions).ps
+        xx = first(basis_functions).xx
+        new{typeof(kernel), eltype(basis_functions), typeof(ps), typeof(xx)}(centers,
+                                                                             kernel,
+                                                                             basis_functions,
+                                                                             ps, xx)
+    end
+end
+
+Base.getindex(basis::LagrangeBasis, i) = x -> basis.basis_functions[i](x)
+Base.collect(basis::LagrangeBasis) = basis.basis_functions
+# Polynomials are already inherently defined included in the basis
+order(::LagrangeBasis) = 0
