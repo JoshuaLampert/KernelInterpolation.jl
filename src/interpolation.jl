@@ -1,5 +1,3 @@
-abstract type AbstractInterpolation{Basis, Dim, RealT} end
-
 @doc raw"""
     Interpolation
 
@@ -195,16 +193,15 @@ end
 # Evaluate interpolant
 function (itp::Interpolation)(x)
     s = 0
-    kernel = interpolation_kernel(itp)
-    xis = centers(itp)
+    bas = basis(itp)
     c = kernel_coefficients(itp)
+    for j in eachindex(c)
+        s += c[j] * bas[j](x)
+    end
+
     d = polynomial_coefficients(itp)
     ps = polynomial_basis(itp)
     xx = polyvars(itp)
-    for j in eachindex(c)
-        s += c[j] * kernel(x, xis[j])
-    end
-
     for k in eachindex(d)
         s += d[k] * ps[k](xx => x)
     end

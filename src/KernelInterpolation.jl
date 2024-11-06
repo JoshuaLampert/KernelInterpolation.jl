@@ -13,7 +13,7 @@ module KernelInterpolation
 
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
 using ForwardDiff: ForwardDiff
-using LinearAlgebra: Symmetric, norm, tr, muladd, dot, diagind
+using LinearAlgebra: Symmetric, I, norm, tr, muladd, dot, diagind
 using Printf: @sprintf
 using ReadVTK: VTKFile, get_points, get_point_data, get_data
 using RecipesBase: RecipesBase, @recipe, @series
@@ -28,6 +28,9 @@ using TrixiBase: @trixi_timeit, timer
 using TypedPolynomials: Variable, monomials, degree
 using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
                 CollectionFile
+
+# Define the AbstractInterpolation already here because they are needed in basis.jl
+abstract type AbstractInterpolation{Basis, Dim, RealT} end
 
 include("kernels/kernels.jl")
 include("nodes.jl")
@@ -49,7 +52,7 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        RadialCharacteristicKernel, MaternKernel, Matern12Kernel, Matern32Kernel,
        Matern52Kernel, Matern72Kernel, RieszKernel,
        TransformationKernel, ProductKernel, SumKernel
-export StandardBasis
+export StandardBasis, LagrangeBasis
 export phi, Phi, order
 export PartialDerivative, Gradient, Laplacian, EllipticOperator
 export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation,
