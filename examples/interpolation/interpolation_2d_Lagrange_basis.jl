@@ -10,12 +10,12 @@ function f(x)
 end
 
 n = 50
-centers = random_hypercube(n; dim = 2)
-values = f.(centers)
+nodeset = random_hypercube(n; dim = 2)
+values = f.(nodeset)
 
-kernel = ThinPlateSplineKernel{dim(centers)}()
+kernel = ThinPlateSplineKernel{dim(nodeset)}()
 # Computing the Lagrange basis is expensive, but interpolation with it is cheap
-basis = LagrangeBasis(centers, kernel)
+basis = LagrangeBasis(nodeset, kernel)
 itp = interpolate(basis, values)
 
 N = 20

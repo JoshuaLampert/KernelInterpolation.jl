@@ -119,6 +119,15 @@ end
                           ns=5:10)
 end
 
+@testitem "interpolation_2d_Lagrange_basis.jl" setup=[
+    Setup,
+    AdditionalImports,
+    InterpolationExamples
+] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_Lagrange_basis.jl"),
+                          l2=0.40362797382569787, linf=0.06797693848658759)
+end
+
 @testitem "least_squares_2d.jl" setup=[
     Setup,
     AdditionalImports,
