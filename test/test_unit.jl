@@ -647,7 +647,7 @@ end
     function S(x)
         v = zeros(length(basis.ps))
         for i in eachindex(v)
-          v[i] = basis.ps[i](basis.xx => x)
+            v[i] = basis.ps[i](basis.xx => x)
         end
         return v
     end
