@@ -62,7 +62,7 @@ end
     interpolation_matrix(basis, ps, regularization)
 
 Return the interpolation matrix for the `basis`, polynomials `ps`, and `regularization`.
-The interpolation matrix is defined as
+For the [`StandardBasis`](@ref), the interpolation matrix is defined as
 ```math
     A = \begin{pmatrix}K & P\\P^T & 0\end{pmatrix},
 ```
@@ -96,7 +96,7 @@ end
     least_squares_matrix(centers, nodeset, kernel, ps, regularization = NoRegularization())
 
 Return the least squares matrix for the `basis`, `nodeset`, polynomials `ps`, and `regularization`.
-The least squares matrix is defined as
+For the [`StandardBasis`](@ref), the least squares matrix is defined as
 ```math
     A = \begin{pmatrix}K & P_1\\P_2^T & 0\end{pmatrix},
 ```
