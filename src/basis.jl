@@ -89,7 +89,8 @@ struct LagrangeBasis{Kernel, I <: AbstractInterpolation} <: AbstractBasis
     centers::NodeSet
     kernel::Kernel
     basis_functions::Vector{I}
-    function LagrangeBasis(centers::NodeSet, kernel::Kernel; m = order(kernel)) where {Kernel}
+    function LagrangeBasis(centers::NodeSet, kernel::Kernel;
+                           m = order(kernel)) where {Kernel}
         if dim(kernel) != dim(centers)
             throw(DimensionMismatch("The dimension of the kernel and the centers must be the same"))
         end
