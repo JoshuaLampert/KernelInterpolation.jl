@@ -9,11 +9,11 @@ function f(x)
     0.2 * exp(-(9 * x[1] - 4)^2 - (9 * x[2] - 7)^2)
 end
 
-n = 300
+n = 50
 centers = random_hypercube(n; dim = 2)
-values = f.(nodeset)
+values = f.(centers)
 
-kernel = ThinPlateSplineKernel{dim(nodeset)}()
+kernel = ThinPlateSplineKernel{dim(centers)}()
 # Computing the Lagrange basis is expensive, but interpolation with it is cheap
 basis = LagrangeBasis(centers, kernel)
 itp = interpolate(basis, values)
