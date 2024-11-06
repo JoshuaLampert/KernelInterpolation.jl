@@ -781,6 +781,29 @@ end
     @test isapprox(itp([0.5, 0.5]), 1.0)
     @test isapprox(kernel_norm(itp), 0.0, atol = 1e-15)
 
+    # Least squares with LagrangeBasis (not really recommended because you still need to solve a linear system)
+    basis = LagrangeBasis(centers, kernel)
+    basis_functions = collect(basis)
+    # There is no RBF part
+    for b in basis_functions
+        @test isapprox(kernel_coefficients(b), zeros(length(centers)))
+    end
+    itp = interpolate(basis, ff, nodes)
+    coeffs = coefficients(itp)
+    # Polynomial coefficients add up correctly
+    expected_coefficients = [
+        0.0,
+        1.0,
+        1.0]
+    for i in eachindex(expected_coefficients)
+        coeff = 0.0
+        for (j, b) in enumerate(basis_functions)
+            coeff += coeffs[j] * polynomial_coefficients(b)[i]
+        end
+        @test isapprox(coeff, expected_coefficients[i], atol = 1e-15)
+    end
+    @test isapprox(itp([0.5, 0.5]), 1.0)
+
     # 1D interpolation and evaluation
     nodes = NodeSet(LinRange(0.0, 1.0, 10))
     f(x) = sinpi(x[1])
