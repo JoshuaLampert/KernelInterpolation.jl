@@ -97,7 +97,7 @@ where ``p_k`` are a basis functions (usually monomials) of the ``Q = \begin{pmat
 of degree ``m - 1``. To obtain a complete system of equations, we need to enforce the constraints
 
 ```math
-\sum\limits_{j = 1}^Nc_jp_k(x_j) = 0, \quad\forall k = 1,\ldots,M.
+\sum\limits_{j = 1}^Nc_jp_k(x_j) = 0, \quad\forall k = 1,\ldots,Q.
 ```
 
 The linear system now consists of a system-matrix that has 4 blocks:
