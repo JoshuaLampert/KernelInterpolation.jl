@@ -462,6 +462,10 @@ function random_hypersphere_boundary(n, r; kwargs...)
     random_hypersphere_boundary(Random.default_rng(), n, r; kwargs...)
 end
 
+function random_hypersphere_boundary(n, r, center; kwargs...)
+    random_hypersphere_boundary(Random.default_rng(), n, r, center; kwargs...)
+end
+
 function random_hypersphere_boundary(rng::Random.AbstractRNG, n::Int, r = 1.0; dim = 2)
     random_hypersphere_boundary(rng, n, r, zeros(dim))
 end
