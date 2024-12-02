@@ -470,7 +470,7 @@ function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r = 1.0; dim = 
     random_hypersphere_boundary(rng, n, r, zeros(dim))
 end
 
-function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r = 1.0,
+function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r,
                                      center;
                                      dim = length(center))
     @assert length(center) == dim
