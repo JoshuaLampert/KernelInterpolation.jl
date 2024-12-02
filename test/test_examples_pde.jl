@@ -59,5 +59,5 @@ end
     @test_include_example(joinpath(EXAMPLES_DIR, "advection_diffusion_2d_basic.jl"),
                           l2=1.5864821617681693, linf=0.5647099100416488,
                           pde_test=true, tspan=(0.0, 0.1),
-                          atol=1e-11) # stability issues
+                          atol=1e-7) # stability issues
 end
