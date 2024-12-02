@@ -232,12 +232,14 @@ function random_hypercube(n, x_min = 0.0, x_max = 1.0; kwargs...)
     random_hypercube(Random.default_rng(), n, x_min, x_max; kwargs...)
 end
 
-function random_hypercube(rng::Random.AbstractRNG, n::Int, x_min::Real = 0.0, x_max::Real = 1.0; dim = 1)
+function random_hypercube(rng::Random.AbstractRNG, n::Int, x_min::Real = 0.0,
+                          x_max::Real = 1.0; dim = 1)
     nodes = x_min .+ (x_max - x_min) .* rand(rng, n, dim)
     return NodeSet(nodes)
 end
 
-function random_hypercube(rng::Random.AbstractRNG, n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
+function random_hypercube(rng::Random.AbstractRNG, n::Int, x_min::NTuple{Dim},
+                          x_max::NTuple{Dim};
                           dim = Dim) where {Dim}
     @assert dim == Dim
     nodes = rand(rng, n, dim)
@@ -260,11 +262,13 @@ function random_hypercube_boundary(n, x_min = 0.0, x_max = 1.0; kwargs...)
     random_hypercube_boundary(Random.default_rng(), n, x_min, x_max; kwargs...)
 end
 
-function random_hypercube_boundary(rng::Random.AbstractRNG, n::Int, x_min::Real = 0.0, x_max::Real = 1.0; dim = 1)
+function random_hypercube_boundary(rng::Random.AbstractRNG, n::Int, x_min::Real = 0.0,
+                                   x_max::Real = 1.0; dim = 1)
     random_hypercube_boundary(rng, n, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
 end
 
-function project_on_hypercube_boundary!(rng::Random.AbstractRNG, nodeset::NodeSet{Dim}, x_min::NTuple{Dim},
+function project_on_hypercube_boundary!(rng::Random.AbstractRNG, nodeset::NodeSet{Dim},
+                                        x_min::NTuple{Dim},
                                         x_max::NTuple{Dim}) where {Dim}
     for i in eachindex(nodeset)
         # j = argmin([abs.(nodeset[i] .- x_min); abs.(nodeset[i] .- x_max)])
@@ -278,7 +282,8 @@ function project_on_hypercube_boundary!(rng::Random.AbstractRNG, nodeset::NodeSe
     end
 end
 
-function random_hypercube_boundary(rng::Random.AbstractRNG, n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
+function random_hypercube_boundary(rng::Random.AbstractRNG, n::Int, x_min::NTuple{Dim},
+                                   x_max::NTuple{Dim};
                                    dim = Dim) where {Dim}
     @assert dim == Dim
     if dim == 1 && n >= 2
@@ -435,7 +440,8 @@ function random_hypersphere(rng::Random.AbstractRNG, n::Int, r = 1.0; dim = 2)
     random_hypersphere(rng, n, r, zeros(dim))
 end
 
-function random_hypersphere(rng::Random.AbstractRNG, n::Int, r::Real, center::AbstractVector; dim = length(center))
+function random_hypersphere(rng::Random.AbstractRNG, n::Int, r::Real,
+                            center::AbstractVector; dim = length(center))
     @assert length(center) == dim
     nodes = randn(rng, n, dim)
     for i in 1:n
@@ -460,7 +466,8 @@ function random_hypersphere_boundary(rng::Random.AbstractRNG, n::Int, r = 1.0; d
     random_hypersphere_boundary(rng, n, r, zeros(dim))
 end
 
-function random_hypersphere_boundary(rng::Random.AbstractRNG, n::Int, r::Real, center::AbstractVector;
+function random_hypersphere_boundary(rng::Random.AbstractRNG, n::Int, r::Real,
+                                     center::AbstractVector;
                                      dim = length(center))
     @assert length(center) == dim
     if dim == 1 && n >= 2
