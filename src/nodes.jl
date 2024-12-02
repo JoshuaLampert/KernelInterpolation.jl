@@ -428,20 +428,20 @@ radius `r` around the center `center`.
 If `dim` is not given explicitly, it is inferred by the length of `center` if possible.
 Optionally, pass a random number generator `rng`.
 """
-function random_hypersphere(n, r; kwargs...)
+function random_hypersphere(n, r = 1.0; kwargs...)
     random_hypersphere(Random.default_rng(), n, r; kwargs...)
 end
 
-function random_hypersphere(n, r, center; kwargs...)
+function random_hypersphere(n, r = 1.0, center; kwargs...)
     random_hypersphere(Random.default_rng(), n, r, center; kwargs...)
 end
 
-function random_hypersphere(rng::Random.AbstractRNG, n::Int, r = 1.0; dim = 2)
+function random_hypersphere(rng::Random.AbstractRNG, n, r = 1.0; dim = 2)
     random_hypersphere(rng, n, r, zeros(dim))
 end
 
-function random_hypersphere(rng::Random.AbstractRNG, n::Int, r::Real,
-                            center::AbstractVector; dim = length(center))
+function random_hypersphere(rng::Random.AbstractRNG, n, r = 1.0,
+                            center; dim = length(center))
     @assert length(center) == dim
     nodes = randn(rng, n, dim)
     for i in 1:n
@@ -466,12 +466,12 @@ function random_hypersphere_boundary(n, r, center; kwargs...)
     random_hypersphere_boundary(Random.default_rng(), n, r, center; kwargs...)
 end
 
-function random_hypersphere_boundary(rng::Random.AbstractRNG, n::Int, r = 1.0; dim = 2)
+function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r = 1.0; dim = 2)
     random_hypersphere_boundary(rng, n, r, zeros(dim))
 end
 
-function random_hypersphere_boundary(rng::Random.AbstractRNG, n::Int, r::Real,
-                                     center::AbstractVector;
+function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r = 1.0,
+                                     center;
                                      dim = length(center))
     @assert length(center) == dim
     if dim == 1 && n >= 2
