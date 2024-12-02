@@ -458,7 +458,7 @@ hypersphere with radius `r` around the center `center`.
 If `dim` is not given explicitly, it is inferred by the length of `center` if possible.
 Optionally, pass a random number generator `rng`.
 """
-function random_hypersphere_boundary(n, r; kwargs...)
+function random_hypersphere_boundary(n, r = 1.0; kwargs...)
     random_hypersphere_boundary(Random.default_rng(), n, r; kwargs...)
 end
 
