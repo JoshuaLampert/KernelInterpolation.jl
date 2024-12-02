@@ -220,22 +220,29 @@ end
 
 # Some convenience function to create some specific `NodeSet`s
 """
-    random_hypercube(n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
+    random_hypercube([rng], n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
 Create a [`NodeSet`](@ref) with `n` random nodes each of dimension `dim` inside a hypercube defined by
 the bounds `x_min` and `x_max`. If the bounds are given as single values, they are applied for
 each dimension. If they are `Tuple`s of size `dim` the hypercube has the according bounds.
 If `dim` is not given explicitly, it is inferred by the lengths of `x_min` and `x_max` if possible.
+Optionally, pass a random number generator `rng`.
 """
-function random_hypercube(n::Int, x_min::Real = 0.0, x_max::Real = 1.0; dim = 1)
-    nodes = x_min .+ (x_max - x_min) .* rand(n, dim)
+function random_hypercube(n, x_min = 0.0, x_max = 1.0; kwargs...)
+    random_hypercube(Random.default_rng(), n, x_min, x_max; kwargs...)
+end
+
+function random_hypercube(rng::Random.AbstractRNG, n::Int, x_min::Real = 0.0,
+                          x_max::Real = 1.0; dim = 1)
+    nodes = x_min .+ (x_max - x_min) .* rand(rng, n, dim)
     return NodeSet(nodes)
 end
 
-function random_hypercube(n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
+function random_hypercube(rng::Random.AbstractRNG, n::Int, x_min::NTuple{Dim},
+                          x_max::NTuple{Dim};
                           dim = Dim) where {Dim}
     @assert dim == Dim
-    nodes = rand(n, dim)
+    nodes = rand(rng, n, dim)
     for i in 1:dim
         nodes[:, i] = x_min[i] .+ (x_max[i] - x_min[i]) .* view(nodes, :, i)
     end
@@ -243,24 +250,31 @@ function random_hypercube(n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
 end
 
 """
-    random_hypercube_boundary(n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
+    random_hypercube_boundary([rng], n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
 Create a [`NodeSet`](@ref) with `n` random nodes each of dimension `dim` on the boundary of a hypercube
 defined by the bounds `x_min` and `x_max`. If the bounds are given as single values, they are
 applied for each dimension. If they are `Tuple`s of size `dim` the hypercube has the according bounds.
 If `dim` is not given explicitly, it is inferred by the lengths of `x_min` and `x_max` if possible.
+Optionally, pass a random number generator `rng`.
 """
-function random_hypercube_boundary(n::Int, x_min::Real = 0.0, x_max::Real = 1.0; dim = 1)
-    random_hypercube_boundary(n, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
+function random_hypercube_boundary(n, x_min = 0.0, x_max = 1.0; kwargs...)
+    random_hypercube_boundary(Random.default_rng(), n, x_min, x_max; kwargs...)
 end
 
-function project_on_hypercube_boundary!(nodeset::NodeSet{Dim}, x_min::NTuple{Dim},
+function random_hypercube_boundary(rng::Random.AbstractRNG, n::Int, x_min::Real = 0.0,
+                                   x_max::Real = 1.0; dim = 1)
+    random_hypercube_boundary(rng, n, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
+end
+
+function project_on_hypercube_boundary!(rng::Random.AbstractRNG, nodeset::NodeSet{Dim},
+                                        x_min::NTuple{Dim},
                                         x_max::NTuple{Dim}) where {Dim}
     for i in eachindex(nodeset)
         # j = argmin([abs.(nodeset[i] .- x_min); abs.(nodeset[i] .- x_max)])
         # Project to random axis
-        j = rand(1:Dim)
-        if rand([1, 2]) == 1
+        j = rand(rng, 1:Dim)
+        if rand(rng, [1, 2]) == 1
             nodeset[i][j] = x_min[j]
         else
             nodeset[i][j] = x_max[j]
@@ -268,7 +282,8 @@ function project_on_hypercube_boundary!(nodeset::NodeSet{Dim}, x_min::NTuple{Dim
     end
 end
 
-function random_hypercube_boundary(n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim};
+function random_hypercube_boundary(rng::Random.AbstractRNG, n::Int, x_min::NTuple{Dim},
+                                   x_max::NTuple{Dim};
                                    dim = Dim) where {Dim}
     @assert dim == Dim
     if dim == 1 && n >= 2
@@ -276,9 +291,9 @@ function random_hypercube_boundary(n::Int, x_min::NTuple{Dim}, x_max::NTuple{Dim
         return NodeSet([x_min[1], x_max[1]])
     end
     # First, create random nodes *inside* hypercube
-    nodeset = random_hypercube(n, x_min, x_max)
+    nodeset = random_hypercube(rng, n, x_min, x_max)
     # Then, project all the nodes on the boundary
-    project_on_hypercube_boundary!(nodeset, x_min, x_max)
+    project_on_hypercube_boundary!(rng, nodeset, x_min, x_max)
     return nodeset
 end
 
@@ -406,44 +421,64 @@ function homogeneous_hypercube_boundary(n::NTuple{Dim},
 end
 
 """
-    random_hypersphere(n, r = 1.0, center = zeros(dim); [dim])
+    random_hypersphere([rng], n, r = 1.0, center = zeros(dim); [dim])
 
 Create a [`NodeSet`](@ref) with `n` random nodes each of dimension `dim` inside a hypersphere with
 radius `r` around the center `center`.
 If `dim` is not given explicitly, it is inferred by the length of `center` if possible.
+Optionally, pass a random number generator `rng`.
 """
-function random_hypersphere(n::Int, r = 1.0; dim = 2)
-    random_hypersphere(n, r, zeros(dim))
+function random_hypersphere(n, r = 1.0; kwargs...)
+    random_hypersphere(Random.default_rng(), n, r; kwargs...)
 end
 
-function random_hypersphere(n::Int, r::Real, center::AbstractVector; dim = length(center))
+function random_hypersphere(n, r, center; kwargs...)
+    random_hypersphere(Random.default_rng(), n, r, center; kwargs...)
+end
+
+function random_hypersphere(rng::Random.AbstractRNG, n, r = 1.0; dim = 2)
+    random_hypersphere(rng, n, r, zeros(dim))
+end
+
+function random_hypersphere(rng::Random.AbstractRNG, n, r,
+                            center; dim = length(center))
     @assert length(center) == dim
-    nodes = randn(n, dim)
+    nodes = randn(rng, n, dim)
     for i in 1:n
-        nodes[i, :] .= center .+ r .* nodes[i, :] ./ norm(nodes[i, :]) * rand()^(1 / dim)
+        nodes[i, :] .= center .+ r .* nodes[i, :] ./ norm(nodes[i, :]) * rand(rng)^(1 / dim)
     end
     return NodeSet(nodes)
 end
 
 """
-    random_hypersphere_boundary(n, r = 1.0, center = zeros(dim); [dim])
+    random_hypersphere_boundary([rng], n, r = 1.0, center = zeros(dim); [dim])
 
 Create a [`NodeSet`](@ref) with `n` random nodes each of dimension `dim` at the boundary of a
 hypersphere with radius `r` around the center `center`.
 If `dim` is not given explicitly, it is inferred by the length of `center` if possible.
+Optionally, pass a random number generator `rng`.
 """
-function random_hypersphere_boundary(n::Int, r = 1.0; dim = 2)
-    random_hypersphere_boundary(n, r, zeros(dim))
+function random_hypersphere_boundary(n, r = 1.0; kwargs...)
+    random_hypersphere_boundary(Random.default_rng(), n, r; kwargs...)
 end
 
-function random_hypersphere_boundary(n::Int, r::Real, center::AbstractVector;
+function random_hypersphere_boundary(n, r, center; kwargs...)
+    random_hypersphere_boundary(Random.default_rng(), n, r, center; kwargs...)
+end
+
+function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r = 1.0; dim = 2)
+    random_hypersphere_boundary(rng, n, r, zeros(dim))
+end
+
+function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r,
+                                     center;
                                      dim = length(center))
     @assert length(center) == dim
     if dim == 1 && n >= 2
         @warn "For one dimension the boundary of the hypersphere consists only of 2 points"
         return NodeSet([-r, r])
     end
-    nodes = randn(n, dim)
+    nodes = randn(rng, n, dim)
     for i in 1:n
         nodes[i, :] .= center .+ r .* nodes[i, :] ./ norm(nodes[i, :])
     end
