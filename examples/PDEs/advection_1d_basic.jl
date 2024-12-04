@@ -1,5 +1,5 @@
 using KernelInterpolation
-using OrdinaryDiffEqRosenbrock
+using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 using Plots
 
 # source term of advection equation
