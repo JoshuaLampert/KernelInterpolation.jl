@@ -1,5 +1,5 @@
 using KernelInterpolation
-using OrdinaryDiffEq
+using OrdinaryDiffEqRosenbrock
 using LinearAlgebra: norm
 using WriteVTK: WriteVTK, paraview_collection
 
