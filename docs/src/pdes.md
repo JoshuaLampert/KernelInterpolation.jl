@@ -226,6 +226,9 @@ which already provides a wide range of time integration methods. Note that this 
 system, which is more difficult to solve than a simple ODE system. Thus, we are restricted to specialized time integration
 methods, which can handle DAEs. We recommend using the `Rodas5P` method, which is a Rosenbrock method for stiff DAEs. See
 also the [documentation of OrdinaryDiffEq.jl](https://docs.sciml.ai/DiffEqDocs/latest/tutorials/dae_example/) for more information.
+`Rodas5P` along with other Rosenbrock methods are implemented in the subpackage OrdinaryDiffEqRosenbrock.jl. Therefore, we
+recommend using this package in combination with KernelInterpolation.jl to reduce precompile time. In order to solve DAEs with
+OrdinaryDiffEqRosenbrock.jl, we also need to import the subpackage OrdinaryDiffEqNonlinearSolve.jl.
 
 In KernelInterpolation.jl, you can use the constructor of a [`Semidiscretization`](@ref) in a very similar way as
 [`SpatialDiscretization`](@ref), but with the additional initial condition. This can be turned into an `ODEProblem` object

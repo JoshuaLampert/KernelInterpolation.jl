@@ -38,7 +38,8 @@ julia> Pkg.add("Plots")
 
 To create special node sets, you might also want to install [QuasiMonteCarlo.jl](https://github.com/SciML/QuasiMonteCarlo.jl) or
 [Meshes.jl](https://github.com/JuliaGeometry/Meshes.jl) and for solving time-dependent partial differential equations
-[OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl) in a similar way as above for Plots.jl. See the documentation for more
+[OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl) in a similar way as above for Plots.jl. Consider using the subpackage
+OrdinaryDiffEqRosenbrock.jl as it contains the most relevant time integration schemes for this package. See the documentation for more
 examples on how to use these packages in combination with KernelInterpolation.jl.
 
 ## Usage

@@ -1,5 +1,5 @@
 using KernelInterpolation
-using OrdinaryDiffEq
+using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 using Plots
 
 # right-hand-side of Heat equation
