@@ -45,7 +45,7 @@ In the simplest case, we use the same linear combination (neglecting polynomial 
 u(x) = \sum_{j = 1}^N c_jK(x, x_j),
 ```
 
-where $K$ is the kernel function. This approach is also non as non-symmetric collocation or Kansa's method. By enforcing the
+where $K$ is the kernel function. This approach is also known as non-symmetric collocation or Kansa's method. By enforcing the
 conditions $\mathcal{L}u(x_i) = f(x_i)$ for $i = 1,\ldots,N_I$ and $\mathcal{B}u(x_i) = g(x_i)$ for $i = N_I + 1,\ldots,N$ we
 obtain a linear system of equations for the coefficients $c_i$, which can be written as
 
