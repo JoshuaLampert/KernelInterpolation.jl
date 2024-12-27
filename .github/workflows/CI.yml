@@ -7,6 +7,7 @@ on:
     paths-ignore:
       - 'CITATION.bib'
       - 'LICENSE.md'
+      - 'NEWS.md'
       - 'README.md'
       - '.zenodo.json'
       - '.github/workflows/CompatHelper.yml'
@@ -19,6 +20,7 @@ on:
     paths-ignore:
       - 'CITATION.bib'
       - 'LICENSE.md'
+      - 'NEWS.md'
       - 'README.md'
       - '.zenodo.json'
       - '.github/workflows/CompatHelper.yml'
