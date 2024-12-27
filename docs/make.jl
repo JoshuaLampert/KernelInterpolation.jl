@@ -8,7 +8,7 @@ DocMeta.setdocmeta!(KernelInterpolation, :DocTestSetup, :(using KernelInterpolat
 
 # Create changelog
 Changelog.generate(Changelog.Documenter(),                        # output type
-                   joinpath(@__DIR__, "..", "NEWS.md"),           # input file
+                   joinpath(@__DIR__, "..", "CHANGELOG.md"),      # input file
                    joinpath(@__DIR__, "src", "changelog.md");     # output file
                    repo = "JoshuaLampert/KernelInterpolation.jl", # default repository for links
                    branch = "main",)
