@@ -1,0 +1,41 @@
+# Changelog
+
+KernelInterpolation.jl follows the interpretation of
+[semantic versioning (semver)](https://julialang.github.io/Pkg.jl/dev/compatibility/#Version-specifier-format-1)
+used in the Julia ecosystem. Notable changes will be documented in this file
+for human readability.
+
+## Changes in the v0.2 lifecycle
+
+#### Added
+
+- Added support for general RNG in `random_*` functions ([#106]).
+- Added `LagrangeBasis` ([#103]).
+
+#### Changed
+
+- Use OrdinaryDiffEqRosenbrock.jl instead of OrdinaryDiffEq.jl in the examples and documentation ([#108]).
+- Fix seriestype for 1D plots ([#101]).
+
+## Changes when updating to v0.2 from v0.1.x
+
+#### Added
+
+- Added tutorial on noisy data ([#95]).
+- Added L2 regularization ([#94]).
+- Added least squares approximation ([#93], [#97]).
+
+#### Changed
+
+- Add interface for general bases and add `StandardBasis`. This is breaking for least squares approximations because
+  the order of `centers` and `nodeset` needs to be swapped in the `interpolate` function. Alternatively, use the new
+  `StandardBasis` ([#100]).
+
+## Changes in the v0.1 lifecycle
+
+#### Added
+
+- Added tutorial to documentation ([#66]).
+- Added `PartialDerivativeOperator` ([#65]).
+- Added compactly supported Wu kernels ([#64]).
+- Added compatibility for `PointSet`s  from Meshes.jl ([#63]).

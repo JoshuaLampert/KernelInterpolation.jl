@@ -6,6 +6,7 @@ on:
       - 'AUTHORS.md'
       - 'CITATION.bib'
       - 'LICENSE.md'
+      - 'CHANGELOG.md'
       - 'README.md'
       - '.zenodo.json'
       - '.github/workflows/CompatHelper.yml'
