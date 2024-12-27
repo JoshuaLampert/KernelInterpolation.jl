@@ -19,12 +19,6 @@ for human readability.
 
 ## Changes when updating to v0.2 from v0.1.x
 
-### Changes
-
-- Add interface for general bases and add `StandardBasis`. This is breaking for least squares approximations because
-  the order of `centers` and `nodeset` needs to be swapped in the `interpolate` function. Alternatively, use the new
-  `StandardBasis` ([#100]).
-
 #### Added
 
 - Added tutorial on noisy data ([#95]).
@@ -32,6 +26,10 @@ for human readability.
 - Added least squares approximation ([#93], [#97]).
 
 #### Changed
+
+- Add interface for general bases and add `StandardBasis`. This is breaking for least squares approximations because
+  the order of `centers` and `nodeset` needs to be swapped in the `interpolate` function. Alternatively, use the new
+  `StandardBasis` ([#100]).
 
 ## Changes in the v0.1 lifecycle
 
