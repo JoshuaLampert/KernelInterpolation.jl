@@ -1,9 +1,18 @@
 using KernelInterpolation
 using Documenter
+import Changelog
 
 # Define module-wide setups such that the respective modules are available in doctests
 DocMeta.setdocmeta!(KernelInterpolation, :DocTestSetup, :(using KernelInterpolation);
                     recursive = true)
+
+
+# Create changelog
+Changelog.generate(Changelog.Documenter(),                        # output type
+                   joinpath(@__DIR__, "..", "NEWS.md"),           # input file
+                   joinpath(@__DIR__, "src", "changelog.md");     # output file
+                   repo = "JoshuaLampert/KernelInterpolation.jl", # default repository for links
+                   branch = "main",)
 
 makedocs(;
          modules = [KernelInterpolation],
@@ -26,6 +35,7 @@ makedocs(;
                  "Dealing with noisy data" => "tutorial_noisy_data.md"],
              "Development" => "development.md",
              "Reference" => "ref.md",
+             "Changelog" => "changelog.md",
              "License" => "license.md"])
 
 deploydocs(;
