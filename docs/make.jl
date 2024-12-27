@@ -6,7 +6,6 @@ import Changelog
 DocMeta.setdocmeta!(KernelInterpolation, :DocTestSetup, :(using KernelInterpolation);
                     recursive = true)
 
-
 # Create changelog
 Changelog.generate(Changelog.Documenter(),                        # output type
                    joinpath(@__DIR__, "..", "NEWS.md"),           # input file
