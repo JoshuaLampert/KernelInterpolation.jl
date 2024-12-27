@@ -37,5 +37,5 @@ for human readability.
 
 - Added tutorial to documentation ([#66]).
 - Added `PartialDerivativeOperator` ([#65]).
-- Added compactly supported Wu kernels ([[#64]).
+- Added compactly supported Wu kernels ([#64]).
 - Added compatibility for `PointSet`s  from Meshes.jl ([#63]).
