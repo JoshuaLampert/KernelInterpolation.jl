@@ -29,7 +29,7 @@ KernelInterpolationMeshesExt = "Meshes"
 
 [compat]
 DiffEqCallbacks = "3, 4"
-ForwardDiff = "0.10.36"
+ForwardDiff = "0.10.36, 1"
 LinearAlgebra = "1"
 Meshes = "0.52.1, 0.53"
 Printf = "1"
