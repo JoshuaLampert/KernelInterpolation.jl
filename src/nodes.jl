@@ -423,10 +423,10 @@ function homogeneous_hypercube_boundary(n::NTuple{Dim},
 end
 
 """
-    random_hypersphere([rng], n, r = 1.0, center = zeros(dim); [dim])
+    random_hypersphere([rng], n, r = 1.0, center = Tuple(zeros(dim)); [dim])
 
 Create a [`NodeSet`](@ref) with `n` random nodes each of dimension `dim` inside a hypersphere with
-radius `r` around the center `center`.
+radius `r` around the center `center`, which is given as a tuple.
 If `dim` is not given explicitly, it is inferred by the length of `center` if possible.
 Optionally, pass a random number generator `rng`.
 """
@@ -455,10 +455,10 @@ function random_hypersphere(rng::Random.AbstractRNG, n, r::RealT,
 end
 
 """
-    random_hypersphere_boundary([rng], n, r = 1.0, center = zeros(dim); [dim])
+    random_hypersphere_boundary([rng], n, r = 1.0, center = Tuple(zeros(dim)); [dim])
 
 Create a [`NodeSet`](@ref) with `n` random nodes each of dimension `dim` at the boundary of a
-hypersphere with radius `r` around the center `center`.
+hypersphere with radius `r` around the center `center`, which is given as a tuple.
 If `dim` is not given explicitly, it is inferred by the length of `center` if possible.
 Optionally, pass a random number generator `rng`.
 """

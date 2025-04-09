@@ -5,7 +5,7 @@ using Plots
 f(x) = x[1] * x[2]
 
 r = 2.0
-center = [-1.0, 2.0]
+center = (-1.0, 2.0)
 n = 40
 nodeset = random_hypersphere(n, r, center)
 nodeset_boundary = random_hypersphere_boundary(20, r, center)

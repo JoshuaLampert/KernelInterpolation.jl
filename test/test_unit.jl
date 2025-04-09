@@ -571,7 +571,7 @@ end
     end
 
     r = 2.0
-    center = [-1.0, 3.0, 2.0, -pi]
+    center = (-1.0, 3.0, 2.0, -pi)
     nodeset13 = @test_nowarn random_hypersphere(50, r, center)
     @test nodeset13 isa NodeSet{4, Float64}
     for node in nodeset13
