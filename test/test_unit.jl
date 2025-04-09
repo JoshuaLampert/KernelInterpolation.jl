@@ -1106,6 +1106,69 @@ end
     @test isapprox(titp(t, x), u2(t, x, pde), atol = 0.12)
 end
 
+@testitem "Different floating point types" setup=[Setup, AdditionalImports] begin
+    # Special nodesets
+    @test eltype(@inferred random_hypercube(10, (0.5f0, 0.5f0), (1.0f0, 1.0f0))) == Float32
+    @test eltype(@inferred random_hypercube_boundary(10, (0.5f0, 0.5f0), (1.0f0, 1.0f0))) ==
+          Float32
+    @test eltype(@inferred homogeneous_hypercube(10, (0.5f0, 0.5f0), (1.0f0, 1.0f0))) ==
+          Float32
+    @test eltype(@inferred homogeneous_hypercube_boundary(10, (0.5f0, 0.5f0),
+                                                          (1.0f0, 1.0f0))) == Float32
+    @test eltype(@inferred random_hypersphere(10, 1.0f0, (1.0f0, 1.0f0))) == Float32
+    @test eltype(@inferred random_hypersphere_boundary(10, 1.0f0, (1.0f0, 1.0f0))) ==
+          Float32
+
+    # Interpolation with `StandardBasis`
+    centers = NodeSet(Float32[0.0 0.0
+                              1.0 0.0
+                              0.0 1.0
+                              1.0 1.0])
+    @test eltype(centers) == Float32
+    kernel = MultiquadricKernel{dim(centers)}(; shape_parameter = 0.5f0)
+    f(x) = x[1] + x[2]
+    ff = f.(centers)
+    itp = @test_nowarn interpolate(centers, ff, kernel)
+    @test eltype(coefficients(itp)) == Float32
+    @test eltype(system_matrix(itp)) == Float32
+    @test typeof(@inferred itp([0.5f0, 0.5f0])) == Float32
+
+    # Interpolation with `LagrangeBasis`
+    basis = @test_nowarn LagrangeBasis(centers, kernel)
+    K = kernel_matrix(basis)
+    @test eltype(K) == Float32
+    nodes = NodeSet(Float32[0.0 0.0
+                            1.0 0.0
+                            0.5 0.5
+                            0.0 1.0
+                            1.0 1.0])
+    ff = f.(nodes)
+    itp = @test_nowarn interpolate(basis, ff, nodes)
+    @test eltype(coefficients(itp)) == Float32
+    @test eltype(system_matrix(itp)) == Float32
+    @test typeof(@inferred itp([0.5f0, 0.5f0])) == Float32
+
+    # Solving stationary PDE
+    nodeset_inner = NodeSet(Float32[0.25 0.25
+                                    0.75 0.25
+                                    0.25 0.75
+                                    0.75 0.75])
+    u1(x) = x[1] * (x[1] - 1) + (x[2] - 1) * x[2]
+    f1(x, equations) = -4.0f0 # -Δu
+    nodeset_boundary = NodeSet(Float32[0.0 0.0
+                                       1.0 0.0
+                                       0.0 1.0
+                                       1.0 1.0])
+    g1(x) = u1(x)
+    kernel = WendlandKernel{2}(3; shape_parameter = 0.5f0)
+    pde = PoissonEquation(f1)
+    sd = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, kernel)
+    itp = @test_nowarn solve_stationary(sd)
+    @test eltype(coefficients(itp)) == Float32
+    @test eltype(system_matrix(itp)) == Float32
+    @test typeof(@inferred itp([0.5f0, 0.5f0])) == Float32
+end
+
 @testitem "Callbacks" setup=[Setup, AdditionalImports] begin
     # AliveCallback
     alive_callback = AliveCallback(dt = 0.1)

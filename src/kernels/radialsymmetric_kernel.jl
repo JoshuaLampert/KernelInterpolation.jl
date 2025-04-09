@@ -278,21 +278,21 @@ function Base.show(io::IO, kernel::WendlandKernel{Dim}) where {Dim}
           kernel.shape_parameter, ", d = ", kernel.d, ")")
 end
 
-function phi(kernel::WendlandKernel, r::Real)
+function phi(kernel::WendlandKernel, r::RealT) where {RealT <: Real}
     a_r = kernel.shape_parameter * r
     if a_r >= 1
-        return 0.0
+        return RealT(0.0)
     end
-    l = floor(kernel.d / 2) + kernel.k + 1
+    l = floor(Int, kernel.d / 2) + kernel.k + 1
     if kernel.k == 0
         return (1 - a_r)^l
     elseif kernel.k == 1
         return (1 - a_r)^(l + 1) * ((l + 1) * a_r + 1)
     elseif kernel.k == 2
-        return 1 / 3 * (1 - a_r)^(l + 2) *
+        return 1 // 3 * (1 - a_r)^(l + 2) *
                ((l^2 + 4 * l + 3) * a_r^2 + (3 * l + 6) * a_r + 3)
     elseif kernel.k == 3
-        return 1 / 15 * (1 - a_r)^(l + 3) *
+        return 1 // 15 * (1 - a_r)^(l + 3) *
                ((l^3 + 9 * l^2 + 23 * l + 15) * a_r^3 + (6 * l^2 + 36 * l + 45) * a_r^2 +
                 (15 * l + 45) * a_r + 15)
     end
@@ -346,10 +346,10 @@ function Base.show(io::IO, kernel::WuKernel{Dim}) where {Dim}
           ", shape_parameter = ", kernel.shape_parameter, ")")
 end
 
-function phi(kernel::WuKernel, r::Real)
+function phi(kernel::WuKernel, r::RealT) where {RealT <: Real}
     a_r = kernel.shape_parameter * r
     if a_r >= 1
-        return 0.0
+        return RealT(0.0)
     end
     if kernel.l == 0
         # k = 0
@@ -358,29 +358,29 @@ function phi(kernel::WuKernel, r::Real)
         if kernel.k == 0
             return (1 - a_r)^3 * (a_r^2 + 3 * a_r + 1)
         elseif kernel.k == 1
-            return 1 / 2 * (1 - a_r)^2 * (a_r + 2)
+            return 1 // 2 * (1 - a_r)^2 * (a_r + 2)
         end
     elseif kernel.l == 2
         if kernel.k == 0
             return (1 - a_r)^5 * (a_r^4 + 5 * a_r^3 + 9 * a_r^2 + 5 * a_r + 1)
         elseif kernel.k == 1
-            return 1 / 4 * (1 - a_r)^4 * (3 * a_r^3 + 12 * a_r^2 + 16 * a_r + 4)
+            return 1 // 4 * (1 - a_r)^4 * (3 * a_r^3 + 12 * a_r^2 + 16 * a_r + 4)
         elseif kernel.k == 2
-            return 1 / 8 * (1 - a_r)^3 * (3 * a_r^2 + 9 * a_r + 8)
+            return 1 // 8 * (1 - a_r)^3 * (3 * a_r^2 + 9 * a_r + 8)
         end
     elseif kernel.l == 3
         if kernel.k == 0
-            return 1 / 5 * (1 - a_r)^7 *
+            return 1 // 5 * (1 - a_r)^7 *
                    (5 * a_r^6 + 35 * a_r^5 + 101 * a_r^4 + 147 * a_r^3 + 101 * a_r^2 +
                     35 * a_r + 5)
         elseif kernel.k == 1
-            return 1 / 6 * (1 - a_r)^6 *
+            return 1 // 6 * (1 - a_r)^6 *
                    (5 * a_r^5 + 30 * a_r^4 + 72 * a_r^3 + 82 * a_r^2 + 36 * a_r + 6)
         elseif kernel.k == 2
-            return 1 / 8 * (1 - a_r)^5 *
+            return 1 // 8 * (1 - a_r)^5 *
                    (5 * a_r^4 + 25 * a_r^3 + 48 * a_r^2 + 40 * a_r + 8)
         elseif kernel.k == 3
-            return 1 / 16 * (1 - a_r)^4 * (5 * a_r^3 + 20 * a_r^2 + 29 * a_r + 16)
+            return 1 // 16 * (1 - a_r)^4 * (5 * a_r^3 + 20 * a_r^2 + 29 * a_r + 16)
         end
     end
 end
@@ -466,7 +466,7 @@ function phi(kernel::MaternKernel, r::Real)
     nu = kernel.nu
     a_r = kernel.shape_parameter * r
     if iszero(r)
-        c = -nu / (nu - 1)
+        c = -nu // (nu - 1)
         return one(a_r) + c * a_r^2 / 2
     else
         y = sqrt(2 * nu) * a_r
@@ -544,8 +544,8 @@ function Base.show(io::IO, kernel::Matern32Kernel{Dim}) where {Dim}
                  kernel.shape_parameter, ")")
 end
 
-function phi(kernel::Matern32Kernel, r::Real)
-    y = sqrt(3) * kernel.shape_parameter * r
+function phi(kernel::Matern32Kernel, r::RealT) where {RealT <: Real}
+    y = RealT(sqrt(3)) * kernel.shape_parameter * r
     return (1 + y) * exp(-y)
 end
 order(::Matern32Kernel) = 0
@@ -580,9 +580,9 @@ function Base.show(io::IO, kernel::Matern52Kernel{Dim}) where {Dim}
     print(io, "Matern52Kernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter, ")")
 end
 
-function phi(kernel::Matern52Kernel, r::Real)
-    y = sqrt(5) * kernel.shape_parameter * r
-    return 1 / 3 * (3 + 3 * y + y^2) * exp(-y)
+function phi(kernel::Matern52Kernel, r::RealT) where {RealT <: Real}
+    y = RealT(sqrt(5)) * kernel.shape_parameter * r
+    return 1 // 3 * (3 + 3 * y + y^2) * exp(-y)
 end
 order(::Matern52Kernel) = 0
 
@@ -616,8 +616,8 @@ function Base.show(io::IO, kernel::Matern72Kernel{Dim}) where {Dim}
     print(io, "Matern72Kernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter, ")")
 end
 
-function phi(kernel::Matern72Kernel, r::Real)
-    y = sqrt(7) * kernel.shape_parameter * r
+function phi(kernel::Matern72Kernel, r::RealT) where {RealT <: Real}
+    y = RealT(sqrt(7)) * kernel.shape_parameter * r
     return (1 + y + 6 * y^2 / 15 + y^3 / 15) * exp(-y)
 end
 order(::Matern72Kernel) = 0

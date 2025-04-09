@@ -76,7 +76,7 @@ function interpolation_matrix(basis::AbstractBasis, ps,
     regularize!(k_matrix, regularization)
     p_matrix = polynomial_matrix(centers(basis), ps)
     system_matrix = [k_matrix p_matrix
-                     p_matrix' zeros(q, q)]
+                     p_matrix' zeros(eltype(k_matrix), q, q)]
     return Symmetric(system_matrix)
 end
 
@@ -112,7 +112,7 @@ function least_squares_matrix(basis::AbstractBasis, nodeset::NodeSet, ps,
     p_matrix1 = polynomial_matrix(nodeset, ps)
     p_matrix2 = polynomial_matrix(centers(basis), ps)
     system_matrix = [k_matrix p_matrix1
-                     p_matrix2' zeros(q, q)]
+                     p_matrix2' zeros(eltype(k_matrix), q, q)]
     return system_matrix
 end
 
