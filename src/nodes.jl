@@ -438,7 +438,8 @@ function random_hypersphere(n, r, center; kwargs...)
     random_hypersphere(Random.default_rng(), n, r, center; kwargs...)
 end
 
-function random_hypersphere(rng::Random.AbstractRNG, n, r::RealT = 1.0; dim = 2) where {RealT}
+function random_hypersphere(rng::Random.AbstractRNG, n, r::RealT = 1.0;
+                            dim = 2) where {RealT}
     random_hypersphere(rng, n, r, Tuple(zeros(RealT, dim)))
 end
 
@@ -447,7 +448,8 @@ function random_hypersphere(rng::Random.AbstractRNG, n, r::RealT,
     @assert Dim == dim
     nodes = randn(rng, RealT, n, dim)
     for i in 1:n
-        nodes[i, :] .= center .+ r .* nodes[i, :] ./ norm(nodes[i, :]) * rand(rng, RealT)^(1 / dim)
+        nodes[i, :] .= center .+
+                       r .* nodes[i, :] ./ norm(nodes[i, :]) * rand(rng, RealT)^(1 / dim)
     end
     return NodeSet(SVector{Dim}.(eachrow(nodes)))
 end
@@ -468,7 +470,8 @@ function random_hypersphere_boundary(n, r, center; kwargs...)
     random_hypersphere_boundary(Random.default_rng(), n, r, center; kwargs...)
 end
 
-function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r::RealT = 1.0; dim = 2) where {RealT}
+function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r::RealT = 1.0;
+                                     dim = 2) where {RealT}
     random_hypersphere_boundary(rng, n, r, Tuple(zeros(RealT, dim)))
 end
 
