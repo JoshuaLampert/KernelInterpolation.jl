@@ -42,4 +42,4 @@ end
 # Create `d` polyvars from `TypedPolynomials.jl`, don't use `@polyvars` because of
 # https://github.com/JuliaAlgebra/TypedPolynomials.jl/issues/51, instead use the
 # workaround from there
-polyvars(d) = ntuple(i -> Variable{Symbol("x[", i, "]")}(), d)
+polyvars(d) = ntuple(i -> Variable{Symbol("x[", i, "]")}(), Val(d))

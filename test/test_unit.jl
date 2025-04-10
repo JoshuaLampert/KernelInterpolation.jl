@@ -283,17 +283,18 @@ end
     @test nodeset3[1] == [1.0, 2.0]
     @test_nowarn nodeset3[1] = MVector{2}([2.0, 3.0])
     @test_nowarn nodeset3[1] = [2.0, 3.0]
-    nodeset4 = @test_nowarn similar(nodeset1, Int64)
-    @test nodeset4 isa NodeSet{2, Int64}
+    nodeset4 = @test_nowarn similar(nodeset1, Float32)
+    @test nodeset4 isa NodeSet{2, Float32}
     nodeset5 = @test_nowarn similar(nodeset1, 10)
     @test nodeset5 isa NodeSet{2, Float64}
     @test length(nodeset5) == 10
-    nodeset6 = @test_nowarn similar(nodeset1, Int64, 10)
-    @test nodeset6 isa NodeSet{2, Int64}
+    nodeset6 = @test_nowarn similar(nodeset1, Float32, 10)
+    @test nodeset6 isa NodeSet{2, Float32}
     @test length(nodeset6) == 10
 
+    # Integer nodes should be converted to float by design
     nodeset7 = @test_nowarn NodeSet(1:4)
-    @test eltype(nodeset7) == Int64
+    @test eltype(nodeset7) == Float64
     @test dim(nodeset7) == 1
     @test length(nodeset7) == 4
     @test size(nodeset7) == (4, 1)
@@ -571,7 +572,7 @@ end
     end
 
     r = 2.0
-    center = [-1.0, 3.0, 2.0, -pi]
+    center = (-1.0, 3.0, 2.0, -pi)
     nodeset13 = @test_nowarn random_hypersphere(50, r, center)
     @test nodeset13 isa NodeSet{4, Float64}
     for node in nodeset13
@@ -1104,6 +1105,69 @@ end
     t = 0.03423
     x = [0.1, 0.08]
     @test isapprox(titp(t, x), u2(t, x, pde), atol = 0.12)
+end
+
+@testitem "Different floating point types" setup=[Setup] begin
+    # Special nodesets
+    @test eltype(@inferred random_hypercube(10, (0.5f0, 0.5f0), (1.0f0, 1.0f0))) == Float32
+    @test eltype(@inferred random_hypercube_boundary(10, (0.5f0, 0.5f0), (1.0f0, 1.0f0))) ==
+          Float32
+    @test eltype(@inferred homogeneous_hypercube(10, (0.5f0, 0.5f0), (1.0f0, 1.0f0))) ==
+          Float32
+    @test eltype(@inferred homogeneous_hypercube_boundary(10, (0.5f0, 0.5f0),
+                                                          (1.0f0, 1.0f0))) == Float32
+    @test eltype(@inferred random_hypersphere(10, 1.0f0, (1.0f0, 1.0f0))) == Float32
+    @test eltype(@inferred random_hypersphere_boundary(10, 1.0f0, (1.0f0, 1.0f0))) ==
+          Float32
+
+    # Interpolation with `StandardBasis`
+    centers = NodeSet(Float32[0.0 0.0
+                              1.0 0.0
+                              0.0 1.0
+                              1.0 1.0])
+    @test eltype(centers) == Float32
+    kernel = MultiquadricKernel{dim(centers)}(; shape_parameter = 0.5f0)
+    f(x) = x[1] + x[2]
+    ff = f.(centers)
+    itp = @test_nowarn interpolate(centers, ff, kernel)
+    @test eltype(coefficients(itp)) == Float32
+    @test eltype(system_matrix(itp)) == Float32
+    @test typeof(@inferred itp([0.5f0, 0.5f0])) == Float32
+
+    # Interpolation with `LagrangeBasis`
+    basis = @test_nowarn LagrangeBasis(centers, kernel)
+    K = kernel_matrix(basis)
+    @test eltype(K) == Float32
+    nodes = NodeSet(Float32[0.0 0.0
+                            1.0 0.0
+                            0.5 0.5
+                            0.0 1.0
+                            1.0 1.0])
+    ff = f.(nodes)
+    itp = @test_nowarn interpolate(basis, ff, nodes)
+    @test eltype(coefficients(itp)) == Float32
+    @test eltype(system_matrix(itp)) == Float32
+    @test typeof(@inferred itp([0.5f0, 0.5f0])) == Float32
+
+    # Solving stationary PDE
+    nodeset_inner = NodeSet(Float32[0.25 0.25
+                                    0.75 0.25
+                                    0.25 0.75
+                                    0.75 0.75])
+    u1(x) = x[1] * (x[1] - 1) + (x[2] - 1) * x[2]
+    f1(x, equations) = -4.0f0 # -Δu
+    nodeset_boundary = NodeSet(Float32[0.0 0.0
+                                       1.0 0.0
+                                       0.0 1.0
+                                       1.0 1.0])
+    g1(x) = u1(x)
+    kernel = WendlandKernel{2}(3; shape_parameter = 0.5f0)
+    pde = PoissonEquation(f1)
+    sd = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, kernel)
+    itp = @test_nowarn solve_stationary(sd)
+    @test eltype(coefficients(itp)) == Float32
+    @test eltype(system_matrix(itp)) == Float32
+    @test typeof(@inferred itp([0.5f0, 0.5f0])) == Float32
 end
 
 @testitem "Callbacks" setup=[Setup, AdditionalImports] begin
