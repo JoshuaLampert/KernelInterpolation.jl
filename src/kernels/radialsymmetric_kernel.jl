@@ -466,7 +466,7 @@ function phi(kernel::MaternKernel, r::Real)
     nu = kernel.nu
     a_r = kernel.shape_parameter * r
     if iszero(r)
-        c = -nu // (nu - 1)
+        c = -nu / (nu - 1)
         return one(a_r) + c * a_r^2 / 2
     else
         y = sqrt(2 * nu) * a_r
