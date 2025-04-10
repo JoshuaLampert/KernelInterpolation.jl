@@ -1106,7 +1106,7 @@ end
     @test isapprox(titp(t, x), u2(t, x, pde), atol = 0.12)
 end
 
-@testitem "Different floating point types" setup=[Setup, AdditionalImports] begin
+@testitem "Different floating point types" setup=[Setup] begin
     # Special nodesets
     @test eltype(@inferred random_hypercube(10, (0.5f0, 0.5f0), (1.0f0, 1.0f0))) == Float32
     @test eltype(@inferred random_hypercube_boundary(10, (0.5f0, 0.5f0), (1.0f0, 1.0f0))) ==
