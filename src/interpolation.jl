@@ -165,7 +165,7 @@ function interpolate(basis::AbstractBasis, values::Vector{RealT},
     @assert dim(basis) == Dim
     n = length(nodeset)
     @assert length(values) == n
-    xx = polyvars(Dim)
+    xx = polyvars(Val(Dim))
     ps = monomials(xx, 0:(m - 1))
     q = length(ps)
 
