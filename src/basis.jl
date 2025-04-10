@@ -82,8 +82,9 @@ already includes polynomial augmentation of degree `m` defaulting to `order(kern
     b_j(x_i) = \delta_{ij},
 ```
 
-which means that the [`kernel_matrix`](@ref) of this basis is the identity matrix making it suitable for interpolation. Since the
-basis already includes polynomials no additional polynomial augmentation is needed for interpolation with this basis.
+which means that the [`kernel_matrix`](@ref) of this basis is the identity matrix making it suitable if multiple interpolations
+with the same `centers` of the basis and the same `kernel`, but with different right-hand sides or nodesets are performed.
+Since the basis already includes polynomials no additional polynomial augmentation is needed for interpolation with this basis.
 """
 struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation, Monomials, PolyVars} <:
        AbstractBasis

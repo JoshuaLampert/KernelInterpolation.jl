@@ -74,9 +74,20 @@ function interpolation_matrix(basis::AbstractBasis, ps,
     q = length(ps)
     k_matrix = kernel_matrix(basis)
     regularize!(k_matrix, regularization)
-    p_matrix = polynomial_matrix(centers(basis), ps)
-    system_matrix = [k_matrix p_matrix
-                     p_matrix' zeros(eltype(k_matrix), q, q)]
+    # We could always use the first branch, but this is more efficient
+    # for the case where we don't use polynomial augmentation (q == 0).
+    if q > 0
+        p_matrix = polynomial_matrix(centers(basis), ps)
+        system_matrix = [k_matrix p_matrix
+                         p_matrix' zeros(eltype(k_matrix), q, q)]
+    else
+        # We could also use `cholesky` here because usually `k_matrix` is
+        # symmetric positive definite, but this might not be the case if
+        # the user explicitly sets `m = 0` even though the kernel is not
+        # strictly positive definite or the matrix might be numerically not spd.
+        # TODO: Think of an interface to allow for general matrix factorizations.
+        system_matrix = k_matrix
+    end
     return Symmetric(system_matrix)
 end
 
