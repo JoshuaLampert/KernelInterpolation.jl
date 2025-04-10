@@ -5,6 +5,20 @@ KernelInterpolation.jl follows the interpretation of
 used in the Julia ecosystem. Notable changes will be documented in this file
 for human readability.
 
+## Changes when updating to v0.2 from v0.1.x
+
+#### Added
+
+- General floating point support  ([#121]).
+
+#### Changed
+
+- The functions `random_hypersphere` and `random_hypersphere_boundary` not require a `Tuple` for
+  the argument `center`. Before, e.g., a `Vector` was allowed ([#121]).
+- The element type of `NodeSet`s will now always be converted to a floating point type, i.e., also when
+  integer values are passed. This is more consistent for an interpolation framework makes many things easier.
+  A similar approach is also used in the Meshes.jl/CoordRefSystems.jl ecosystem ([#121]).
+
 ## Changes in the v0.2 lifecycle
 
 #### Added
