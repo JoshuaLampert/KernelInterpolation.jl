@@ -1,6 +1,7 @@
 module KernelInterpolationMeshesExt
 
-using Meshes: Meshes, Point, PointSet, to, ustrip
+using Meshes: Meshes, Point, PointSet, to
+using Unitful: ustrip
 using KernelInterpolation: KernelInterpolation, NodeSet
 
 # Meshes.jl uses Unitful.jl for units, which is not available in KernelInterpolation.jl
