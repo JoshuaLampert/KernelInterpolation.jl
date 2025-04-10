@@ -9,7 +9,7 @@ for human readability.
 
 #### Added
 
-- General floating point support  ([#121]).
+- General floating point support ([#121]).
 
 #### Changed
 
