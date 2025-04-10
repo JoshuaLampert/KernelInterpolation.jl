@@ -5,7 +5,7 @@ KernelInterpolation.jl follows the interpretation of
 used in the Julia ecosystem. Notable changes will be documented in this file
 for human readability.
 
-## Changes when updating to v0.2 from v0.1.x
+## Changes when updating to v0.3 from v0.2.x
 
 #### Added
 
