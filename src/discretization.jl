@@ -176,7 +176,8 @@ function rhs!(dc, c, semi, t)
                           boundary_condition.(Ref(t), nodeset_boundary)]
         end
         # dc = -pde_boundary_matrix * c + rhs_vector
-        @trixi_timeit timer() "muladd" dc[:]=muladd(pde_boundary_matrix, -c, rhs_vector)
+        @trixi_timeit timer() "muladd" dc[:]=Base.muladd(pde_boundary_matrix, -c,
+                                                         rhs_vector)
     end
     return nothing
 end

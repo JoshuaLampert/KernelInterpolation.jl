@@ -43,3 +43,11 @@ end
 # https://github.com/JuliaAlgebra/TypedPolynomials.jl/issues/51, instead use the
 # workaround from there
 polyvars(d) = ntuple(i -> Variable{Symbol("x[", i, "]")}(), d)
+# The function above is not type stable.
+# Therefore, we define some common special cases for performance reasons.
+polyvars(::Val{1}) = (Variable{Symbol("x[1]")}(),)
+polyvars(::Val{2}) = (Variable{Symbol("x[1]")}(), Variable{Symbol("x[2]")}())
+function polyvars(::Val{3})
+    (Variable{Symbol("x[1]")}(), Variable{Symbol("x[2]")}(),
+     Variable{Symbol("x[3]")}())
+end

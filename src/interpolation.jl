@@ -159,13 +159,13 @@ Otherwise, `nodeset` is set to `centers(basis)` or `centers`.
 A regularization can be applied to the kernel matrix using the `regularization` argument, cf. [`regularize!`](@ref).
 """
 function interpolate(basis::AbstractBasis, values::Vector{RealT},
-                     nodeset::NodeSet{Dim} = centers(basis);
+                     nodeset::NodeSet{Dim, RealT} = centers(basis);
                      m = order(basis),
                      regularization = NoRegularization()) where {Dim, RealT}
     @assert dim(basis) == Dim
     n = length(nodeset)
     @assert length(values) == n
-    xx = polyvars(Dim)
+    xx = polyvars(Val(Dim))
     ps = monomials(xx, 0:(m - 1))
     q = length(ps)
 
@@ -174,27 +174,29 @@ function interpolate(basis::AbstractBasis, values::Vector{RealT},
     else
         system_matrix = least_squares_matrix(basis, nodeset, ps, regularization)
     end
-    b = [values; zeros(q)]
+    b = [values; zeros(RealT, q)]
     c = system_matrix \ b
-    return Interpolation(basis, nodeset, c, system_matrix, ps, xx)
+    return Interpolation{typeof(basis), dim(basis), eltype(nodeset), typeof(system_matrix),
+                         typeof(ps), typeof(xx)}(basis, nodeset, c, system_matrix, ps, xx)
 end
 function interpolate(centers::NodeSet{Dim, RealT}, nodeset::NodeSet{Dim, RealT},
-                     values::AbstractVector{RealT}, kernel = GaussKernel{Dim}();
+                     values::AbstractVector{RealT}, kernel = GaussKernel{Dim, RealT}();
                      kwargs...) where {Dim, RealT}
     interpolate(StandardBasis(centers, kernel), values, nodeset; kwargs...)
 end
 
 function interpolate(centers::NodeSet{Dim, RealT},
-                     values::AbstractVector{RealT}, kernel = GaussKernel{Dim}();
+                     values::AbstractVector{RealT},
+                     kernel = GaussKernel{Dim}(; shape_parameter = RealT(1.0));
                      kwargs...) where {Dim, RealT}
     interpolate(StandardBasis(centers, kernel), values; kwargs...)
 end
 
 # Evaluate interpolant
 function (itp::Interpolation)(x)
-    s = 0
     bas = basis(itp)
     c = kernel_coefficients(itp)
+    s = zero(eltype(x))
     for j in eachindex(c)
         s += c[j] * bas[j](x)
     end

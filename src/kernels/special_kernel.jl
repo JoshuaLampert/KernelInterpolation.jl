@@ -57,7 +57,7 @@ end
 
 function (kernel::ProductKernel)(x, y)
     @assert length(x) == length(y)
-    res = 1.0
+    res = eltype(x)(1.0)
     for k in kernel.kernels
         res *= k(x, y)
     end

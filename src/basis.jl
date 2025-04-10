@@ -59,14 +59,14 @@ The basis functions are given by
 
 where `K` is the kernel and `x_j` are the nodes in `centers`.
 """
-struct StandardBasis{Kernel} <: AbstractBasis
-    centers::NodeSet
+struct StandardBasis{Dim, RealT, Kernel} <: AbstractBasis
+    centers::NodeSet{Dim, RealT}
     kernel::Kernel
     function StandardBasis(centers::NodeSet, kernel::Kernel) where {Kernel}
         if dim(kernel) != dim(centers)
             throw(DimensionMismatch("The dimension of the kernel and the centers must be the same"))
         end
-        new{typeof(kernel)}(centers, kernel)
+        new{dim(centers), eltype(centers), typeof(kernel)}(centers, kernel)
     end
 end
 
@@ -82,39 +82,39 @@ already includes polynomial augmentation of degree `m` defaulting to `order(kern
     b_j(x_i) = \delta_{ij},
 ```
 
-which means that the [`kernel_matrix`](@ref) of this basis is the identity matrix making it suitable for interpolation. Since the
-basis already includes polynomials no additional polynomial augmentation is needed for interpolation with this basis.
+which means that the [`kernel_matrix`](@ref) of this basis is the identity matrix making it suitable if multiple interpolations
+with the same `centers` of the basis and the same `kernel`, but with different right-hand sides or nodesets are performed.
+Since the basis already includes polynomials no additional polynomial augmentation is needed for interpolation with this basis.
 """
-struct LagrangeBasis{Kernel, I <: AbstractInterpolation, Monomials, PolyVars} <:
+struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation, Monomials, PolyVars} <:
        AbstractBasis
-    centers::NodeSet
+    centers::NodeSet{Dim, RealT}
     kernel::Kernel
     basis_functions::Vector{I}
     ps::Monomials
     xx::PolyVars
-    function LagrangeBasis(centers::NodeSet, kernel::Kernel;
-                           m = order(kernel)) where {Kernel}
+    function LagrangeBasis(centers::NodeSet, kernel::AbstractKernel;
+                           m = order(kernel))
         if dim(kernel) != dim(centers)
             throw(DimensionMismatch("The dimension of the kernel and the centers must be the same"))
         end
+        RealT = eltype(centers)
         K = length(centers)
-        values = zeros(K)
-        values[1] = 1.0
+        values = zeros(RealT, K)
+        values[1] = one(RealT)
         b = interpolate(centers, values, kernel; m = m)
         basis_functions = Vector{typeof(b)}(undef, K)
         basis_functions[1] = b
         for i in 2:K
-            values[i - 1] = 0.0
-            values[i] = 1.0
+            values[i - 1] = zero(RealT)
+            values[i] = one(RealT)
             basis_functions[i] = interpolate(centers, values, kernel; m = m)
         end
         # All basis functions have same polynomials
         ps = first(basis_functions).ps
         xx = first(basis_functions).xx
-        new{typeof(kernel), eltype(basis_functions), typeof(ps), typeof(xx)}(centers,
-                                                                             kernel,
-                                                                             basis_functions,
-                                                                             ps, xx)
+        new{dim(centers), eltype(centers), typeof(kernel), eltype(basis_functions),
+            typeof(ps), typeof(xx)}(centers, kernel, basis_functions, ps, xx)
     end
 end
 
