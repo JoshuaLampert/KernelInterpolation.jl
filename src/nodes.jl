@@ -36,7 +36,8 @@ end
 # Constructors
 function NodeSet(nodes::Vector{MVector{Dim, RealT}}) where {Dim, RealT}
     q = separation_distance(nodes)
-    NodeSet{Dim, RealT}(nodes, q)
+    # Convert nodes to floats by design
+    NodeSet{Dim, float(RealT)}(nodes, q)
 end
 function NodeSet(nodes::Vector{SVector{Dim, RealT}}) where {Dim, RealT}
     NodeSet(MVector.(nodes))
@@ -139,7 +140,7 @@ function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT},
     # could be done more efficiently
     update_separation_distance!(nodeset)
 end
-function Base.setindex!(nodeset::NodeSet{1, RealT}, v::RealT, i::Int) where {RealT}
+function Base.setindex!(nodeset::NodeSet{1, RealT}, v, i::Int) where {RealT}
     @assert dim(nodeset) == 1
     nodeset.nodes[i] = [v]
     # update separation distance of nodeset because it possibly changed
@@ -236,7 +237,7 @@ end
 
 function random_hypercube(rng::Random.AbstractRNG, n::Int, x_min::RealT = 0.0,
                           x_max::RealT = 1.0; dim = 1) where {RealT}
-    nodes = x_min .+ (x_max - x_min) .* rand(rng, RealT, n, dim)
+    nodes = x_min .+ (x_max - x_min) .* rand(rng, float(RealT), n, dim)
     return NodeSet(nodes)
 end
 
@@ -244,7 +245,7 @@ function random_hypercube(rng::Random.AbstractRNG, n::Int, x_min::NTuple{Dim, Re
                           x_max::NTuple{Dim, RealT};
                           dim = Dim) where {Dim, RealT}
     @assert dim == Dim
-    nodes = rand(rng, RealT, n, dim)
+    nodes = rand(rng, float(RealT), n, dim)
     for i in 1:dim
         nodes[:, i] = x_min[i] .+ (x_max[i] - x_min[i]) .* view(nodes, :, i)
     end
@@ -332,9 +333,9 @@ function homogeneous_hypercube(n::NTuple{Dim, Int},
                                x_max::NTuple{Dim, RealT} = ntuple(_ -> 1.0, Dim);
                                dim = Dim) where {Dim, RealT}
     @assert Dim == dim
-    nodes = Vector{MVector{Dim, RealT}}(undef, prod(n))
+    nodes = Vector{MVector{Dim, float(RealT)}}(undef, prod(n))
     for (i, indices) in enumerate(Iterators.product(ntuple(j -> 1:n[j], Dim)...))
-        node = MVector{Dim, RealT}(undef)
+        node = MVector{Dim, float(RealT)}(undef)
         for j in 1:dim
             node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j] - 1) / (n[j] - 1)
         end
@@ -389,7 +390,7 @@ function homogeneous_hypercube_boundary(n::NTuple{Dim},
         return NodeSet([x_min[1], x_max[1]])
     end
     @assert Dim == dim
-    nodes = Vector{MVector{Dim, RealT}}(undef, number_of_nodes(n, Dim))
+    nodes = Vector{MVector{Dim, float(RealT)}}(undef, number_of_nodes(n, Dim))
     local i = 1
     # Left side is like homogeneous hypercube in `dim - 1` hypercube
     for indices in Iterators.product(ntuple(j -> 1:n[j + 1], Dim - 1)...)
@@ -440,16 +441,17 @@ end
 
 function random_hypersphere(rng::Random.AbstractRNG, n, r::RealT = 1.0;
                             dim = 2) where {RealT}
-    random_hypersphere(rng, n, r, Tuple(zeros(RealT, dim)))
+    random_hypersphere(rng, n, r, Tuple(zeros(float(RealT), dim)))
 end
 
 function random_hypersphere(rng::Random.AbstractRNG, n, r::RealT,
                             center::NTuple{Dim, RealT}; dim = Dim) where {Dim, RealT}
     @assert Dim == dim
-    nodes = randn(rng, RealT, n, dim)
+    nodes = randn(rng, float(RealT), n, dim)
     for i in 1:n
         nodes[i, :] .= center .+
-                       r .* nodes[i, :] ./ norm(nodes[i, :]) * rand(rng, RealT)^(1 / dim)
+                       r .* nodes[i, :] ./ norm(nodes[i, :]) *
+                       rand(rng, float(RealT))^(1 / dim)
     end
     return NodeSet(SVector{Dim}.(eachrow(nodes)))
 end
@@ -472,7 +474,7 @@ end
 
 function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r::RealT = 1.0;
                                      dim = 2) where {RealT}
-    random_hypersphere_boundary(rng, n, r, Tuple(zeros(RealT, dim)))
+    random_hypersphere_boundary(rng, n, r, Tuple(zeros(float(RealT), dim)))
 end
 
 function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r::RealT,
@@ -483,7 +485,7 @@ function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r::RealT,
         @warn "For one dimension the boundary of the hypersphere consists only of 2 points"
         return NodeSet([-r, r])
     end
-    nodes = randn(rng, RealT, n, dim)
+    nodes = randn(rng, float(RealT), n, dim)
     for i in 1:n
         nodes[i, :] .= center .+ r .* nodes[i, :] ./ norm(nodes[i, :])
     end

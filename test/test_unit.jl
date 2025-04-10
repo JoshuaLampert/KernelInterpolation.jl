@@ -283,17 +283,18 @@ end
     @test nodeset3[1] == [1.0, 2.0]
     @test_nowarn nodeset3[1] = MVector{2}([2.0, 3.0])
     @test_nowarn nodeset3[1] = [2.0, 3.0]
-    nodeset4 = @test_nowarn similar(nodeset1, Int64)
-    @test nodeset4 isa NodeSet{2, Int64}
+    nodeset4 = @test_nowarn similar(nodeset1, Float32)
+    @test nodeset4 isa NodeSet{2, Float32}
     nodeset5 = @test_nowarn similar(nodeset1, 10)
     @test nodeset5 isa NodeSet{2, Float64}
     @test length(nodeset5) == 10
-    nodeset6 = @test_nowarn similar(nodeset1, Int64, 10)
-    @test nodeset6 isa NodeSet{2, Int64}
+    nodeset6 = @test_nowarn similar(nodeset1, Float32, 10)
+    @test nodeset6 isa NodeSet{2, Float32}
     @test length(nodeset6) == 10
 
+    # Integer nodes should be converted to float by design
     nodeset7 = @test_nowarn NodeSet(1:4)
-    @test eltype(nodeset7) == Int64
+    @test eltype(nodeset7) == Float64
     @test dim(nodeset7) == 1
     @test length(nodeset7) == 4
     @test size(nodeset7) == (4, 1)
