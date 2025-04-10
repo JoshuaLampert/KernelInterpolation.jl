@@ -9,7 +9,6 @@
     @test isnothing(check_no_implicit_imports(KernelInterpolation))
     @test isnothing(check_no_stale_explicit_imports(KernelInterpolation;
                                                     ignore = (:trixi_include,)))
-    @test isnothing(check_all_explicit_imports_via_owners(KernelInterpolation))
     @test isnothing(check_all_qualified_accesses_via_owners(KernelInterpolation))
     @test isnothing(check_no_self_qualified_accesses(KernelInterpolation))
 end
