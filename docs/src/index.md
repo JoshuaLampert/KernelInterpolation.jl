@@ -113,7 +113,7 @@ An [`Interpolation`](@ref) object can be plotted by providing a [`NodeSet`](@ref
 the example from above, we can visualize the resulting interpolant on a finer grid
 
 ```julia
-julia> nodeset_fine = homogeneous_hypercube(20, 2, (-2, -1), (2, 1))
+julia> nodeset_fine = homogeneous_hypercube(20, (-2, -1), (2, 1))
 julia> plot(nodeset_fine, itp)
 ```
 
