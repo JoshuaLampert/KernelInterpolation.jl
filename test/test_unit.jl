@@ -1,6 +1,6 @@
 @testitem "util" setup=[Setup] begin
     @test_nowarn get_examples()
-    @test_nowarn_mod trixi_include(default_example(), n = 10)
+    @trixi_test_nowarn trixi_include(default_example(), n = 10)
 end
 
 @testitem "Kernels" setup=[Setup] begin
