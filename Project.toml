@@ -1,7 +1,7 @@
 name = "KernelInterpolation"
 uuid = "95686e15-3c94-4443-8f08-76d06d509f7b"
 authors = ["Joshua Lampert <joshua.lampert@uni-hamburg.de> and contributors"]
-version = "0.3.1"
+version = "0.3.2-DEV"
 
 [deps]
 DiffEqCallbacks = "459566f4-90b8-5000-8ac3-15dfb0a30def"
