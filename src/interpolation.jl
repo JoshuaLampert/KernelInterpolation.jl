@@ -82,7 +82,7 @@ interpolant.
 
 See also [`coefficients`](@ref) and [`polynomial_coefficients`](@ref).
 """
-kernel_coefficients(itp::Interpolation) = itp.c[eachindex(centers(itp))]
+@views kernel_coefficients(itp::Interpolation) = itp.c[eachindex(centers(itp))]
 
 """
     polynomial_coefficients(itp::Interpolation)
@@ -92,7 +92,7 @@ interpolant.
 
 See also [`coefficients`](@ref) and [`kernel_coefficients`](@ref).
 """
-polynomial_coefficients(itp::Interpolation) = itp.c[(length(centers(itp)) + 1):end]
+@views polynomial_coefficients(itp::Interpolation) = itp.c[(length(centers(itp)) + 1):end]
 
 """
     polynomial_basis(itp::Interpolation)
