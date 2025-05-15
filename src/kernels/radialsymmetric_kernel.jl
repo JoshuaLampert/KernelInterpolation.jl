@@ -44,7 +44,7 @@ end
 
 function (kernel::RadialSymmetricKernel)(x, y)
     @assert length(x)==length(y) "x and y must have the same length"
-    return Phi(kernel, x .- y)
+    return Phi(kernel, x - y)
 end
 
 """
@@ -193,7 +193,9 @@ function Base.show(io::IO, kernel::PolyharmonicSplineKernel{Dim}) where {Dim}
 end
 
 function phi(kernel::PolyharmonicSplineKernel, r::Real)
-    if isodd(kernel.k)
+    if kernel.k == 1 # to improve performance a little bit by saving the exponentiation
+        return r
+    elseif isodd(kernel.k)
         return r^kernel.k
     else
         return isapprox(r, 0.0) ? 0.0 : r^kernel.k * log(r)
