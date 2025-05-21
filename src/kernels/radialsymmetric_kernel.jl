@@ -203,7 +203,8 @@ function phi(kernel::PolyharmonicSplineKernel, r::Real)
 end
 
 function order(kernel::PolyharmonicSplineKernel)
-    isodd(kernel.k) ? ceil(kernel.k / 2) : ceil(kernel.k / 2) + 1
+    k2 = Int(ceil(kernel.k / 2))
+    isodd(kernel.k) ? k2 : k2 + 1
 end
 
 @doc raw"""
