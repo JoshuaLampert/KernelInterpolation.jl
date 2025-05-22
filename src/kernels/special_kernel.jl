@@ -21,7 +21,7 @@ function TransformationKernel{Dim}(kernel, transformation) where {Dim}
                                                                              transformation)
 end
 
-function (kernel::TransformationKernel)(x, y)
+function (kernel::TransformationKernel)(x::AbstractVector, y::AbstractVector)
     @assert length(x) == length(y)
     K = kernel.kernel
     T = kernel.trafo
@@ -55,7 +55,7 @@ struct ProductKernel{Dim} <: AbstractKernel{Dim}
     end
 end
 
-function (kernel::ProductKernel)(x, y)
+function (kernel::ProductKernel)(x::AbstractVector, y::AbstractVector)
     @assert length(x) == length(y)
     res = eltype(x)(1.0)
     for k in kernel.kernels
@@ -102,7 +102,7 @@ struct SumKernel{Dim} <: AbstractKernel{Dim}
     end
 end
 
-function (kernel::SumKernel)(x, y)
+function (kernel::SumKernel)(x::AbstractVector, y::AbstractVector)
     @assert length(x) == length(y)
     res = 0.0
     for k in kernel.kernels

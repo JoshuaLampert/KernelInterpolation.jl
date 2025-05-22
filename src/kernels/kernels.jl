@@ -24,5 +24,18 @@ function (kernel::AbstractKernel)(x)
     return kernel(x, zero(x))
 end
 
+# This allows to evaluate 1D kernels at a scalar, which is sometimes more convenient
+function (kernel::AbstractKernel{1})(x::Real, y::AbstractVector)
+    @assert length(y) == 1
+    return kernel(SVector(x), y)
+end
+function (kernel::AbstractKernel{1})(x::AbstractVector, y::Real)
+    @assert length(x) == 1
+    return kernel(x, SVector(y))
+end
+function (kernel::AbstractKernel{1})(x::Real, y::Real)
+    return kernel(SVector(x), SVector(y))
+end
+
 include("radialsymmetric_kernel.jl")
 include("special_kernel.jl")

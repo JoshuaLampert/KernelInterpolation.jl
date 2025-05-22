@@ -21,7 +21,7 @@ using RecipesBase: RecipesBase, @recipe, @series
 using SciMLBase: ODEFunction, ODEProblem, ODESolution, DiscreteCallback, u_modified!
 using SimpleUnPack: @unpack
 using SpecialFunctions: besselk, loggamma
-using StaticArrays: StaticArrays, MVector, SVector
+using StaticArrays: StaticArrays, StaticVector, MVector, SVector
 using Reexport: @reexport
 using TimerOutputs: TimerOutputs, print_timer, reset_timer!
 @reexport using TrixiBase: trixi_include

@@ -190,6 +190,10 @@ end
     @test order(kernel12) == 0
     @test isapprox(kernel12(x, y), kernel1(x, y) + kernel2(x, y))
     @test isapprox((kernel1 + kernel2)(x, y), kernel1(x, y) + kernel2(x, y))
+
+    # Test evaluating 1D kernels at a scalar
+    kernel13 = @test_nowarn GaussKernel{1}(shape_parameter = 2.0)
+    @test kernel13(3.1, 3.0) == kernel13(3.1, SVector(3.0)) == kernel13([3.1], 3.0)
 end
 
 @testitem "NodeSet" setup=[Setup, AdditionalImports] begin
