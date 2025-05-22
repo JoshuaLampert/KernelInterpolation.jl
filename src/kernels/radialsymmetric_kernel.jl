@@ -42,7 +42,7 @@ function Phi(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
     return phi(kernel, r)
 end
 
-function (kernel::RadialSymmetricKernel)(x, y)
+function (kernel::RadialSymmetricKernel)(x::AbstractVector, y::AbstractVector)
     @assert length(x)==length(y) "x and y must have the same length"
     return Phi(kernel, x - y)
 end

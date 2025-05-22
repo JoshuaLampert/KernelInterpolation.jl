@@ -24,5 +24,20 @@ function (kernel::AbstractKernel)(x)
     return kernel(x, zero(x))
 end
 
+# This allows to evaluate 1D kernels at a scalar, which is sometimes more convenient
+# For multidimensional kernels, this is needed, such that evaluating the kernel at one scalar
+# evaluates the basic function, which is exploited, e.g., for plotting the kernel.
+function (kernel::AbstractKernel)(x::Real, y::AbstractVector)
+    @assert length(y) == 1
+    return kernel(SVector(x), y)
+end
+function (kernel::AbstractKernel)(x::AbstractVector, y::Real)
+    @assert length(x) == 1
+    return kernel(x, SVector(y))
+end
+function (kernel::AbstractKernel)(x::Real, y::Real)
+    return kernel(SVector(x), SVector(y))
+end
+
 include("radialsymmetric_kernel.jl")
 include("special_kernel.jl")
