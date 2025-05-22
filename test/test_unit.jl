@@ -3,7 +3,7 @@
     @trixi_test_nowarn trixi_include(default_example(), n = 10)
 end
 
-@testitem "Kernels" setup=[Setup] begin
+@testitem "Kernels" setup=[Setup, AdditionalImports] begin
     x = [3.1, 3.0]
     y = [pi, 2.7]
 
