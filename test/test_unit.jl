@@ -1,9 +1,9 @@
 @testitem "util" setup=[Setup] begin
     @test_nowarn get_examples()
-    @test_nowarn_mod trixi_include(default_example(), n = 10)
+    @trixi_test_nowarn trixi_include(default_example(), n = 10)
 end
 
-@testitem "Kernels" setup=[Setup] begin
+@testitem "Kernels" setup=[Setup, AdditionalImports] begin
     x = [3.1, 3.0]
     y = [pi, 2.7]
 
@@ -190,6 +190,10 @@ end
     @test order(kernel12) == 0
     @test isapprox(kernel12(x, y), kernel1(x, y) + kernel2(x, y))
     @test isapprox((kernel1 + kernel2)(x, y), kernel1(x, y) + kernel2(x, y))
+
+    # Test evaluating 1D kernels at a scalar
+    kernel13 = @test_nowarn GaussKernel{1}(shape_parameter = 2.0)
+    @test kernel13(3.1, 3.0) == kernel13(3.1, SVector(3.0)) == kernel13([3.1], 3.0)
 end
 
 @testitem "NodeSet" setup=[Setup, AdditionalImports] begin

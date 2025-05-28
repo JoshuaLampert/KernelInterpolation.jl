@@ -42,9 +42,9 @@ function Phi(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
     return phi(kernel, r)
 end
 
-function (kernel::RadialSymmetricKernel)(x, y)
+function (kernel::RadialSymmetricKernel)(x::AbstractVector, y::AbstractVector)
     @assert length(x)==length(y) "x and y must have the same length"
-    return Phi(kernel, x .- y)
+    return Phi(kernel, x - y)
 end
 
 """
@@ -193,7 +193,9 @@ function Base.show(io::IO, kernel::PolyharmonicSplineKernel{Dim}) where {Dim}
 end
 
 function phi(kernel::PolyharmonicSplineKernel, r::Real)
-    if isodd(kernel.k)
+    if kernel.k == 1 # to improve performance a little bit by saving the exponentiation
+        return r
+    elseif isodd(kernel.k)
         return r^kernel.k
     else
         return isapprox(r, 0.0) ? 0.0 : r^kernel.k * log(r)
@@ -201,7 +203,8 @@ function phi(kernel::PolyharmonicSplineKernel, r::Real)
 end
 
 function order(kernel::PolyharmonicSplineKernel)
-    isodd(kernel.k) ? ceil(kernel.k / 2) : ceil(kernel.k / 2) + 1
+    k2 = Int(ceil(kernel.k / 2))
+    isodd(kernel.k) ? k2 : k2 + 1
 end
 
 @doc raw"""
