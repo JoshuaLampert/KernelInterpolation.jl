@@ -69,7 +69,7 @@ For the [`StandardBasis`](@ref), the interpolation matrix is defined as
 where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref) and ``P`` the [`polynomial_matrix`](@ref).
 If a node set of `centers` and a `kernel` are given, the interpolation matrix is computed for the [`StandardBasis`](@ref).
 Additionally, you can specify a `factorization_method` to use for the system matrix. By default, the system matrix is
-just wrapped as a [`Symmetric`](@ref) matrix, but you can, e.g., also explicitly use `cholesky`, `lu`, or `qr` factorization.
+just wrapped as a `Symmetric` matrix, but you can, e.g., also explicitly use `cholesky`, `lu`, or `qr` factorization.
 """
 function interpolation_matrix(basis::AbstractBasis, ps,
                               regularization::AbstractRegularization = NoRegularization();
