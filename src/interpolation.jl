@@ -175,11 +175,15 @@ function interpolate(basis::AbstractBasis, values::Vector{RealT},
     q = length(ps)
 
     if nodeset == centers(basis)
-        factorization_method = isnothing(factorization_method) ? Symmetric : factorization_method
-        system_matrix = interpolation_matrix(basis, ps, regularization; factorization_method)
+        factorization_method = isnothing(factorization_method) ? Symmetric :
+                               factorization_method
+        system_matrix = interpolation_matrix(basis, ps, regularization;
+                                             factorization_method)
     else
-        factorization_method = isnothing(factorization_method) ? Matrix : factorization_method
-        system_matrix = least_squares_matrix(basis, nodeset, ps, regularization; factorization_method)
+        factorization_method = isnothing(factorization_method) ? Matrix :
+                               factorization_method
+        system_matrix = least_squares_matrix(basis, nodeset, ps, regularization;
+                                             factorization_method)
     end
     b = [values; zeros(RealT, q)]
     c = system_matrix \ b
