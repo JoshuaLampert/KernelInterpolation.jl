@@ -1,5 +1,6 @@
 using KernelInterpolation
 using Plots
+using LinearAlgebra: cholesky
 
 # function to interpolate
 f(x) = x[1] * x[2]
