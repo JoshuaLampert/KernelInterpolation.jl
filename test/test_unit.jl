@@ -789,7 +789,9 @@ end
     @test isapprox(itp([0.5, 0.5]), 1.0)
     @test isapprox(kernel_norm(itp), 0.0, atol = 1e-15)
 
-    itp = @test_nowarn interpolate(nodes, ff, kernel; factorization_method = qr)
+    itp = @test_nowarn interpolate(nodes, ff,
+                                   Matern52Kernel{dim(nodes)}(shape_parameter = 0.5);
+                                   factorization_method = qr)
     @test system_matrix(itp) isa LinearAlgebra.QRCompactWY
 
     # Least squares with LagrangeBasis (not really recommended because you still need to solve a linear system)
