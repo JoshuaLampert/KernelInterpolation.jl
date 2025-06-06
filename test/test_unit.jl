@@ -713,6 +713,9 @@ end
     @test isapprox(itp([0.5, 0.5]), 1.115625820404527)
     @test isapprox(kernel_norm(itp), 2.5193566316951626)
 
+    itp = @test_nowarn interpolate(nodes, ff, kernel; factorization_method = cholesky)
+    @test system_matrix(itp) isa Cholesky
+
     # Conditionally positive definite kernel
     # Interpolation
     kernel = ThinPlateSplineKernel{dim(nodes)}()
@@ -785,6 +788,11 @@ end
     @test size(system_matrix(itp)) == (7, 6)
     @test isapprox(itp([0.5, 0.5]), 1.0)
     @test isapprox(kernel_norm(itp), 0.0, atol = 1e-15)
+
+    itp = @test_nowarn interpolate(centers, nodes, ff,
+                                   Matern52Kernel{dim(nodes)}(shape_parameter = 0.5);
+                                   factorization_method = qr)
+    @test system_matrix(itp) isa LinearAlgebra.QRCompactWY
 
     # Least squares with LagrangeBasis (not really recommended because you still need to solve a linear system)
     basis = LagrangeBasis(centers, kernel)

@@ -58,8 +58,8 @@ function polynomial_matrix(nodeset::NodeSet, ps)
 end
 
 @doc raw"""
-    interpolation_matrix(centers, kernel, ps, regularization = NoRegularization())
-    interpolation_matrix(basis, ps, regularization)
+    interpolation_matrix(centers, kernel, ps, regularization = NoRegularization(); factorization_method = Symmetric)
+    interpolation_matrix(basis, ps, regularization; factorization_method = Symmetric)
 
 Return the interpolation matrix for the `basis`, polynomials `ps`, and `regularization`.
 For the [`StandardBasis`](@ref), the interpolation matrix is defined as
@@ -68,9 +68,12 @@ For the [`StandardBasis`](@ref), the interpolation matrix is defined as
 ```
 where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref) and ``P`` the [`polynomial_matrix`](@ref).
 If a node set of `centers` and a `kernel` are given, the interpolation matrix is computed for the [`StandardBasis`](@ref).
+Additionally, you can specify a `factorization_method` to use for the system matrix. By default, the system matrix is
+just wrapped as a `Symmetric` matrix, but you can, e.g., also explicitly use `cholesky`, `lu`, or `qr` factorization.
 """
 function interpolation_matrix(basis::AbstractBasis, ps,
-                              regularization::AbstractRegularization = NoRegularization())
+                              regularization::AbstractRegularization = NoRegularization();
+                              factorization_method = Symmetric)
     q = length(ps)
     k_matrix = kernel_matrix(basis)
     regularize!(k_matrix, regularization)
@@ -81,30 +84,30 @@ function interpolation_matrix(basis::AbstractBasis, ps,
         system_matrix = [k_matrix p_matrix
                          p_matrix' zeros(eltype(k_matrix), q, q)]
     else
-        # We could also use `cholesky` here because usually `k_matrix` is
-        # symmetric positive definite, but this might not be the case if
-        # the user explicitly sets `m = 0` even though the kernel is not
-        # strictly positive definite or the matrix might be numerically not spd.
-        # TODO: Think of an interface to allow for general matrix factorizations.
         system_matrix = k_matrix
     end
-    return Symmetric(system_matrix)
+    return factorization_method(system_matrix)
 end
 
 # This should be the same as `kernel_matrix(basis)`
 function interpolation_matrix(::LagrangeBasis, ps,
-                              ::AbstractRegularization = NoRegularization())
+                              ::AbstractRegularization = NoRegularization();
+                              factorization_method = Symmetric)
     return I
 end
 
 function interpolation_matrix(centers::NodeSet, kernel::AbstractKernel, ps,
-                              regularization::AbstractRegularization = NoRegularization())
-    interpolation_matrix(StandardBasis(centers, kernel), ps, regularization)
+                              regularization::AbstractRegularization = NoRegularization();
+                              factorization_method = Symmetric)
+    interpolation_matrix(StandardBasis(centers, kernel), ps, regularization;
+                         factorization_method)
 end
 
 @doc raw"""
-    least_squares_matrix(basis, nodeset, ps, regularization = NoRegularization())
-    least_squares_matrix(centers, nodeset, kernel, ps, regularization = NoRegularization())
+    least_squares_matrix(basis, nodeset, ps, regularization = NoRegularization();
+                         factorization_method = Matrix)
+    least_squares_matrix(centers, nodeset, kernel, ps, regularization = NoRegularization();
+                         factorization_method = Matrix)
 
 Return the least squares matrix for the `basis`, `nodeset`, polynomials `ps`, and `regularization`.
 For the [`StandardBasis`](@ref), the least squares matrix is defined as
@@ -114,30 +117,42 @@ For the [`StandardBasis`](@ref), the least squares matrix is defined as
 where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)
 for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref)` for the `centers`.
 If a `nodeset` and `kernel` are given, the least squares matrix is computed for the [`StandardBasis`](@ref).
+Additionally, you can specify a `factorization_method` to use for the system matrix. By default, the system matrix is
+not factorized, but you can, e.g., also explicitly use the `qr` factorization.
 """
 function least_squares_matrix(basis::AbstractBasis, nodeset::NodeSet, ps,
-                              regularization::AbstractRegularization = NoRegularization())
+                              regularization::AbstractRegularization = NoRegularization();
+                              factorization_method = Matrix)
     q = length(ps)
     k_matrix = kernel_matrix(basis, nodeset)
     regularize!(k_matrix, regularization)
-    p_matrix1 = polynomial_matrix(nodeset, ps)
-    p_matrix2 = polynomial_matrix(centers(basis), ps)
-    system_matrix = [k_matrix p_matrix1
-                     p_matrix2' zeros(eltype(k_matrix), q, q)]
-    return system_matrix
+    # We could always use the first branch, but this is more efficient
+    # for the case where we don't use polynomial augmentation (q == 0).
+    if q > 0
+        p_matrix1 = polynomial_matrix(nodeset, ps)
+        p_matrix2 = polynomial_matrix(centers(basis), ps)
+        system_matrix = [k_matrix p_matrix1
+                         p_matrix2' zeros(eltype(k_matrix), q, q)]
+    else
+        system_matrix = k_matrix
+    end
+    return factorization_method(system_matrix)
 end
 
 function least_squares_matrix(basis::LagrangeBasis, nodeset::NodeSet, ps,
-                              regularization::AbstractRegularization = NoRegularization())
+                              regularization::AbstractRegularization = NoRegularization();
+                              factorization_method = Matrix)
     k_matrix = kernel_matrix(basis, nodeset)
     regularize!(k_matrix, regularization)
-    return k_matrix
+    return factorization_method(k_matrix)
 end
 
 function least_squares_matrix(centers::NodeSet, nodeset::NodeSet, kernel::AbstractKernel,
                               ps,
-                              regularization::AbstractRegularization = NoRegularization())
-    least_squares_matrix(StandardBasis(centers, kernel), nodeset, ps, regularization)
+                              regularization::AbstractRegularization = NoRegularization();
+                              factorization_method = Matrix)
+    least_squares_matrix(StandardBasis(centers, kernel), nodeset, ps, regularization;
+                         factorization_method)
 end
 
 @doc raw"""

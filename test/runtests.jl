@@ -8,7 +8,7 @@ using TestItemRunner
 end
 
 @testsnippet AdditionalImports begin
-    using LinearAlgebra: norm, Symmetric, I
+    using LinearAlgebra: LinearAlgebra, norm, cholesky, qr, Symmetric, Cholesky, I
     using OrdinaryDiffEqRosenbrock: solve, Rodas5P
     import OrdinaryDiffEqNonlinearSolve
     using StaticArrays: SVector, MVector
