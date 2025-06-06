@@ -134,9 +134,10 @@ system_matrix(itp::Interpolation) = itp.system_matrix
 
 @doc raw"""
     interpolate(basis, values, nodeset = centers(basis); m = order(basis),
-                regularization = NoRegularization())
+                regularization = NoRegularization(), factorization_method = nothing)
     interpolate(centers, [nodeset,] values, kernel = GaussKernel{dim(nodeset)}();
-                m = order(kernel), regularization = NoRegularization())
+                m = order(kernel), regularization = NoRegularization(),
+                factorization_method = nothing)
 
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
 and polynomials up to a order `m` (i.e. degree - 1), i.e., determine the coefficients ``c_j`` and ``d_k`` in the expansion
@@ -157,11 +158,15 @@ used for the basis.
 Otherwise, `nodeset` is set to `centers(basis)` or `centers`.
 
 A regularization can be applied to the kernel matrix using the `regularization` argument, cf. [`regularize!`](@ref).
+In addition, the `factorization_method` can be specified to determine how the system matrix is factorized. By default,
+the system matrix is just wrapped as a [`Symmetric`](@ref) matrix for interpolation and no factorization is applied
+for a least squares solution, but you can, e.g., also explicitly use `cholesky`, `lu`, or `qr` factorization.
 """
 function interpolate(basis::AbstractBasis, values::Vector{RealT},
                      nodeset::NodeSet{Dim, RealT} = centers(basis);
                      m = order(basis),
-                     regularization = NoRegularization()) where {Dim, RealT}
+                     regularization = NoRegularization(),
+                     factorization_method = nothing) where {Dim, RealT}
     @assert dim(basis) == Dim
     n = length(nodeset)
     @assert length(values) == n
@@ -170,9 +175,11 @@ function interpolate(basis::AbstractBasis, values::Vector{RealT},
     q = length(ps)
 
     if nodeset == centers(basis)
-        system_matrix = interpolation_matrix(basis, ps, regularization)
+        factorization_method = isnothing(factorization_method) ? Symmetric : factorization_method
+        system_matrix = interpolation_matrix(basis, ps, regularization; factorization_method)
     else
-        system_matrix = least_squares_matrix(basis, nodeset, ps, regularization)
+        factorization_method = isnothing(factorization_method) ? Matrix : factorization_method
+        system_matrix = least_squares_matrix(basis, nodeset, ps, regularization; factorization_method)
     end
     b = [values; zeros(RealT, q)]
     c = system_matrix \ b
