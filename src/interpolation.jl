@@ -159,7 +159,7 @@ Otherwise, `nodeset` is set to `centers(basis)` or `centers`.
 
 A regularization can be applied to the kernel matrix using the `regularization` argument, cf. [`regularize!`](@ref).
 In addition, the `factorization_method` can be specified to determine how the system matrix is factorized. By default,
-the system matrix is just wrapped as a [`Symmetric`](@ref) matrix for interpolation and no factorization is applied
+the system matrix is just wrapped as a Symmetric matrix for interpolation and no factorization is applied
 for a least squares solution, but you can, e.g., also explicitly use `cholesky`, `lu`, or `qr` factorization.
 """
 function interpolate(basis::AbstractBasis, values::Vector{RealT},
