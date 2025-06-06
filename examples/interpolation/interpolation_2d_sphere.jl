@@ -14,7 +14,7 @@ values = f.(nodeset)
 
 kernel = InverseMultiquadricKernel{dim(nodeset)}()
 basis = StandardBasis(nodeset, kernel)
-itp = interpolate(basis, values)
+itp = interpolate(basis, values; factorization_method = cholesky)
 
 N = 500
 many_nodes = random_hypersphere(N, r, center)
