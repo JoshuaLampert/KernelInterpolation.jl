@@ -50,6 +50,7 @@ jobs:
         with:
           skip: LinearAlgebra,Printf,Test,Random
           projects: ., test
+          julia_version: ${{ matrix.version }}
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: ""
