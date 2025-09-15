@@ -120,7 +120,7 @@ function Base.show(io::IO, kernel::MultiquadricKernel{Dim}) where {Dim}
 end
 
 phi(kernel::MultiquadricKernel, r::Real) = (1 + (kernel.shape_parameter * r)^2)^kernel.beta
-order(kernel::MultiquadricKernel) = ceil(kernel.beta)
+order(kernel::MultiquadricKernel) = ceil(Int, kernel.beta)
 
 @doc raw"""
     InverseMultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0)
@@ -203,7 +203,7 @@ function phi(kernel::PolyharmonicSplineKernel, r::Real)
 end
 
 function order(kernel::PolyharmonicSplineKernel)
-    k2 = Int(ceil(kernel.k / 2))
+    k2 = ceil(Int, kernel.k / 2)
     isodd(kernel.k) ? k2 : k2 + 1
 end
 
