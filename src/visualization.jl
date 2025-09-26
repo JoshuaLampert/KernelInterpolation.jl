@@ -6,8 +6,8 @@
         x, kernel.(x)
     elseif Dim == 2
         nodeset = homogeneous_hypercube(N, x_min, x_max; dim = 2)
-        x = unique(values_along_dim(nodeset, 1))
-        y = unique(values_along_dim(nodeset, 2))
+        x = unique(nodeset[:, 1])
+        y = unique(nodeset[:, 2])
         z = reshape(kernel.(nodeset), (N, N))
         seriestype --> :heatmap # :contourf
         title --> get_name(kernel)
@@ -25,12 +25,12 @@ end
 
 @recipe function f(nodeset::NodeSet, kernel::AbstractKernel)
     if dim(nodeset) == 1
-        x = values_along_dim(nodeset, 1)
+        x = nodeset[:, 1]
         title --> get_name(kernel)
         x, kernel.(Ref(0.0), x)
     elseif dim(nodeset) == 2
-        x = values_along_dim(nodeset, 1)
-        y = values_along_dim(nodeset, 2)
+        x = nodeset[:, 1]
+        y = nodeset[:, 2]
         seriestype --> :scatter
         label --> "nodes"
         title --> get_name(kernel)
@@ -42,7 +42,7 @@ end
 
 @recipe function f(nodeset::NodeSet)
     if dim(nodeset) == 1
-        x = values_along_dim(nodeset, 1)
+        x = nodeset[:, 1]
         seriestype := :scatter
         label --> "nodes"
         xguide --> "x"
@@ -50,8 +50,8 @@ end
         yticks --> []
         x, zero(x)
     elseif dim(nodeset) == 2
-        x = values_along_dim(nodeset, 1)
-        y = values_along_dim(nodeset, 2)
+        x = nodeset[:, 1]
+        y = nodeset[:, 2]
         seriestype --> :scatter
         label --> "nodes"
         xguide --> "x"
@@ -70,9 +70,9 @@ end
             x, y
         end
     elseif dim(nodeset) == 3
-        x = values_along_dim(nodeset, 1)
-        y = values_along_dim(nodeset, 2)
-        z = values_along_dim(nodeset, 3)
+        x = nodeset[:, 1]
+        y = nodeset[:, 2]
+        z = nodeset[:, 3]
         seriestype --> :scatter
         label --> "nodes"
         xguide --> "x"
@@ -88,7 +88,7 @@ end
     if dim(nodeset) == 1
         if training_nodes
             @series begin
-                x = values_along_dim(itp.nodeset, 1)
+                x = centers(itp)[:, 1]
                 seriestype := :scatter
                 markershape --> :star
                 label --> "training nodes"
@@ -96,7 +96,7 @@ end
             end
         end
         @series begin
-            x = values_along_dim(nodeset, 1)
+            x = nodeset[:, 1]
             perm = sortperm(x)
             label --> "interpolation"
             xguide --> "x"
@@ -106,8 +106,8 @@ end
     elseif dim(nodeset) == 2
         if training_nodes
             @series begin
-                x = values_along_dim(centers(itp), 1)
-                y = values_along_dim(centers(itp), 2)
+                x = centers(itp)[:, 1]
+                y = centers(itp)[:, 2]
                 seriestype := :scatter
                 markershape --> :star
                 markersize --> 10
@@ -116,8 +116,8 @@ end
             end
         end
         @series begin
-            x = values_along_dim(nodeset, 1)
-            y = values_along_dim(nodeset, 2)
+            x = nodeset[:, 1]
+            y = nodeset[:, 2]
             seriestype --> :scatter
             label --> "interpolation"
             xguide --> "x"
@@ -136,8 +136,8 @@ end
         x, itp.(x)
     elseif dim(itp) == 2
         nodeset = homogeneous_hypercube(N, x_min, x_max; dim = 2)
-        x = unique(values_along_dim(nodeset, 1))
-        y = unique(values_along_dim(nodeset, 2))
+        x = unique(nodeset[:, 1])
+        y = unique(nodeset[:, 2])
         z = reshape(itp.(nodeset), (N, N))'
         xguide --> "x"
         yguide --> "y"
@@ -151,7 +151,7 @@ end
 @recipe function f(nodeset::NodeSet, vals::AbstractVector)
     if dim(nodeset) == 1
         @series begin
-            x = values_along_dim(nodeset, 1)
+            x = nodeset[:, 1]
             perm = sortperm(x)
             label --> "f"
             xguide --> "x"
@@ -160,8 +160,8 @@ end
         end
     elseif dim(nodeset) == 2
         @series begin
-            x = values_along_dim(nodeset, 1)
-            y = values_along_dim(nodeset, 2)
+            x = nodeset[:, 1]
+            y = nodeset[:, 2]
             seriestype --> :scatter
             label --> "f"
             xguide --> "x"

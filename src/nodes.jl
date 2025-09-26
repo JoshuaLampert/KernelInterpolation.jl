@@ -125,6 +125,15 @@ function Base.similar(nodeset::NodeSet{Dim, RealT}, ::Type{T}, n::Int) where {Di
 end
 Base.getindex(nodeset::NodeSet, i::Int) = nodeset.nodes[i]
 Base.getindex(nodeset::NodeSet, is::AbstractVector) = nodeset.nodes[is]
+function Base.getindex(nodeset::NodeSet, ::Colon, i::Int)
+    @assert dim(nodeset) >= i
+    x_i = Vector{eltype(nodeset)}(undef, length(nodeset))
+    for (j, node) in enumerate(nodeset)
+        x_i[j] = node[i]
+    end
+    return x_i
+end
+
 Base.firstindex(nodeset::NodeSet) = firstindex(nodeset.nodes)
 Base.lastindex(nodeset::NodeSet) = lastindex(nodeset.nodes)
 Base.keys(nodeset::NodeSet) = keys(nodeset.nodes)
@@ -206,20 +215,7 @@ function distance_matrix(nodeset1::NodeSet, nodeset2::NodeSet)
     return D
 end
 
-"""
-    values_along_dim(nodeset::NodeSet, i::Int)
-
-Convenience function to return all ``x_i``-values of the nodes, i.e. the `i`-th component of each node.
-Supported for `nodeset` with `dim(nodeset) >= i`.
-"""
-function values_along_dim(nodeset::NodeSet, i::Int)
-    @assert dim(nodeset) >= i
-    x_i = Vector{eltype(nodeset)}(undef, length(nodeset))
-    for (j, node) in enumerate(nodeset)
-        x_i[j] = node[i]
-    end
-    return x_i
-end
+@deprecate values_along_dim(nodeset::NodeSet, i::Int) nodeset[:, i]
 
 # Some convenience function to create some specific `NodeSet`s
 """
