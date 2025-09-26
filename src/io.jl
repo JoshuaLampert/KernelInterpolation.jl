@@ -13,7 +13,7 @@ function vtk_save(filename, nodeset::NodeSet, functions_or_vectors...;
                   keys = "value_" .* string.(eachindex(functions_or_vectors)))
     @assert dim(nodeset)<=3 "Only 1D, 2D, and 3D data can be saved to VTK files."
     cells = [MeshCell(VTKCellTypes.VTK_VERTEX, (i,)) for i in eachindex(nodeset)]
-    points = values_along_dim.(Ref(nodeset), eachdim(nodeset))
+    points = Base.getindex.(Ref(nodeset), :, eachdim(nodeset))
     vtk_grid(filename, points..., cells, append = false) do vtk
         for (i, fun_or_vec) in enumerate(functions_or_vectors)
             if fun_or_vec isa AbstractArray
@@ -37,7 +37,7 @@ function add_to_pvd(filename, pvd, time, nodeset::NodeSet, functions_or_vectors.
                     keys = "value_" .* string.(eachindex(functions_or_vectors)))
     @assert dim(nodeset)<=3 "Only 1D, 2D, and 3D data can be saved to VTK files."
     cells = [MeshCell(VTKCellTypes.VTK_VERTEX, (i,)) for i in eachindex(nodeset)]
-    points = values_along_dim.(Ref(nodeset), eachdim(nodeset))
+    points = Base.getindex.(Ref(nodeset), :, eachdim(nodeset))
     vtk_grid(filename, points..., cells, append = false) do vtk
         for (i, fun_or_vec) in enumerate(functions_or_vectors)
             if fun_or_vec isa AbstractArray

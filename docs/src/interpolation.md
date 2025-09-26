@@ -203,8 +203,8 @@ To visualize the interpolation, we can use evaluate the interpolant on a grid of
 ```@example interpolation
 N = 50
 nodes_grid = homogeneous_hypercube(N, (0.0, 0.0), (1.0, 1.0))
-x = unique(values_along_dim(nodes_grid, 1))
-y = unique(values_along_dim(nodes_grid, 2))
+x = unique(nodes_grid[:, 1])
+y = unique(nodes_grid[:, 2])
 z_itp = reshape(itp.(nodes_grid), (N, N))'
 p1 = plot(x, y, z_itp, st = :heatmap, colorbar = :none, title = "Interpolation")
 z_true = reshape(f.(nodes_grid), (N, N))'
