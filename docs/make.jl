@@ -40,4 +40,6 @@ makedocs(;
 deploydocs(;
            repo = "github.com/JoshuaLampert/KernelInterpolation.jl",
            devbranch = "main",
-           push_preview = true)
+           push_preview = all(!isempty,
+                              (get(ENV, "GITHUB_TOKEN", ""),
+                               get(ENV, "DOCUMENTER_KEY", ""))))
