@@ -1,6 +1,6 @@
 name = "KernelInterpolation"
 uuid = "95686e15-3c94-4443-8f08-76d06d509f7b"
-version = "0.3.8"
+version = "0.3.9-DEV"
 authors = ["Joshua Lampert <joshua.lampert@uni-hamburg.de> and contributors"]
 
 [deps]
