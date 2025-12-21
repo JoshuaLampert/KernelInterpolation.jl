@@ -23,10 +23,10 @@ struct SpatialDiscretization{Dim, RealT, Equations, BoundaryCondition,
                                    nodeset_boundary::NodeSet{Dim, RealT},
                                    basis::AbstractBasis) where {Dim,
                                                                 RealT}
-        new{Dim, RealT, typeof(equations), typeof(boundary_condition),
-            typeof(basis)}(equations, nodeset_inner,
-                           boundary_condition, nodeset_boundary,
-                           basis)
+        return new{Dim, RealT, typeof(equations), typeof(boundary_condition),
+                   typeof(basis)}(equations, nodeset_inner,
+                                  boundary_condition, nodeset_boundary,
+                                  basis)
     end
 end
 
@@ -36,8 +36,8 @@ function SpatialDiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
                                centers::NodeSet{Dim, RealT},
                                kernel = GaussKernel{Dim}()) where {Dim,
                                                                    RealT}
-    SpatialDiscretization(equations, nodeset_inner, boundary_condition,
-                          nodeset_boundary, StandardBasis(centers, kernel))
+    return SpatialDiscretization(equations, nodeset_inner, boundary_condition,
+                                 nodeset_boundary, StandardBasis(centers, kernel))
 end
 
 function SpatialDiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
@@ -56,6 +56,7 @@ function Base.show(io::IO, sd::SpatialDiscretization)
     k = interpolation_kernel(sd.basis)
     print(io,
           "SpatialDiscretization with $(dim(sd)) dimensions, $N_i inner nodes, $N_b boundary nodes, and kernel $k")
+    return nothing
 end
 
 dim(::SpatialDiscretization{Dim}) where {Dim} = Dim
@@ -152,6 +153,7 @@ function Base.show(io::IO, semi::Semidiscretization)
     k = interpolation_kernel(semi.spatial_discretization.basis)
     print(io,
           "Semidiscretization with $(dim(semi)) dimensions, $N_i inner nodes, $N_b boundary nodes, and kernel $k")
+    return nothing
 end
 
 dim(semi::Semidiscretization) = dim(semi.spatial_discretization)

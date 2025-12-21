@@ -38,7 +38,7 @@ dim(basis::AbstractBasis) = dim(basis.centers)
 Base.length(basis::AbstractBasis) = length(centers(basis))
 Base.eachindex(basis::AbstractBasis) = Base.OneTo(length(basis))
 function Base.iterate(basis::AbstractBasis, state = 1)
-    state > length(basis) ? nothing : (basis[state], state + 1)
+    return state > length(basis) ? nothing : (basis[state], state + 1)
 end
 Base.collect(basis::AbstractBasis) = Function[basis[i] for i in 1:length(basis)]
 
@@ -66,7 +66,7 @@ struct StandardBasis{Dim, RealT, Kernel} <: AbstractBasis
         if dim(kernel) != dim(centers)
             throw(DimensionMismatch("The dimension of the kernel and the centers must be the same"))
         end
-        new{dim(centers), eltype(centers), typeof(kernel)}(centers, kernel)
+        return new{dim(centers), eltype(centers), typeof(kernel)}(centers, kernel)
     end
 end
 
@@ -113,8 +113,8 @@ struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation, Monomials, 
         # All basis functions have same polynomials
         ps = first(basis_functions).ps
         xx = first(basis_functions).xx
-        new{dim(centers), eltype(centers), typeof(kernel), eltype(basis_functions),
-            typeof(ps), typeof(xx)}(centers, kernel, basis_functions, ps, xx)
+        return new{dim(centers), eltype(centers), typeof(kernel), eltype(basis_functions),
+                   typeof(ps), typeof(xx)}(centers, kernel, basis_functions, ps, xx)
     end
 end
 

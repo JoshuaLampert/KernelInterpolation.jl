@@ -20,7 +20,7 @@ end
 @recipe function f(x::AbstractVector, kernel::AbstractKernel)
     xguide --> "r"
     title --> get_name(kernel)
-    x, kernel.(x)
+    return x, kernel.(x)
 end
 
 @recipe function f(nodeset::NodeSet, kernel::AbstractKernel)
@@ -175,7 +175,7 @@ end
 end
 
 @recipe function f(nodeset::NodeSet, f::Function)
-    nodeset, f.(nodeset)
+    return nodeset, f.(nodeset)
 end
 
 @recipe function f(basis::AbstractBasis, nodeset::NodeSet = centers(basis))
