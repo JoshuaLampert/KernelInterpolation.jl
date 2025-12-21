@@ -141,7 +141,7 @@ Base.keys(nodeset::NodeSet) = keys(nodeset.nodes)
 function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::MVector{Dim, RealT},
                         i::Int) where {Dim, RealT}
     nodeset.nodes[i] = v
-    return nothing
+    return v
 end
 function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT},
                         i::Int) where {Dim, RealT}

@@ -35,8 +35,7 @@ function Base.show(io::IO, cb::DiscreteCallback{<:Any, <:SaveSolutionCallback})
     @nospecialize cb # reduce precompilation time
 
     save_solution_callback = cb.affect!
-    print(io, "SaveSolutionCallback(interval=",
-          save_solution_callback.interval_or_dt, ")")
+    print(io, "SaveSolutionCallback(interval=", save_solution_callback.interval_or_dt, ")")
     return nothing
 end
 
