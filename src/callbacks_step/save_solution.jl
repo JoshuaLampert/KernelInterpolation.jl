@@ -36,6 +36,7 @@ function Base.show(io::IO, cb::DiscreteCallback{<:Any, <:SaveSolutionCallback})
 
     save_solution_callback = cb.affect!
     print(io, "SaveSolutionCallback(interval=", save_solution_callback.interval_or_dt, ")")
+    return nothing
 end
 
 function Base.show(io::IO,
@@ -45,6 +46,7 @@ function Base.show(io::IO,
 
     save_solution_callback = cb.affect!.affect!
     print(io, "SaveSolutionCallback(dt=", save_solution_callback.interval_or_dt, ")")
+    return nothing
 end
 
 function SaveSolutionCallback(; interval::Integer = 0,
@@ -94,7 +96,7 @@ function initialize_save_cb(cb, u, t, integrator)
     # The SaveSolutionCallback is either cb.affect! (with DiscreteCallback)
     # or cb.affect!.affect! (with PeriodicCallback).
     # Let recursive dispatch handle this.
-    initialize_save_cb(cb.affect!, u, t, integrator)
+    return initialize_save_cb(cb.affect!, u, t, integrator)
 end
 
 function initialize_save_cb(solution_callback::SaveSolutionCallback, u, t, integrator)
@@ -145,7 +147,7 @@ function finalize_save_cb(cb, u, t, integrator)
     # The SaveSolutionCallback is either cb.affect! (with DiscreteCallback)
     # or cb.affect!.affect! (with PeriodicCallback).
     # Let recursive dispatch handle this.
-    finalize_save_cb(cb.affect!, u, t, integrator)
+    return finalize_save_cb(cb.affect!, u, t, integrator)
 end
 
 function finalize_save_cb(solution_callback::SaveSolutionCallback, u, t, integrator)

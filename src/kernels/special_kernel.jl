@@ -30,6 +30,7 @@ end
 
 function Base.show(io::IO, kernel::TransformationKernel{Dim}) where {Dim}
     print(io, "TransformationKernel{", Dim, "}(kernel = ", kernel.kernel, ")")
+    return nothing
 end
 
 order(kernel::TransformationKernel) = order(kernel.kernel)
@@ -51,7 +52,7 @@ struct ProductKernel{Dim} <: AbstractKernel{Dim}
 
     function ProductKernel{Dim}(kernels) where {Dim}
         @assert all(dim.(kernels) .== Dim)
-        new(kernels)
+        return new(kernels)
     end
 end
 
@@ -74,6 +75,7 @@ function Base.show(io::IO, kernel::ProductKernel{Dim}) where {Dim}
         end
     end
     print("])")
+    return nothing
 end
 
 # TODO: Is that correct in general?
@@ -98,7 +100,7 @@ struct SumKernel{Dim} <: AbstractKernel{Dim}
 
     function SumKernel{Dim}(kernels) where {Dim}
         @assert all(dim.(kernels) .== Dim)
-        new(kernels)
+        return new(kernels)
     end
 end
 
@@ -121,6 +123,7 @@ function Base.show(io::IO, kernel::SumKernel{Dim}) where {Dim}
         end
     end
     print("])")
+    return nothing
 end
 
 # TODO: Is that correct in general?

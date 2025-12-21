@@ -9,7 +9,7 @@ pde = AdvectionEquation((0.5, 0.5, 0.5), f)
 
 # initial condition
 function u(t, x, equations)
-    exp(-20.0 * norm(x .- equations.advection_velocity .* t .- [0.3, 0.3, 0.3])^2)
+    return exp(-20.0 * norm(x .- equations.advection_velocity .* t .- [0.3, 0.3, 0.3])^2)
 end
 
 n = 10

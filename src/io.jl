@@ -48,6 +48,7 @@ function add_to_pvd(filename, pvd, time, nodeset::NodeSet, functions_or_vectors.
             vtk["$(keys[i])"] = vec
         end
         pvd[time] = vtk
+        return nothing
     end
 end
 

@@ -36,7 +36,7 @@ Return the path to an example that can be used to quickly see KernelInterpolatio
 See also [`examples_dir`](@ref) and [`get_examples`](@ref).
 """
 function default_example()
-    joinpath(examples_dir(), "interpolation", "interpolation_2d.jl")
+    return joinpath(examples_dir(), "interpolation", "interpolation_2d.jl")
 end
 
 # Create `d` polyvars from `TypedPolynomials.jl`, don't use `@polyvars` because of
@@ -48,6 +48,6 @@ polyvars(d) = ntuple(i -> Variable{Symbol("x[", i, "]")}(), d)
 polyvars(::Val{1}) = (Variable{Symbol("x[1]")}(),)
 polyvars(::Val{2}) = (Variable{Symbol("x[1]")}(), Variable{Symbol("x[2]")}())
 function polyvars(::Val{3})
-    (Variable{Symbol("x[1]")}(), Variable{Symbol("x[2]")}(),
-     Variable{Symbol("x[3]")}())
+    return (Variable{Symbol("x[1]")}(), Variable{Symbol("x[2]")}(),
+            Variable{Symbol("x[3]")}())
 end

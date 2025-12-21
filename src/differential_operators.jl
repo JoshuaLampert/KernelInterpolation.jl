@@ -32,6 +32,7 @@ end
 
 function Base.show(io::IO, operator::PartialDerivative)
     print(io, "∂_{x_", operator.i, "}")
+    return nothing
 end
 
 function (operator::PartialDerivative)(kernel::RadialSymmetricKernel, x)
@@ -52,6 +53,7 @@ end
 
 function Base.show(io::IO, ::Gradient)
     print(io, "∇")
+    return nothing
 end
 
 function (::Gradient)(kernel::RadialSymmetricKernel, x)
@@ -72,6 +74,7 @@ end
 
 function Base.show(io::IO, ::Laplacian)
     print(io, "Δ")
+    return nothing
 end
 
 function (::Laplacian)(kernel::RadialSymmetricKernel, x)
@@ -105,6 +108,7 @@ end
 
 function Base.show(io::IO, ::EllipticOperator)
     print(io, "-∑_{i,j = 1}^d aᵢⱼ (x)∂_{x_i,x_j}^2 + ∑_{i = 1}^d bᵢ(x)∂_{x_i} + c(x)")
+    return nothing
 end
 
 function (operator::EllipticOperator)(kernel::RadialSymmetricKernel, x)
