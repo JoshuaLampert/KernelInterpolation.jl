@@ -58,7 +58,7 @@ end
         yguide --> "y"
         # Dirty hack to have different behavior depending on there already exists a 3D plot that the nodes should be
         # plotted into or not. If not, the nodes are plotted in the 2D plane, otherwise inside the 3D with z = 0.
-        # This can, e.g., be useful when the error of an inteprolation is plotted (in 3D) and then the original training
+        # This can, e.g., be useful when the error of an interpolation is plotted (in 3D) and then the original training
         # nodes should be plotted in the same 3D plot.
         if length(plotattributes[:plot_object].series_list) > 0
             if !isnothing(plotattributes[:plot_object].series_list[1][:z])
