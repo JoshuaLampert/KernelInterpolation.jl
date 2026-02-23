@@ -11,6 +11,7 @@ end
 function Base.show(io::IO, nodeset::NodeSet)
     print(io, "NodeSet{", dim(nodeset), ", ", eltype(nodeset),
           "} with separation distance q = ", nodeset.q, " and ", length(nodeset), " nodes")
+    return nothing
 end
 
 function Base.show(io::IO, ::MIME"text/plain", nodeset::NodeSet)
@@ -37,10 +38,10 @@ end
 function NodeSet(nodes::Vector{MVector{Dim, RealT}}) where {Dim, RealT}
     q = separation_distance(nodes)
     # Convert nodes to floats by design
-    NodeSet{Dim, float(RealT)}(nodes, q)
+    return NodeSet{Dim, float(RealT)}(nodes, q)
 end
 function NodeSet(nodes::Vector{SVector{Dim, RealT}}) where {Dim, RealT}
-    NodeSet(MVector.(nodes))
+    return NodeSet(MVector.(nodes))
 end
 function NodeSet(nodes::AbstractVector{Vector{RealT}}) where {RealT}
     n = length(nodes)
@@ -55,7 +56,7 @@ function NodeSet(nodes::AbstractVector{Vector{RealT}}) where {RealT}
 end
 function NodeSet(nodes::AbstractMatrix{RealT}) where {RealT}
     d = size(nodes, 2)
-    NodeSet(MVector{d, RealT}.(eachrow(nodes)))
+    return NodeSet(MVector{d, RealT}.(eachrow(nodes)))
 end
 function NodeSet(nodes::AbstractVector{RealT}) where {RealT}
     @assert length(nodes) > 0
@@ -69,7 +70,7 @@ NodeSet(nodeset::NodeSet) = nodeset
 Create an empty [`NodeSet`](@ref).
 """
 function empty_nodeset(Dim, RealT = Float64)
-    NodeSet{Dim, RealT}(Vector{MVector{Dim, RealT}}[], Inf)
+    return NodeSet{Dim, RealT}(Vector{MVector{Dim, RealT}}[], Inf)
 end
 
 function separation_distance(nodes::Vector{MVector{Dim, RealT}}) where {Dim, RealT}
@@ -112,25 +113,35 @@ Base.eachindex(nodeset::NodeSet) = eachindex(nodeset.nodes)
 eachdim(nodeset::NodeSet) = Base.OneTo(dim(nodeset))
 Base.isassigned(nodeset::NodeSet, i::Int) = isassigned(nodeset.nodes, i)
 function Base.similar(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT}
-    NodeSet{Dim, RealT}(similar(nodeset.nodes), Inf)
+    return NodeSet{Dim, RealT}(similar(nodeset.nodes), Inf)
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, ::Type{T}) where {Dim, RealT, T}
-    NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}), Inf)
+    return NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}), Inf)
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, n::Int) where {Dim, RealT}
-    NodeSet{Dim, RealT}(similar(nodeset.nodes, n), Inf)
+    return NodeSet{Dim, RealT}(similar(nodeset.nodes, n), Inf)
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, ::Type{T}, n::Int) where {Dim, RealT, T}
-    NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}, n), Inf)
+    return NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}, n), Inf)
 end
 Base.getindex(nodeset::NodeSet, i::Int) = nodeset.nodes[i]
 Base.getindex(nodeset::NodeSet, is::AbstractVector) = nodeset.nodes[is]
+function Base.getindex(nodeset::NodeSet, ::Colon, i::Int)
+    @assert dim(nodeset) >= i
+    x_i = Vector{eltype(nodeset)}(undef, length(nodeset))
+    for (j, node) in enumerate(nodeset)
+        x_i[j] = node[i]
+    end
+    return x_i
+end
+
 Base.firstindex(nodeset::NodeSet) = firstindex(nodeset.nodes)
 Base.lastindex(nodeset::NodeSet) = lastindex(nodeset.nodes)
 Base.keys(nodeset::NodeSet) = keys(nodeset.nodes)
 function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::MVector{Dim, RealT},
                         i::Int) where {Dim, RealT}
     nodeset.nodes[i] = v
+    return v
 end
 function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT},
                         i::Int) where {Dim, RealT}
@@ -138,33 +149,33 @@ function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT},
     nodeset.nodes[i] = v
     # update separation distance of nodeset because it possibly changed
     # could be done more efficiently
-    update_separation_distance!(nodeset)
+    return update_separation_distance!(nodeset)
 end
 function Base.setindex!(nodeset::NodeSet{1, RealT}, v, i::Int) where {RealT}
     @assert dim(nodeset) == 1
     nodeset.nodes[i] = [v]
     # update separation distance of nodeset because it possibly changed
     # could be done more efficiently
-    update_separation_distance!(nodeset)
+    return update_separation_distance!(nodeset)
 end
 function Base.push!(nodeset::NodeSet{Dim, RealT}, v::MVector{Dim, RealT}) where {Dim, RealT}
     push!(nodeset.nodes, v)
     # update separation distance of nodeset because it possibly changed
     # could be done more efficiently
-    update_separation_distance!(nodeset)
+    return update_separation_distance!(nodeset)
 end
 function Base.push!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT}) where {Dim, RealT}
     @assert length(v) == dim(nodeset)
     push!(nodeset.nodes, v)
     # update separation distance of nodeset because it possibly changed
     # could be done more efficiently
-    update_separation_distance!(nodeset)
+    return update_separation_distance!(nodeset)
 end
 function Base.pop!(nodeset::NodeSet)
     pop!(nodeset.nodes)
     # update separation distance of nodeset because it possibly changed
     # could be done more efficiently
-    update_separation_distance!(nodeset)
+    return update_separation_distance!(nodeset)
 end
 function Base.merge(nodeset::NodeSet{Dim, RealT},
                     others::NodeSet{Dim, RealT}...) where {Dim, RealT}
@@ -175,17 +186,17 @@ end
 function Base.merge!(nodeset::NodeSet{Dim, RealT},
                      others::NodeSet{Dim, RealT}...) where {Dim, RealT}
     foreach(other -> append!(nodeset.nodes, other.nodes), others)
-    update_separation_distance!(nodeset)
+    return update_separation_distance!(nodeset)
     #     return NodeSet(merge(nodeset.nodes, foreach(other -> other.nodes, others)...))
 end
 Base.unique(nodeset::NodeSet) = NodeSet(unique(nodeset.nodes))
 function Base.unique!(nodeset::NodeSet)
     unique!(nodeset.nodes)
-    update_separation_distance!(nodeset)
+    return update_separation_distance!(nodeset)
 end
 function Base.deleteat!(nodeset::NodeSet, i)
     deleteat!(nodeset.nodes, i)
-    update_separation_distance!(nodeset)
+    return update_separation_distance!(nodeset)
 end
 
 @doc raw"""
@@ -206,20 +217,7 @@ function distance_matrix(nodeset1::NodeSet, nodeset2::NodeSet)
     return D
 end
 
-"""
-    values_along_dim(nodeset::NodeSet, i::Int)
-
-Convenience function to return all ``x_i``-values of the nodes, i.e. the `i`-th component of each node.
-Supported for `nodeset` with `dim(nodeset) >= i`.
-"""
-function values_along_dim(nodeset::NodeSet, i::Int)
-    @assert dim(nodeset) >= i
-    x_i = Vector{eltype(nodeset)}(undef, length(nodeset))
-    for (j, node) in enumerate(nodeset)
-        x_i[j] = node[i]
-    end
-    return x_i
-end
+@deprecate values_along_dim(nodeset::NodeSet, i::Int) nodeset[:, i]
 
 # Some convenience function to create some specific `NodeSet`s
 """
@@ -232,7 +230,7 @@ If `dim` is not given explicitly, it is inferred by the lengths of `x_min` and `
 Optionally, pass a random number generator `rng`.
 """
 function random_hypercube(n, x_min = 0.0, x_max = 1.0; kwargs...)
-    random_hypercube(Random.default_rng(), n, x_min, x_max; kwargs...)
+    return random_hypercube(Random.default_rng(), n, x_min, x_max; kwargs...)
 end
 
 function random_hypercube(rng::Random.AbstractRNG, n::Int, x_min::RealT = 0.0,
@@ -262,12 +260,13 @@ If `dim` is not given explicitly, it is inferred by the lengths of `x_min` and `
 Optionally, pass a random number generator `rng`.
 """
 function random_hypercube_boundary(n, x_min = 0.0, x_max = 1.0; kwargs...)
-    random_hypercube_boundary(Random.default_rng(), n, x_min, x_max; kwargs...)
+    return random_hypercube_boundary(Random.default_rng(), n, x_min, x_max; kwargs...)
 end
 
 function random_hypercube_boundary(rng::Random.AbstractRNG, n::Int, x_min::RealT = 0.0,
                                    x_max::RealT = 1.0; dim = 1) where {RealT}
-    random_hypercube_boundary(rng, n, ntuple(_ -> x_min, dim), ntuple(_ -> x_max, dim))
+    return random_hypercube_boundary(rng, n, ntuple(_ -> x_min, dim),
+                                     ntuple(_ -> x_max, dim))
 end
 
 function project_on_hypercube_boundary!(rng::Random.AbstractRNG, nodeset::NodeSet{Dim},
@@ -355,8 +354,8 @@ If `dim` is not given explicitly, it is inferred by the lengths of `n`, `x_min` 
 """
 function homogeneous_hypercube_boundary(n::Int, x_min = 0.0, x_max = 1.0;
                                         dim = 1)
-    homogeneous_hypercube_boundary(ntuple(_ -> n, dim), ntuple(_ -> x_min, dim),
-                                   ntuple(_ -> x_max, dim))
+    return homogeneous_hypercube_boundary(ntuple(_ -> n, dim), ntuple(_ -> x_min, dim),
+                                          ntuple(_ -> x_max, dim))
 end
 
 function homogeneous_hypercube_boundary(n::NTuple{Dim}, x_min, x_max;
@@ -432,16 +431,16 @@ If `dim` is not given explicitly, it is inferred by the length of `center` if po
 Optionally, pass a random number generator `rng`.
 """
 function random_hypersphere(n, r = 1.0; kwargs...)
-    random_hypersphere(Random.default_rng(), n, r; kwargs...)
+    return random_hypersphere(Random.default_rng(), n, r; kwargs...)
 end
 
 function random_hypersphere(n, r, center; kwargs...)
-    random_hypersphere(Random.default_rng(), n, r, center; kwargs...)
+    return random_hypersphere(Random.default_rng(), n, r, center; kwargs...)
 end
 
 function random_hypersphere(rng::Random.AbstractRNG, n, r::RealT = 1.0;
                             dim = 2) where {RealT}
-    random_hypersphere(rng, n, r, Tuple(zeros(float(RealT), dim)))
+    return random_hypersphere(rng, n, r, Tuple(zeros(float(RealT), dim)))
 end
 
 function random_hypersphere(rng::Random.AbstractRNG, n, r::RealT,
@@ -465,16 +464,16 @@ If `dim` is not given explicitly, it is inferred by the length of `center` if po
 Optionally, pass a random number generator `rng`.
 """
 function random_hypersphere_boundary(n, r = 1.0; kwargs...)
-    random_hypersphere_boundary(Random.default_rng(), n, r; kwargs...)
+    return random_hypersphere_boundary(Random.default_rng(), n, r; kwargs...)
 end
 
 function random_hypersphere_boundary(n, r, center; kwargs...)
-    random_hypersphere_boundary(Random.default_rng(), n, r, center; kwargs...)
+    return random_hypersphere_boundary(Random.default_rng(), n, r, center; kwargs...)
 end
 
 function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r::RealT = 1.0;
                                      dim = 2) where {RealT}
-    random_hypersphere_boundary(rng, n, r, Tuple(zeros(float(RealT), dim)))
+    return random_hypersphere_boundary(rng, n, r, Tuple(zeros(float(RealT), dim)))
 end
 
 function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r::RealT,

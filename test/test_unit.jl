@@ -219,9 +219,9 @@ end
     f(x) = x[1] + x[2]
     ff = @test_nowarn f.(nodeset1)
     @test ff == [0.0, 1.0, 1.0, 2.0]
-    dim1 = @test_nowarn values_along_dim(nodeset1, 1)
+    dim1 = @test_nowarn nodeset1[:, 1]
     @test dim1 == [0.0, 1.0, 0.0, 1.0]
-    dim2 = @test_nowarn values_along_dim(nodeset1, 2)
+    dim2 = @test_nowarn nodeset1[:, 2]
     @test dim2 == [0.0, 0.0, 1.0, 1.0]
     @test distance_matrix(nodeset1, nodeset1) == [0.0 1.0 1.0 1.4142135623730951
            1.0 0.0 1.4142135623730951 1.0
