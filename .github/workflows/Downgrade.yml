@@ -50,6 +50,7 @@ jobs:
         with:
           skip: LinearAlgebra,Printf,Test,Random
           projects: ., test
+          mode: forcedeps
           julia_version: ${{ matrix.version }}
       - uses: julia-actions/julia-buildpkg@v1
         env:
@@ -59,5 +60,6 @@ jobs:
         with:
           coverage: false
           allow_reresolve: false
+          force_latest_compatible_version: false
         env:
           PYTHON: ""
