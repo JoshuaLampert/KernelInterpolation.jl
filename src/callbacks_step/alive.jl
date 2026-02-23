@@ -19,6 +19,7 @@ function Base.show(io::IO, cb::DiscreteCallback{<:Any, <:AliveCallback})
 
     alive_callback = cb.affect!
     print(io, "AliveCallback(interval=", alive_callback.interval_or_dt, ")")
+    return nothing
 end
 
 function Base.show(io::IO,
@@ -28,6 +29,7 @@ function Base.show(io::IO,
 
     alive_callback = cb.affect!.affect!
     print(io, "AliveCallback(dt=", alive_callback.interval_or_dt, ")")
+    return nothing
 end
 
 function AliveCallback(io::IO = stdout; interval::Integer = 0,
@@ -67,7 +69,7 @@ function initialize!(cb, u, t, integrator)
     # The AliveCallback is either cb.affect! (with DiscreteCallback)
     # or cb.affect!.affect! (with PeriodicCallback).
     # Let recursive dispatch handle this.
-    initialize!(cb.affect!, u, t, integrator)
+    return initialize!(cb.affect!, u, t, integrator)
 end
 
 function initialize!(alive_callback::AliveCallback, u, t, integrator)
@@ -111,7 +113,7 @@ function finalize(cb, u, t, integrator)
     # The AliveCallback is either cb.affect! (with DiscreteCallback)
     # or cb.affect!.affect! (with PeriodicCallback).
     # Let recursive dispatch handle this.
-    finalize(cb.affect!, u, t, integrator)
+    return finalize(cb.affect!, u, t, integrator)
 end
 
 function finalize(alive_callback::AliveCallback, u, t, integrator)

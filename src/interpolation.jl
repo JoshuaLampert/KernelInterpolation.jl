@@ -193,14 +193,14 @@ end
 function interpolate(centers::NodeSet{Dim, RealT}, nodeset::NodeSet{Dim, RealT},
                      values::AbstractVector{RealT}, kernel = GaussKernel{Dim, RealT}();
                      kwargs...) where {Dim, RealT}
-    interpolate(StandardBasis(centers, kernel), values, nodeset; kwargs...)
+    return interpolate(StandardBasis(centers, kernel), values, nodeset; kwargs...)
 end
 
 function interpolate(centers::NodeSet{Dim, RealT},
                      values::AbstractVector{RealT},
                      kernel = GaussKernel{Dim}(; shape_parameter = RealT(1.0));
                      kwargs...) where {Dim, RealT}
-    interpolate(StandardBasis(centers, kernel), values; kwargs...)
+    return interpolate(StandardBasis(centers, kernel), values; kwargs...)
 end
 
 # Evaluate interpolant

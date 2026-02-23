@@ -5,6 +5,17 @@ KernelInterpolation.jl follows the interpretation of
 used in the Julia ecosystem. Notable changes will be documented in this file
 for human readability.
 
+## Changes in the v0.3 lifecycle
+
+#### Added
+
+- Allow passing a factorization to `interpolate` ([#130]).
+
+#### Changed
+
+- Define slicing for `NodeSet`s and deprecate `values_along_dim` ([#139]).
+- Fix order of `PolyharmonicSplineKernel` to return an integer ([#127]).
+
 ## Changes when updating to v0.3 from v0.2.x
 
 #### Added

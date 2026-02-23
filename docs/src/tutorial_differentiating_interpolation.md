@@ -38,7 +38,8 @@ Let's plot the interpolated function and the original function on a finer grid t
 using Plots
 many_nodes = NodeSet(LinRange(x_min, x_max, 200))
 plot(many_nodes, f, label = "Original function")
-plot!(many_nodes, itp)
+scatter!(nodeset, f, label = "Original data", markershape = :star)
+plot!(many_nodes, itp, training_nodes = false, yrange = (0.0, 5.0))
 savefig("interpolation_oscillatory.png") # hide
 nothing # hide
 ```
@@ -72,7 +73,7 @@ Note, however, that you might need to choose another kernel if you increase the 
 kernel = GaussKernel{1}(shape_parameter = 1.8)
 itp = interpolate(nodeset, values, kernel)
 plot(many_nodes, f, label = "Original function")
-plot!(many_nodes, itp)
+plot!(many_nodes, itp, yrange = (0.0, 5.0))
 savefig("interpolation_oscillatory_1_5.png") # hide
 nothing # hide
 ```

@@ -1,4 +1,4 @@
-using TrixiTest: @trixi_test_nowarn
+using TrixiTest: @trixi_test_nowarn, get_kwarg
 
 """
     test_include_example(example; l2=nothing, linf=nothing,
@@ -118,17 +118,4 @@ macro test_include_example(example, args...)
         # Clean up
         rm("out"; force = true, recursive = true)
     end
-end
-
-# Get the first value assigned to `keyword` in `args` and return `default_value`
-# if there are no assignments to `keyword` in `args`.
-function get_kwarg(args, keyword, default_value)
-    val = default_value
-    for arg in args
-        if arg.head == :(=) && arg.args[1] == keyword
-            val = arg.args[2]
-            break
-        end
-    end
-    return val
 end

@@ -28,11 +28,11 @@ end
 
 function kernel_matrix(nodeset1::NodeSet{Dim}, nodeset2::NodeSet{Dim},
                        kernel::AbstractKernel{Dim}) where {Dim}
-    kernel_matrix(StandardBasis(nodeset1, kernel), nodeset2)
+    return kernel_matrix(StandardBasis(nodeset1, kernel), nodeset2)
 end
 
 function kernel_matrix(nodeset::NodeSet, kernel::AbstractKernel)
-    kernel_matrix(nodeset, nodeset, kernel)
+    return kernel_matrix(nodeset, nodeset, kernel)
 end
 
 """
@@ -99,8 +99,8 @@ end
 function interpolation_matrix(centers::NodeSet, kernel::AbstractKernel, ps,
                               regularization::AbstractRegularization = NoRegularization();
                               factorization_method = Symmetric)
-    interpolation_matrix(StandardBasis(centers, kernel), ps, regularization;
-                         factorization_method)
+    return interpolation_matrix(StandardBasis(centers, kernel), ps, regularization;
+                                factorization_method)
 end
 
 @doc raw"""
@@ -151,8 +151,8 @@ function least_squares_matrix(centers::NodeSet, nodeset::NodeSet, kernel::Abstra
                               ps,
                               regularization::AbstractRegularization = NoRegularization();
                               factorization_method = Matrix)
-    least_squares_matrix(StandardBasis(centers, kernel), nodeset, ps, regularization;
-                         factorization_method)
+    return least_squares_matrix(StandardBasis(centers, kernel), nodeset, ps, regularization;
+                                factorization_method)
 end
 
 @doc raw"""
@@ -206,8 +206,8 @@ function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, ce
 end
 
 function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
-    pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
-                        merge(nodeset_inner, nodeset_boundary), kernel)
+    return pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
+                               merge(nodeset_inner, nodeset_boundary), kernel)
 end
 
 @doc raw"""
