@@ -34,7 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.11'
+          - '1.10'
           # - '~1.9.0-0' # including development versions
           # - 'nightly'
         os:
@@ -51,14 +51,12 @@ jobs:
           skip: LinearAlgebra,Printf,Test,Random
           projects: ., test
           mode: forcedeps
-      - uses: julia-actions/julia-buildpkg@v1
-        env:
-          PYTHON: ""
-      - name: Run tests without coverage
-        uses: julia-actions/julia-runtest@v1
-        with:
-          coverage: false
-          allow_reresolve: false
-          force_latest_compatible_version: false
-        env:
-          PYTHON: ""
+      - name: Run tests
+        run: |
+          julia --project=test --color=yes -e '
+            import Pkg
+            Pkg.develop(Pkg.PackageSpec(path=pwd()))
+            Pkg.instantiate()
+            Pkg.status(; mode = Pkg.PKGMODE_MANIFEST)
+            include("test/runtests.jl")
+          '
