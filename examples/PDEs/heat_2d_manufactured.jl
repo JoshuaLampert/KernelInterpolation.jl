@@ -23,13 +23,13 @@ kernel = WendlandKernel{2}(3, shape_parameter = 0.3)
 sd = Semidiscretization(pde, nodeset_inner, g, nodeset_boundary, u, kernel)
 tspan = (0.0, 1.0)
 ode = semidiscretize(sd, tspan)
-save_solution_callback = SaveSolutionCallback(interval = 10,
+save_solution_callback = SaveSolutionCallback(dt = 0.01,
                                               extra_functions = ((t, x) -> u(t, x, pde),),
                                               keys = ["itp", "u"])
 alive_callback = AliveCallback(interval = 5)
 summary_callback = SummaryCallback()
 callback = CallbackSet(alive_callback, summary_callback, save_solution_callback)
-sol = solve(ode, Rodas5P(), adaptive = false, dt = 0.01, saveat = 0.01, callback = callback)
+sol = solve(ode, Rodas5P(), saveat = 0.01, callback = callback)
 titp = TemporalInterpolation(sol)
 
 many_nodes = homogeneous_hypercube(20; dim = 2)
