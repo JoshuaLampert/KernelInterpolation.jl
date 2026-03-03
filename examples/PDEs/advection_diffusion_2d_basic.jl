@@ -24,7 +24,7 @@ tspan = (0.0, 1.0)
 ode = semidiscretize(sd, tspan)
 
 save_solution = SaveSolutionCallback(dt = 0.01)
-alive = AliveCallback(interval = 5)
+alive = AliveCallback(interval = 10)
 summary = SummaryCallback()
 callbacks = CallbackSet(alive, summary, save_solution)
 sol = solve(ode, Rodas5P(), saveat = 0.01, callback = callbacks)
