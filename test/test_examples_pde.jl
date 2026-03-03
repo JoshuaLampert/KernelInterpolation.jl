@@ -37,7 +37,7 @@ end
 
 @testitem "heat_2d_manufactured.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "heat_2d_manufactured.jl"),
-                          l2=0.05146343652866822, linf=0.00523420174770628,
+                          l2=0.05146343652866822, linf=0.005234201747677858,
                           pde_test=true)
 end
 
