@@ -70,13 +70,16 @@ macro test_include_example(example, args...)
                 end
             else
                 # PDE test
+                # On julia v1.12, we get world age errors when trying to access the PDE from the example, so we need to redefine it here,
+                # which surprisingly already fixes the issue.
+                pde_2 = pde
                 # assumes `many_nodes`, `nodes_inner` and `nodeset_boundary` are defined in the example
                 # if `u` is defined, it is used to compare the solution (analytical solution or initial condition) using the l2 and linf norms
-                if pde isa KernelInterpolation.AbstractStationaryEquation
+                if pde_2 isa KernelInterpolation.AbstractStationaryEquation
                     if !$least_square_test
-                        rhs_values = KernelInterpolation.rhs(nodeset_inner, pde)
+                        rhs_values = KernelInterpolation.rhs(nodeset_inner, pde_2)
                         for i in eachindex(nodeset_inner)
-                            @test isapprox(pde(itp, nodeset_inner[i]), rhs_values[i],
+                            @test isapprox(pde_2(itp, nodeset_inner[i]), rhs_values[i],
                                            atol = $atol, rtol = $rtol)
                         end
                         values_boundary = g.(nodeset_boundary)
@@ -85,15 +88,15 @@ macro test_include_example(example, args...)
                     itp2 = itp
 
                     if @isdefined u
-                        many_values = u.(many_nodes, Ref(pde))
+                        many_values = u.(many_nodes, Ref(pde_2))
                     end
-                elseif pde isa KernelInterpolation.AbstractTimeDependentEquation
+                elseif pde_2 isa KernelInterpolation.AbstractTimeDependentEquation
                     t = last(tspan)
                     values_boundary = g.(t, nodeset_boundary)
                     itp2 = titp(t)
 
                     if @isdefined u
-                        many_values = u.(Ref(t), many_nodes, Ref(pde))
+                        many_values = u.(Ref(t), many_nodes, Ref(pde_2))
                     end
                 else
                     error("Unknown PDE type")
