@@ -9,4 +9,4 @@ jobs:
       - uses: JoshuaLampert/julia-format@a32e6b9b4ef8b54f970cacf9f59e721bbf11e80d
         with:
           version: '1' # Set `version` to '1.0.54' if you need to use JuliaFormatter.jl v1.0.54 (default: '1')
-          paths: 'test/'
+          paths: 'test,src'
