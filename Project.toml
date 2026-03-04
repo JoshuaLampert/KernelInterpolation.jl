@@ -1,6 +1,6 @@
 name = "KernelInterpolation"
 uuid = "95686e15-3c94-4443-8f08-76d06d509f7b"
-version = "0.3.9-DEV"
+version = "0.3.10-DEV"
 authors = ["Joshua Lampert <joshua.lampert@uni-hamburg.de> and contributors"]
 
 [deps]
@@ -40,7 +40,7 @@ Reexport = "1.2.2"
 SciMLBase = "2.78"
 SimpleUnPack = "1.1"
 SpecialFunctions = "2"
-StaticArrays = "1.9.7"
+StaticArrays = "1.9.8"
 TimerOutputs = "0.5.25"
 TrixiBase = "0.1.6"
 TypedPolynomials = "0.4.1"
