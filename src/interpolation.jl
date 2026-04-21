@@ -212,6 +212,7 @@ function (itp::Interpolation)(x)
         s += c[j] * bas[j](x)
     end
 
+    # This works also for the `LagrangeBasis` because it does not have additional polynomials, i.e., `d` is empty
     d = polynomial_coefficients(itp)
     ps = polynomial_basis(itp)
     xx = polyvars(itp)
@@ -235,6 +236,17 @@ function (diff_op_or_pde::Union{AbstractDifferentialOperator, AbstractStationary
     s = zero(eltype(x))
     for j in eachindex(c)
         s += c[j] * diff_op_or_pde(kernel, x, xis[j])
+    end
+    return s
+end
+
+function (diff_op_or_pde::Union{AbstractDifferentialOperator, AbstractStationaryEquation})(itp::Interpolation{<:LagrangeBasis},
+                                                                                           x)
+    c = kernel_coefficients(itp)
+    bas = basis(itp)
+    s = zero(eltype(x))
+    for j in eachindex(c)
+        s += c[j] * diff_op_or_pde(bas[j], x)
     end
     return s
 end

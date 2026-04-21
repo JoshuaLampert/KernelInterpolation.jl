@@ -74,10 +74,8 @@ function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, Rea
                                                                                             RealT
                                                                                             }
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis = spatial_discretization
-    @unpack centers, kernel = basis
 
-    system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, centers,
-                                        kernel)
+    system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
     b = [rhs(nodeset_inner, equations); boundary_condition.(nodeset_boundary)]
     c = system_matrix \ b
 
@@ -97,7 +95,7 @@ end
 Semidiscretization of a partial differential equation with Dirichlet boundary conditions and initial condition `initial_condition`. The `boundary_condition` function
 can be time- and space-dependent. The `initial_condition` function is time- and space-dependent to be able to reuse it as analytical solution if available. If no
 analytical solution is available, the time variable can be ignored in the `initial_condition` function. The `centers` are the centers of the kernel functions. By default,
-`centers` is set to `merge(nodeset_inner, nodeset_boundary)`. Note that `centers` needs to have the center number of nodes as the number of nodes in the domain and on the boundary
+`centers` is set to `merge(nodeset_inner, nodeset_boundary)`. Note that `centers` needs to have the same number of nodes as the number of nodes in the domain and on the boundary
 because OrdinaryDiffEq.jl does not support DAEs with rectangular mass matrices.
 
 See also [`SpatialDiscretization`](@ref), [`semidiscretize`](@ref).

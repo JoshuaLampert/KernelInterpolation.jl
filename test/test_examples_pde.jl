@@ -11,6 +11,12 @@ end
                           pde_test=true)
 end
 
+@testitem "poisson_2d_lagrange_basis.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "poisson_2d_lagrange_basis.jl"),
+                          l2=0.05189287444793586, linf=0.00962327274766674,
+                          pde_test=true)
+end
+
 @testitem "laplace_2d_annulus.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     # No analytical solution available (don't compare l2 and linf norms)
     @test_include_example(joinpath(EXAMPLES_DIR, "laplace_2d_annulus.jl"),
