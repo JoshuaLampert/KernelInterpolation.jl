@@ -251,6 +251,17 @@ function (diff_op_or_pde::Union{AbstractDifferentialOperator, AbstractStationary
     return s
 end
 
+function (equations::AbstractTimeDependentEquation)(itp::Interpolation, x)
+    kernel = interpolation_kernel(itp)
+    xis = centers(itp)
+    c = kernel_coefficients(itp)
+    s = zero(eltype(x))
+    for j in eachindex(c)
+        s += c[j] * equations(kernel, x, xis[j])
+    end
+    return s
+end
+
 function (g::Gradient)(itp::Interpolation, x)
     kernel = interpolation_kernel(itp)
     xis = centers(itp)
@@ -331,14 +342,12 @@ function (titp::TemporalInterpolation)(t)
     ode_sol = titp.ode_sol
     semi = ode_sol.prob.p
     @unpack nodeset_inner, boundary_condition, nodeset_boundary, basis = semi.spatial_discretization
-    @unpack centers, kernel = basis
     c = ode_sol(t)
     # Do not support additional polynomial basis for now
     xx = polyvars(dim(semi))
     ps = monomials(xx, 0:-1)
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    itp = Interpolation(StandardBasis(centers, kernel), nodeset, c,
-                        semi.cache.mass_matrix, ps, xx)
+    itp = Interpolation(basis, nodeset, c, semi.cache.mass_matrix, ps, xx)
     return itp
 end
 

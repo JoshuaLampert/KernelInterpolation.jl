@@ -94,9 +94,12 @@ end
 
 Semidiscretization of a partial differential equation with Dirichlet boundary conditions and initial condition `initial_condition`. The `boundary_condition` function
 can be time- and space-dependent. The `initial_condition` function is time- and space-dependent to be able to reuse it as analytical solution if available. If no
-analytical solution is available, the time variable can be ignored in the `initial_condition` function. The `centers` are the centers of the kernel functions. By default,
-`centers` is set to `merge(nodeset_inner, nodeset_boundary)`. Note that `centers` needs to have the same number of nodes as the number of nodes in the domain and on the boundary
-because OrdinaryDiffEq.jl does not support DAEs with rectangular mass matrices.
+analytical solution is available, the time variable can be ignored in the `initial_condition` function.
+If a basis is passed via [`SpatialDiscretization`](@ref), this basis is used consistently in the semidiscretization.
+For convenience constructors with `centers` and `kernel`, a [`StandardBasis`](@ref) is used and by default
+`centers` is set to `merge(nodeset_inner, nodeset_boundary)`.
+The number of basis functions must be equal to the number of inner and boundary nodes because OrdinaryDiffEq.jl
+does not support DAEs with rectangular mass matrices.
 
 See also [`SpatialDiscretization`](@ref), [`semidiscretize`](@ref).
 """
@@ -109,18 +112,17 @@ end
 function Semidiscretization(spatial_discretization::SpatialDiscretization,
                             initial_condition)
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis = spatial_discretization
-    @unpack centers, kernel = basis
-    @assert length(centers)==length(nodeset_inner) + length(nodeset_boundary) "The number of centers must be equal to the number of inner and boundary nodes."
-    k_matrix_inner = kernel_matrix(centers, nodeset_inner, kernel)
-    k_matrix_boundary = kernel_matrix(centers, nodeset_boundary, kernel)
-    # whole kernel matrix is not needed for rhs, but for initial condition
-    k_matrix = [k_matrix_inner
-                k_matrix_boundary]
-    pdeb_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, centers,
-                                      kernel)
-    m_matrix = [k_matrix_inner
-                zeros(eltype(k_matrix_inner), size(k_matrix_boundary)...)]
-    cache = (; kernel_matrix = k_matrix, mass_matrix = m_matrix,
+    nodeset = merge(nodeset_inner, nodeset_boundary)
+    @assert length(basis) == length(nodeset) "The basis must have the same number of functions as the number of inner and boundary nodes."
+    basis_matrix_inner = kernel_matrix(basis, nodeset_inner)
+    basis_matrix_boundary = kernel_matrix(basis, nodeset_boundary)
+    # whole basis matrix is not needed for rhs, but for initial condition
+    basis_matrix = [basis_matrix_inner
+                    basis_matrix_boundary]
+    pdeb_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
+    m_matrix = [basis_matrix_inner
+                zeros(eltype(basis_matrix_inner), size(basis_matrix_boundary)...)]
+    cache = (; kernel_matrix = basis_matrix, mass_matrix = m_matrix,
              pde_boundary_matrix = pdeb_matrix)
     return Semidiscretization{typeof(initial_condition), typeof(cache)}(spatial_discretization,
                                                                         initial_condition,
