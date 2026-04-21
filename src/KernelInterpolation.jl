@@ -13,7 +13,7 @@ module KernelInterpolation
 
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
 using ForwardDiff: ForwardDiff
-using LinearAlgebra: Symmetric, I, norm, tr, dot, diagind
+using LinearAlgebra: Symmetric, I, norm, tr, dot, diagind, svdvals, cond
 using Printf: @sprintf
 using Random: Random
 using ReadVTK: VTKFile, get_points, get_point_data, get_data
@@ -22,6 +22,7 @@ using SciMLBase: ODEFunction, ODEProblem, ODESolution, DiscreteCallback, u_modif
 using SimpleUnPack: @unpack
 using SpecialFunctions: besselk, loggamma
 using StaticArrays: StaticArrays, MVector, SVector
+using SparseArrays: sparse
 using Reexport: @reexport
 using TimerOutputs: TimerOutputs, print_timer, reset_timer!
 @reexport using TrixiBase: trixi_include
@@ -40,8 +41,12 @@ include("regularization.jl")
 include("differential_operators.jl")
 include("equations.jl")
 include("kernel_matrices.jl")
+include("rbf_fd_weights.jl")
+include("rbf_fd_basis.jl")
+include("rbf_fd_matrices.jl")
 include("interpolation.jl")
 include("discretization.jl")
+include("rbf_fd_discretization.jl")
 include("callbacks_step/callbacks_step.jl")
 include("visualization.jl")
 include("io.jl")
@@ -54,6 +59,8 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        Matern52Kernel, Matern72Kernel, RieszKernel,
        TransformationKernel, ProductKernel, SumKernel
 export StandardBasis, LagrangeBasis
+export AbstractStencilSelection, KNearestNeighbors, RadiusSearch
+export RBFFDBasis, RBFFiniteDifferenceDiscretization, RBFFDSemidiscretization
 export phi, Phi, order
 export PartialDerivative, Gradient, Laplacian, EllipticOperator
 export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation,
@@ -66,7 +73,10 @@ export NodeSet, empty_nodeset, separation_distance, dim, eachdim,
 export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
        polynomial_coefficients, polynomial_basis, polyvars, system_matrix,
        interpolate, solve_stationary, kernel_inner_product, kernel_norm,
-       kernel_matrix, operator_matrix
+    kernel_matrix, operator_matrix, pde_boundary_matrix
+export rbf_fd_weights, rbf_fd_weights_at_node, rbf_fd_weights_all_nodes,
+       rbf_fd_pde_matrix, rbf_fd_boundary_matrix, rbf_fd_pde_boundary_matrix,
+       select_neighbors
 export Interpolation, TemporalInterpolation
 export AliveCallback, SaveSolutionCallback, SummaryCallback
 export vtk_save, vtk_read

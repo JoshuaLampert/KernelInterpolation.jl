@@ -76,7 +76,7 @@ Base.getindex(basis::StandardBasis, i) = x -> basis.kernel(x, centers(basis)[i])
     LagrangeBasis(centers, kernel, m = order(kernel))
 
 The Lagrange (or cardinal) basis with respect to a kernel and a [`NodeSet`](@ref) of `centers`. This basis
-already includes polynomial augmentation of degree `m` defaulting to `order(kernel)`. The basis functions are given such that
+already includes polynomial augmentation of order `m` defaulting to `order(kernel)`. The basis functions are given such that
 
 ```math
     b_j(x_i) = \delta_{ij},

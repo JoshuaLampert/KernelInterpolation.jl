@@ -95,6 +95,39 @@ For more sophisticated examples also involving solving stationary or time-depend
 [documentation](https://joshualampert.github.io/KernelInterpolation.jl/dev/pdes).
 More examples can be found in the [`examples/`](https://github.com/JoshuaLampert/KernelInterpolation.jl/tree/main/examples) subdirectory.
 
+### RBF-FD Discretization
+
+KernelInterpolation.jl also supports local radial basis function finite differences (RBF-FD) for PDE discretization.
+Compared with global Kansa collocation, RBF-FD assembles sparse operators from local stencils.
+
+```julia
+julia> pde = PoissonEquation((x, eq) -> 1.0)
+julia> nodeset_inner = homogeneous_hypercube(12, (0.1, 0.1), (0.9, 0.9); dim = 2)
+julia> nodeset_boundary = homogeneous_hypercube_boundary(4; dim = 2)
+julia> g(x) = 0.0
+julia> kernel = PolyharmonicSplineKernel{2}(3)
+
+julia> sd = RBFFiniteDifferenceDiscretization(pde, nodeset_inner, g, nodeset_boundary,
+                                              kernel;
+                                              stencil_selection = KNearestNeighbors(25),
+                                              m = order(kernel))
+julia> itp = solve_stationary(sd)
+```
+
+For time-dependent equations, use the same `Semidiscretization` and `semidiscretize` workflow:
+
+```julia
+julia> pde_t = HeatEquation(0.1, (t, x, eq) -> 0.0)
+julia> u0(t, x, eq) = sin(pi * x[1])
+julia> g_t(t, x) = 0.0
+
+julia> sd_t = RBFFiniteDifferenceDiscretization(pde_t, nodeset_inner, g_t,
+                                                nodeset_boundary, kernel;
+                                                stencil_selection = KNearestNeighbors(25))
+julia> semi = Semidiscretization(sd_t, u0)
+julia> ode = semidiscretize(semi, (0.0, 0.2))
+```
+
 ### Visualization
 
 In order to visualize the results, you need to have [Plots.jl](https://github.com/JuliaPlots/Plots.jl) installed and loaded
