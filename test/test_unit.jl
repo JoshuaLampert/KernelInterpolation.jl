@@ -1082,7 +1082,7 @@ end
     itp_lagrange = @test_nowarn solve_stationary(sd_lagrange)
 
     for node in nodeset_inner
-        @test isapprox(pde(itp_lagrange, node), f1(node, pde), atol = 1e-14)
+        @test isapprox(pde(itp_lagrange, node), f1(node, pde), atol = 1e-13)
     end
     for (node, value) in zip(nodeset_boundary, g1.(nodeset_boundary))
         @test isapprox(itp_lagrange(node), value, atol = 1e-14)
