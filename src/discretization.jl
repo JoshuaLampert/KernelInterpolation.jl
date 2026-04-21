@@ -113,7 +113,7 @@ function Semidiscretization(spatial_discretization::SpatialDiscretization,
                             initial_condition)
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis = spatial_discretization
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    @assert length(basis) == length(nodeset) "The basis must have the same number of functions as the number of inner and boundary nodes."
+    @assert length(basis)==length(nodeset) "The basis must have the same number of functions as the number of inner and boundary nodes."
     basis_matrix_inner = kernel_matrix(basis, nodeset_inner)
     basis_matrix_boundary = kernel_matrix(basis, nodeset_boundary)
     # whole basis matrix is not needed for rhs, but for initial condition
