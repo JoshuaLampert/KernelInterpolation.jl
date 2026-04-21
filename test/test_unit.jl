@@ -1204,6 +1204,51 @@ end
     @test typeof(@inferred itp([0.5f0, 0.5f0])) == Float32
 end
 
+@testitem "Kernel-based pde_boundary_matrix" setup=[Setup, AdditionalImports] begin
+    using KernelInterpolation: pde_boundary_matrix
+    # Setup from "solving PDEs" test
+    nodeset_inner = NodeSet([0.25 0.25
+                             0.75 0.25
+                             0.25 0.75
+                             0.75 0.75])
+    nodeset_boundary = NodeSet([0.0 0.0
+                                1.0 0.0
+                                0.0 1.0
+                                1.0 1.0])
+    kernel = Matern52Kernel{2}(shape_parameter = 0.5)
+    u1(x) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2]
+    f1(x, equations) = -4.0 # -Δu
+    pde = PoissonEquation(f1)
+
+    # Call pde_boundary_matrix with explicit centers and kernel
+    centers_explicit = merge(nodeset_inner, nodeset_boundary)
+    pdeb_matrix_explicit = pde_boundary_matrix(pde, nodeset_inner, nodeset_boundary,
+                                               centers_explicit, kernel)
+
+    # Call pde_boundary_matrix with just kernel (computes centers internally)
+    pdeb_matrix_implicit = pde_boundary_matrix(pde, nodeset_inner, nodeset_boundary, kernel)
+
+    # Verify both produce the same result
+    @test pdeb_matrix_explicit ≈ pdeb_matrix_implicit
+
+    # Verify they match the basis-aware version with StandardBasis
+    standard_basis = StandardBasis(merge(nodeset_inner, nodeset_boundary), kernel)
+    pdeb_matrix_basis = pde_boundary_matrix(pde, nodeset_inner, nodeset_boundary,
+                                            standard_basis)
+    @test pdeb_matrix_implicit ≈ pdeb_matrix_basis
+
+    # Verify matrix shape and structure (4 inner + 4 boundary = 8 rows total)
+    @test size(pdeb_matrix_explicit) == (8, 8)
+    @test size(pdeb_matrix_implicit) == (8, 8)
+    @test size(pdeb_matrix_basis) == (8, 8)
+
+    # Verify correctness by checking operator_matrix still works with kernel
+    # and produces same result as basis version
+    L_kernel = operator_matrix(pde, nodeset_inner, nodeset_boundary, kernel)
+    L_basis = operator_matrix(pde, nodeset_inner, nodeset_boundary, standard_basis)
+    @test L_kernel ≈ L_basis
+end
+
 @testitem "Callbacks" setup=[Setup, AdditionalImports] begin
     # AliveCallback
     alive_callback = AliveCallback(dt = 0.1)
