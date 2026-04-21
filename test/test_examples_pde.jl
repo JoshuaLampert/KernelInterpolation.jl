@@ -47,6 +47,11 @@ end
                           pde_test=true)
 end
 
+@testitem "heat_2d_lagrange_basis.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "heat_2d_lagrange_basis.jl"),
+                          pde_test=true)
+end
+
 @testitem "advection_1d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "advection_1d_basic.jl"),
                           l2=0.026436141175788297, linf=0.004194649552604207,
