@@ -16,7 +16,7 @@ nodeset_boundary = homogeneous_hypercube_boundary(n_boundary; dim = 2)
 g(x) = u(x, pde)
 
 centers = merge(nodeset_inner, nodeset_boundary)
-kernel = MultiquadricKernel{2}(shape_parameter = 2.0)
+kernel = WendlandKernel{2}(3, shape_parameter = 0.3)
 basis = LagrangeBasis(centers, kernel)
 sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, basis)
 itp = solve_stationary(sd)
