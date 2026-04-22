@@ -157,13 +157,18 @@ end
 
 @doc raw"""
     pde_matrix(diff_op_or_pde, nodeset1, nodeset2, kernel)
+    pde_matrix(diff_op_or_pde, nodeset, basis)
 
 Compute the matrix of a partial differential equation (or differential operator) with a given kernel. The matrix is defined as
 ```math
     (\tilde A_\mathcal{L})_{ij} = \mathcal{L}K(x_i, \xi_j),
 ```
 where ``\mathcal{L}`` is the differential operator (defined by the `equations`), ``K`` the `kernel`, ``x_i`` are the nodes
-in `nodeset1` and ``\xi_j`` are the nodes in `nodeset2`.
+in `nodeset1` and ``\xi_j`` are the nodes in `nodeset2`. If a `basis` is given, the matrix is defined as
+```math
+    (\tilde A_\mathcal{L})_{ij} = \mathcal{L}b_j(x_i),
+```
+where ``b_j`` are the basis functions in the `basis` and ``x_i`` are the nodes in `nodeset`.
 """
 function pde_matrix(diff_op_or_pde, nodeset1, nodeset2, kernel)
     n = length(nodeset1)
@@ -177,8 +182,27 @@ function pde_matrix(diff_op_or_pde, nodeset1, nodeset2, kernel)
     return A
 end
 
+function pde_matrix(diff_op_or_pde, nodeset::NodeSet, basis::LagrangeBasis)
+    n = length(nodeset)
+    m = length(basis)
+    A = Matrix{eltype(nodeset)}(undef, n, m)
+    basis_functions = collect(basis)
+    for i in eachindex(nodeset)
+        x_i = nodeset[i]
+        for j in eachindex(basis_functions)
+            A[i, j] = diff_op_or_pde(basis_functions[j], x_i)
+        end
+    end
+    return A
+end
+
+function pde_matrix(diff_op_or_pde, nodeset::NodeSet, basis::StandardBasis)
+    return pde_matrix(diff_op_or_pde, nodeset, centers(basis), interpolation_kernel(basis))
+end
+
 @doc raw"""
     pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, [centers,] kernel)
+    pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
 
 Compute the matrix of a partial differential equation (or differential operator) with a given kernel. The matrix is defined as
 ```math
@@ -194,6 +218,14 @@ and ``\tilde A`` is the kernel matrix for the boundary nodes:
 ```
 where ``\mathcal{L}`` is the differential operator (defined by the `equations`), ``K`` the `kernel`, ``x_i`` are the nodes
 in `nodeset_boundary` and ``\xi_j`` are the `centers`. By default, `centers` is set to `merge(nodeset_inner, nodeset_boundary)`.
+If a `basis` is given, the matrices are defined as
+```math
+    (\tilde A_\mathcal{L})_{ij} = \mathcal{L}b_j(x_i),
+```and ``\tilde A`` is the kernel matrix for the boundary nodes:
+```math
+    \tilde A_{ij} = b_j(x_i),
+```
+where ``\mathcal{L}`` is the differential operator (defined by the `equations`), ``b_j`` the basis functions in the `basis`, and ``x_i`` are the nodes in `nodeset_boundary`.
 
 See also [`pde_matrix`](@ref) and [`kernel_matrix`](@ref).
 """
@@ -205,12 +237,21 @@ function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, ce
             b_matrix]
 end
 
+function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
+                             basis::AbstractBasis)
+    pd_matrix = pde_matrix(diff_op_or_pde, nodeset_inner, basis)
+    b_matrix = kernel_matrix(basis, nodeset_boundary)
+    return [pd_matrix
+            b_matrix]
+end
+
 function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
     return pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
                                merge(nodeset_inner, nodeset_boundary), kernel)
 end
 
 @doc raw"""
+    operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
     operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
 
 Compute the operator matrix ``L`` discretizing ``\mathcal{L}`` for a given kernel. The operator matrix is defined as
@@ -218,12 +259,21 @@ Compute the operator matrix ``L`` discretizing ``\mathcal{L}`` for a given kerne
     L = A_\mathcal{L} A^{-1},
 ```
 where ``A_\mathcal{L}`` is the matrix of the differential operator (defined by the `equations`), and ``A`` the kernel matrix.
+If a `basis` is passed, `A` is built via [`kernel_matrix`](@ref) for that basis on
+`merge(nodeset_inner, nodeset_boundary)` and ``A_\mathcal{L}`` via
+[`pde_boundary_matrix`](@ref) for the same basis.
 
 See also [`pde_boundary_matrix`](@ref) and [`kernel_matrix`](@ref).
 """
-function operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
+function operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
+                         basis::AbstractBasis)
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    A = kernel_matrix(nodeset, kernel)
-    A_L = pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
+    A = kernel_matrix(basis, nodeset)
+    A_L = pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
     return A_L / A
+end
+
+function operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
+    basis = StandardBasis(merge(nodeset_inner, nodeset_boundary), kernel)
+    return operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
 end
