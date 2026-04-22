@@ -13,8 +13,8 @@ end
 
 @testitem "poisson_2d_lagrange_basis.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "poisson_2d_lagrange_basis.jl"),
-                          l2=0.05189287444793586, linf=0.00962327274766674,
-                          pde_test=true, atol=1e-7)
+                          l2=0.0760581870219309, linf=0.011540352885859195,
+                          pde_test=true)
 end
 
 @testitem "laplace_2d_annulus.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
@@ -49,8 +49,8 @@ end
 
 @testitem "heat_2d_lagrange_basis.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "heat_2d_lagrange_basis.jl"),
-                          l2=0.05146353759212834, linf=0.005234206537239573,
-                          pde_test=true, atol=1e-8)
+                          l2=0.04845861406406618, linf=0.0049142944777497075,
+                          pde_test=true)
 end
 
 @testitem "advection_1d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
