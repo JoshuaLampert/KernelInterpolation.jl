@@ -1,5 +1,7 @@
 abstract type AbstractEquation end
 
+const DifferentialOperatorOrEquation = Union{AbstractDifferentialOperator, AbstractEquation}
+
 abstract type AbstractStationaryEquation <: AbstractEquation end
 
 function rhs(nodeset::NodeSet, equations::AbstractStationaryEquation)

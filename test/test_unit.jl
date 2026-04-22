@@ -840,6 +840,32 @@ end
         @test isapprox(g_itp[i][1], d1_itp[i])
     end
 
+    # Gradient with LagrangeBasis
+    nodes_2d = NodeSet([0.0 0.0
+                        1.0 0.0
+                        0.0 1.0
+                        1.0 1.0])
+    f_2d(x) = x[1]^2 + x[2]^2
+    ff_2d = f_2d.(nodes_2d)
+    kernel_2d = GaussKernel{2}(shape_parameter = 1.0)
+    basis_lagrange = @test_nowarn LagrangeBasis(nodes_2d, kernel_2d)
+    itp_lagrange = @test_nowarn interpolate(basis_lagrange, ff_2d)
+
+    g = @test_nowarn Gradient()
+    d2 = @test_nowarn PartialDerivative(2)
+    test_points = NodeSet([0.25 0.25
+                           0.75 0.25
+                           0.25 0.75
+                           0.75 0.75])
+    g_itp_lagrange = @test_nowarn g.(Ref(itp_lagrange), test_points)
+    d1_itp_lagrange = @test_nowarn d1.(Ref(itp_lagrange), test_points)
+    d2_itp_lagrange = @test_nowarn d2.(Ref(itp_lagrange), test_points)
+
+    for i in eachindex(test_points)
+        @test isapprox(g_itp_lagrange[i][1], d1_itp_lagrange[i])
+        @test isapprox(g_itp_lagrange[i][2], d2_itp_lagrange[i])
+    end
+
     # TODO: test convergence orders of condition numbers depending on separation distance
 end
 
@@ -1075,9 +1101,31 @@ end
     x = [0.1, 0.08]
     @test isapprox(itp(x), u1(x), atol = 0.12)
 
+    # stationary PDE with LagrangeBasis
+    lagrange_basis = LagrangeBasis(merge(nodeset_inner, nodeset_boundary), kernel)
+    sd_lagrange = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary,
+                                        lagrange_basis)
+    itp_lagrange = @test_nowarn solve_stationary(sd_lagrange)
+
+    for node in nodeset_inner
+        @test isapprox(pde(itp_lagrange, node), f1(node, pde), atol = 1e-13)
+    end
+    for (node, value) in zip(nodeset_boundary, g1.(nodeset_boundary))
+        @test isapprox(itp_lagrange(node), value, atol = 1e-14)
+    end
+    @test isapprox(itp_lagrange(x), u1(x), atol = 0.12)
+    # Test if L * u = b also works with LagrangeBasis
+    nodes_lagrange = nodeset(itp_lagrange)
+    u_lagrange_values = itp_lagrange.(nodes_lagrange)
+    L_lagrange = operator_matrix(pde, nodeset_inner, nodeset_boundary, lagrange_basis)
+    b_lagrange_test = L_lagrange * u_lagrange_values
+    for (b_val, b_test_val) in zip(b, b_lagrange_test)
+        @test isapprox(b_val, b_test_val, atol = 1e-12)
+    end
+
     # time-dependent PDE
     u2(t, x, equations) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2] + t
-    f2(t, x, equations) = -3.0 # ∂_t u -Δu
+    f2(t, x, equations) = -3.0 # ∂_t u - Δu
     pde = HeatEquation(2.0, f2)
     g2(t, x) = u2(t, x, pde)
     semi = Semidiscretization(pde, nodeset_inner, g2, nodeset_boundary, u2, kernel)
@@ -1180,6 +1228,51 @@ end
     @test eltype(coefficients(itp)) == Float32
     @test eltype(system_matrix(itp)) == Float32
     @test typeof(@inferred itp([0.5f0, 0.5f0])) == Float32
+end
+
+@testitem "Kernel-based pde_boundary_matrix" setup=[Setup, AdditionalImports] begin
+    using KernelInterpolation: pde_boundary_matrix
+    # Setup from "solving PDEs" test
+    nodeset_inner = NodeSet([0.25 0.25
+                             0.75 0.25
+                             0.25 0.75
+                             0.75 0.75])
+    nodeset_boundary = NodeSet([0.0 0.0
+                                1.0 0.0
+                                0.0 1.0
+                                1.0 1.0])
+    kernel = Matern52Kernel{2}(shape_parameter = 0.5)
+    u1(x) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2]
+    f1(x, equations) = -4.0 # -Δu
+    pde = PoissonEquation(f1)
+
+    # Call pde_boundary_matrix with explicit centers and kernel
+    centers_explicit = merge(nodeset_inner, nodeset_boundary)
+    pdeb_matrix_explicit = pde_boundary_matrix(pde, nodeset_inner, nodeset_boundary,
+                                               centers_explicit, kernel)
+
+    # Call pde_boundary_matrix with just kernel (computes centers internally)
+    pdeb_matrix_implicit = pde_boundary_matrix(pde, nodeset_inner, nodeset_boundary, kernel)
+
+    # Verify both produce the same result
+    @test pdeb_matrix_explicit ≈ pdeb_matrix_implicit
+
+    # Verify they match the basis-aware version with StandardBasis
+    standard_basis = StandardBasis(merge(nodeset_inner, nodeset_boundary), kernel)
+    pdeb_matrix_basis = pde_boundary_matrix(pde, nodeset_inner, nodeset_boundary,
+                                            standard_basis)
+    @test pdeb_matrix_implicit ≈ pdeb_matrix_basis
+
+    # Verify matrix shape and structure (4 inner + 4 boundary = 8 rows total)
+    @test size(pdeb_matrix_explicit) == (8, 8)
+    @test size(pdeb_matrix_implicit) == (8, 8)
+    @test size(pdeb_matrix_basis) == (8, 8)
+
+    # Verify correctness by checking operator_matrix still works with kernel
+    # and produces same result as basis version
+    L_kernel = operator_matrix(pde, nodeset_inner, nodeset_boundary, kernel)
+    L_basis = operator_matrix(pde, nodeset_inner, nodeset_boundary, standard_basis)
+    @test L_kernel ≈ L_basis
 end
 
 @testitem "Callbacks" setup=[Setup, AdditionalImports] begin
