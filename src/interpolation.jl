@@ -228,70 +228,42 @@ function (itp::Interpolation)(x::RealT) where {RealT <: Real}
     return itp([x])
 end
 
-function (diff_op_or_pde::Union{AbstractDifferentialOperator, AbstractStationaryEquation})(itp::Interpolation,
-                                                                                           x)
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation, x)
     kernel = interpolation_kernel(itp)
     xis = centers(itp)
     c = kernel_coefficients(itp)
-    s = zero(eltype(x))
     for j in eachindex(c)
         s += c[j] * diff_op_or_pde(kernel, x, xis[j])
     end
     return s
 end
 
-function (diff_op_or_pde::Union{AbstractDifferentialOperator, AbstractStationaryEquation})(itp::Interpolation{<:LagrangeBasis},
-                                                                                           x)
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(s,
+                                                          itp::Interpolation{<:LagrangeBasis},
+                                                          x)
     c = kernel_coefficients(itp)
     bas = basis(itp)
-    s = zero(eltype(x))
     for j in eachindex(c)
         s += c[j] * diff_op_or_pde(bas[j], x)
     end
     return s
 end
 
-function (equations::AbstractTimeDependentEquation)(itp::Interpolation, x)
-    kernel = interpolation_kernel(itp)
-    xis = centers(itp)
-    c = kernel_coefficients(itp)
-    s = zero(eltype(x))
-    for j in eachindex(c)
-        s += c[j] * equations(kernel, x, xis[j])
-    end
-    return s
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation, x)
+    return diff_op_or_pde(zero(eltype(x)), itp, x)
 end
 
-function (equations::AbstractTimeDependentEquation)(itp::Interpolation{<:LagrangeBasis},
-                                                    x)
-    c = kernel_coefficients(itp)
-    bas = basis(itp)
-    s = zero(eltype(x))
-    for j in eachindex(c)
-        s += c[j] * equations(bas[j], x)
-    end
-    return s
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation{<:LagrangeBasis},
+                                                          x)
+    return diff_op_or_pde(zero(eltype(x)), itp, x)
 end
 
 function (g::Gradient)(itp::Interpolation, x)
-    kernel = interpolation_kernel(itp)
-    xis = centers(itp)
-    c = kernel_coefficients(itp)
-    s = zero(x)
-    for j in eachindex(c)
-        s += c[j] * g(kernel, x, xis[j])
-    end
-    return s
+    return g(zero(x), itp, x)
 end
 
 function (g::Gradient)(itp::Interpolation{<:LagrangeBasis}, x)
-    c = kernel_coefficients(itp)
-    bas = basis(itp)
-    s = zero(x)
-    for j in eachindex(c)
-        s += c[j] * g(bas[j], x)
-    end
-    return s
+    return g(zero(x), itp, x)
 end
 
 # TODO: Does this also make sense for conditionally positive definite kernels?
