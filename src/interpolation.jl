@@ -262,6 +262,17 @@ function (equations::AbstractTimeDependentEquation)(itp::Interpolation, x)
     return s
 end
 
+function (equations::AbstractTimeDependentEquation)(itp::Interpolation{<:LagrangeBasis},
+                                                    x)
+    c = kernel_coefficients(itp)
+    bas = basis(itp)
+    s = zero(eltype(x))
+    for j in eachindex(c)
+        s += c[j] * equations(bas[j], x)
+    end
+    return s
+end
+
 function (g::Gradient)(itp::Interpolation, x)
     kernel = interpolation_kernel(itp)
     xis = centers(itp)
