@@ -840,6 +840,32 @@ end
         @test isapprox(g_itp[i][1], d1_itp[i])
     end
 
+    # Gradient with LagrangeBasis
+    nodes_2d = NodeSet([0.0 0.0
+                        1.0 0.0
+                        0.0 1.0
+                        1.0 1.0])
+    f_2d(x) = x[1]^2 + x[2]^2
+    ff_2d = f_2d.(nodes_2d)
+    kernel_2d = GaussKernel{2}(shape_parameter = 1.0)
+    basis_lagrange = @test_nowarn LagrangeBasis(nodes_2d, kernel_2d)
+    itp_lagrange = @test_nowarn interpolate(basis_lagrange, ff_2d)
+
+    g = @test_nowarn Gradient()
+    d2 = @test_nowarn PartialDerivative(2)
+    test_points = NodeSet([0.25 0.25
+                           0.75 0.25
+                           0.25 0.75
+                           0.75 0.75])
+    g_itp_lagrange = @test_nowarn g.(Ref(itp_lagrange), test_points)
+    d1_itp_lagrange = @test_nowarn d1.(Ref(itp_lagrange), test_points)
+    d2_itp_lagrange = @test_nowarn d2.(Ref(itp_lagrange), test_points)
+
+    for i in eachindex(test_points)
+        @test isapprox(g_itp_lagrange[i][1], d1_itp_lagrange[i])
+        @test isapprox(g_itp_lagrange[i][2], d2_itp_lagrange[i])
+    end
+
     # TODO: test convergence orders of condition numbers depending on separation distance
 end
 
