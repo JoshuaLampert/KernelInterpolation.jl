@@ -284,6 +284,16 @@ function (g::Gradient)(itp::Interpolation, x)
     return s
 end
 
+function (g::Gradient)(itp::Interpolation{<:LagrangeBasis}, x)
+    c = kernel_coefficients(itp)
+    bas = basis(itp)
+    s = zero(x)
+    for j in eachindex(c)
+        s += c[j] * g(bas[j], x)
+    end
+    return s
+end
+
 # TODO: Does this also make sense for conditionally positive definite kernels?
 @doc raw"""
     kernel_inner_product(itp1, itp2)
