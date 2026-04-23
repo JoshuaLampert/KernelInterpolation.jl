@@ -30,10 +30,11 @@ end
     equation = PoissonEquation(f)
     boundary_condition(x) = 0.0
 
-    disc = RBFFiniteDifferenceDiscretization(equation, nodeset_inner,
-                                             boundary_condition, nodeset_boundary,
-                                             GaussKernel{1}(shape_parameter = 2.0);
-                                             stencil_selection = KNearestNeighbors(4))
+    disc = SpatialDiscretization(equation, nodeset_inner,
+                                 boundary_condition, nodeset_boundary,
+                                 RBFFD(),
+                                 GaussKernel{1}(shape_parameter = 2.0);
+                                 stencil_selection = KNearestNeighbors(4))
 
     A = rbf_fd_pde_boundary_matrix(equation, nodeset_inner, nodeset_boundary, disc.basis)
     A_dispatch = pde_boundary_matrix(equation, nodeset_inner, nodeset_boundary, disc.basis)
@@ -61,10 +62,11 @@ end
     boundary_condition(t, x) = 0.0
     initial_condition(t, x, eq) = sin(pi * x[1])
 
-    disc = RBFFiniteDifferenceDiscretization(equation, nodeset_inner,
-                                             boundary_condition, nodeset_boundary,
-                                             GaussKernel{1}(shape_parameter = 2.0);
-                                             stencil_selection = KNearestNeighbors(4))
+    disc = SpatialDiscretization(equation, nodeset_inner,
+                                 boundary_condition, nodeset_boundary,
+                                 RBFFD(),
+                                 GaussKernel{1}(shape_parameter = 2.0);
+                                 stencil_selection = KNearestNeighbors(4))
 
     semi = Semidiscretization(disc, initial_condition)
     prob = semidiscretize(semi, (0.0, 0.1))

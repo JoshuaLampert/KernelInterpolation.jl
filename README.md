@@ -107,10 +107,10 @@ julia> nodeset_boundary = homogeneous_hypercube_boundary(4; dim = 2)
 julia> g(x) = 0.0
 julia> kernel = PolyharmonicSplineKernel{2}(3)
 
-julia> sd = RBFFiniteDifferenceDiscretization(pde, nodeset_inner, g, nodeset_boundary,
-                                              kernel;
-                                              stencil_selection = KNearestNeighbors(25),
-                                              m = order(kernel))
+julia> sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
+                                  RBFFD(), kernel;
+                                  stencil_selection = KNearestNeighbors(25),
+                                  m = order(kernel))
 julia> itp = solve_stationary(sd)
 ```
 
@@ -121,9 +121,9 @@ julia> pde_t = HeatEquation(0.1, (t, x, eq) -> 0.0)
 julia> u0(t, x, eq) = sin(pi * x[1])
 julia> g_t(t, x) = 0.0
 
-julia> sd_t = RBFFiniteDifferenceDiscretization(pde_t, nodeset_inner, g_t,
-                                                nodeset_boundary, kernel;
-                                                stencil_selection = KNearestNeighbors(25))
+julia> sd_t = SpatialDiscretization(pde_t, nodeset_inner, g_t,
+                                    nodeset_boundary, RBFFD(), kernel;
+                                    stencil_selection = KNearestNeighbors(25))
 julia> semi = Semidiscretization(sd_t, u0)
 julia> ode = semidiscretize(semi, (0.0, 0.2))
 ```

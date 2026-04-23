@@ -16,9 +16,10 @@ nodeset_boundary = homogeneous_hypercube_boundary(n_boundary; dim = 2)
 g(x) = u(x, pde)
 
 kernel = PolyharmonicSplineKernel{2}(3)
-sd = RBFFiniteDifferenceDiscretization(pde, nodeset_inner, g, nodeset_boundary, kernel;
-                                       stencil_selection = KNearestNeighbors(25),
-                                       m = order(kernel))
+sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
+                           RBFFD(), kernel;
+                           stencil_selection = KNearestNeighbors(25),
+                           m = order(kernel))
 itp = solve_stationary(sd)
 
 many_nodes = homogeneous_hypercube(20; dim = 2)

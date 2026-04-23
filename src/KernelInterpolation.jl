@@ -46,7 +46,6 @@ include("rbf_fd_basis.jl")
 include("rbf_fd_matrices.jl")
 include("interpolation.jl")
 include("discretization.jl")
-include("rbf_fd_discretization.jl")
 include("callbacks_step/callbacks_step.jl")
 include("visualization.jl")
 include("io.jl")
@@ -59,8 +58,9 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        Matern52Kernel, Matern72Kernel, RieszKernel,
        TransformationKernel, ProductKernel, SumKernel
 export StandardBasis, LagrangeBasis
+export AbstractSpatialMethod, Collocation, RBFFD
 export AbstractStencilSelection, KNearestNeighbors, RadiusSearch
-export RBFFDBasis, RBFFiniteDifferenceDiscretization, RBFFDSemidiscretization
+export RBFFDBasis
 export phi, Phi, order
 export PartialDerivative, Gradient, Laplacian, EllipticOperator
 export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation,
