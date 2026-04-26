@@ -35,7 +35,8 @@ using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
 @static if isdefined(SciMLBase, :derivative_discontinuity!)
     using SciMLBase: derivative_discontinuity!
 else
-    const derivative_discontinuity! = SciMLBase.u_modified!
+    using SciMLBase: u_modified!
+    const derivative_discontinuity! = u_modified!
 end
 
 # Define the AbstractInterpolation already here because they are needed in basis.jl
