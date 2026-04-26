@@ -8,7 +8,8 @@
     Aqua.test_all(KernelInterpolation, ambiguities = false, unbound_args = false)
     @test isnothing(check_no_implicit_imports(KernelInterpolation))
     @test isnothing(check_no_stale_explicit_imports(KernelInterpolation;
-                                                    ignore = (:trixi_include,)))
+                                                    ignore = (:trixi_include,
+                                                              :derivative_discontinuity!)))
     @test isnothing(check_all_qualified_accesses_via_owners(KernelInterpolation))
     @test isnothing(check_no_self_qualified_accesses(KernelInterpolation))
 end
