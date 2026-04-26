@@ -18,7 +18,7 @@ using Printf: @sprintf
 using Random: Random
 using ReadVTK: VTKFile, get_points, get_point_data, get_data
 using RecipesBase: RecipesBase, @recipe, @series
-using SciMLBase: ODEFunction, ODEProblem, ODESolution, DiscreteCallback
+using SciMLBase: SciMLBase, ODEFunction, ODEProblem, ODESolution, DiscreteCallback
 using SimpleUnPack: @unpack
 using SpecialFunctions: besselk, loggamma
 using StaticArrays: StaticArrays, MVector, SVector
@@ -35,8 +35,7 @@ using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
 @static if isdefined(SciMLBase, :derivative_discontinuity!)
     using SciMLBase: derivative_discontinuity!
 else
-    using SciMLBase: u_modified!
-    const derivative_discontinuity! = u_modified!
+    const derivative_discontinuity! = SciMLBase.u_modified!
 end
 
 # Define the AbstractInterpolation already here because they are needed in basis.jl
