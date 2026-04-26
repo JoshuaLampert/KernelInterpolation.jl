@@ -18,7 +18,7 @@ using Printf: @sprintf
 using Random: Random
 using ReadVTK: VTKFile, get_points, get_point_data, get_data
 using RecipesBase: RecipesBase, @recipe, @series
-using SciMLBase: ODEFunction, ODEProblem, ODESolution, DiscreteCallback, u_modified!
+using SciMLBase: ODEFunction, ODEProblem, ODESolution, DiscreteCallback
 using SimpleUnPack: @unpack
 using SpecialFunctions: besselk, loggamma
 using StaticArrays: StaticArrays, MVector, SVector
@@ -29,6 +29,14 @@ using TrixiBase: @trixi_timeit, timer
 using TypedPolynomials: Variable, monomials, degree
 using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
                 CollectionFile
+
+# To keep backwards compatibility with SciMLBase v2, see
+# https://github.com/trixi-framework/Trixi.jl/pull/2918#issuecomment-4233720339
+@static if isdefined(SciMLBase, :derivative_discontinuity!)
+    using SciMLBase: derivative_discontinuity!
+else
+    const derivative_discontinuity! = SciMLBase.u_modified!
+end
 
 # Define the AbstractInterpolation already here because they are needed in basis.jl
 abstract type AbstractInterpolation{Basis, Dim, RealT} end

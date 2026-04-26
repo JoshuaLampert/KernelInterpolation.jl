@@ -105,7 +105,7 @@ function (alive_callback::AliveCallback)(integrator)
             @sprintf("│ run time: %.4e s", runtime_absolute))
 
     # avoid re-evaluating possible FSAL stages
-    u_modified!(integrator, false)
+    derivative_discontinuity!(integrator, false)
     return nothing
 end
 
