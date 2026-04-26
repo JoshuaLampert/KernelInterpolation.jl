@@ -118,7 +118,7 @@ struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation, Monomials, 
     end
 end
 
-Base.getindex(basis::LagrangeBasis, i) = x -> basis.basis_functions[i](x)
+Base.getindex(basis::LagrangeBasis, i) = basis.basis_functions[i]
 Base.collect(basis::LagrangeBasis) = basis.basis_functions
 # Polynomials are already inherently defined included in the basis
 order(::LagrangeBasis) = 0
