@@ -60,6 +60,7 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
 export StandardBasis, LagrangeBasis
 export AbstractSpatialMethod, Collocation, RBFFD
 export AbstractStencilSelection, KNearestNeighbors, RadiusSearch
+export AbstractRBFDLocalBasis, RBFDStandardBasis, RBFDCardinalBasis
 export RBFFDBasis
 export phi, Phi, order
 export PartialDerivative, Gradient, Laplacian, EllipticOperator

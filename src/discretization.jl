@@ -26,7 +26,8 @@ struct RBFFD <: AbstractSpatialMethod end
                           [centers,] kernel = GaussKernel{dim(nodeset_inner)}())
     SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary,
                           RBFFD(), kernel = GaussKernel{dim(nodeset_inner)}();
-                          stencil_selection = KNearestNeighbors(), m = order(kernel))
+                          stencil_selection = KNearestNeighbors(), m = order(kernel),
+                          local_basis = RBFFDStandardBasis())
 
 Spatial discretization of a partial differential equation with Dirichlet boundary conditions.
 The `nodeset_inner` are the nodes in the domain and `nodeset_boundary` are the nodes on the boundary. The `boundary_condition`
@@ -51,8 +52,8 @@ struct SpatialDiscretization{Dim, RealT, Equations, BoundaryCondition,
                                    basis) where {Dim, RealT}
         return new{Dim, RealT, typeof(equations), typeof(boundary_condition),
                    typeof(method), typeof(basis)}(equations, nodeset_inner,
-                                  boundary_condition, nodeset_boundary,
-                                  method, basis)
+                                                  boundary_condition, nodeset_boundary,
+                                                  method, basis)
     end
 end
 
@@ -77,9 +78,9 @@ function SpatialDiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
                                nodeset_boundary::NodeSet{Dim, RealT},
                                centers::NodeSet{Dim, RealT},
                                kernel::AbstractKernel{Dim} = GaussKernel{Dim}()) where {
-                                                                                       Dim,
-                                                                                       RealT
-                                                                                       }
+                                                                                        Dim,
+                                                                                        RealT
+                                                                                        }
     return SpatialDiscretization(equations, nodeset_inner, boundary_condition,
                                  nodeset_boundary, Collocation(),
                                  StandardBasis(centers, kernel))
@@ -89,9 +90,9 @@ function SpatialDiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
                                boundary_condition,
                                nodeset_boundary::NodeSet{Dim, RealT},
                                kernel::AbstractKernel{Dim} = GaussKernel{Dim}()) where {
-                                                                                       Dim,
-                                                                                       RealT
-                                                                                       }
+                                                                                        Dim,
+                                                                                        RealT
+                                                                                        }
     return SpatialDiscretization(equations, nodeset_inner, boundary_condition,
                                  nodeset_boundary,
                                  merge(nodeset_inner, nodeset_boundary), kernel)
@@ -103,9 +104,9 @@ function SpatialDiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
                                ::Collocation,
                                centers::NodeSet{Dim, RealT},
                                kernel::AbstractKernel{Dim} = GaussKernel{Dim}()) where {
-                                                                                       Dim,
-                                                                                       RealT
-                                                                                       }
+                                                                                        Dim,
+                                                                                        RealT
+                                                                                        }
     return SpatialDiscretization(equations, nodeset_inner, boundary_condition,
                                  nodeset_boundary, Collocation(),
                                  StandardBasis(centers, kernel))
@@ -116,9 +117,9 @@ function SpatialDiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
                                nodeset_boundary::NodeSet{Dim, RealT},
                                ::Collocation,
                                kernel::AbstractKernel{Dim} = GaussKernel{Dim}()) where {
-                                                                                       Dim,
-                                                                                       RealT
-                                                                                       }
+                                                                                        Dim,
+                                                                                        RealT
+                                                                                        }
     return SpatialDiscretization(equations, nodeset_inner, boundary_condition,
                                  nodeset_boundary, Collocation(),
                                  merge(nodeset_inner, nodeset_boundary), kernel)
@@ -130,9 +131,13 @@ function SpatialDiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
                                ::RBFFD,
                                kernel::AbstractKernel{Dim} = GaussKernel{Dim}();
                                stencil_selection::AbstractStencilSelection = KNearestNeighbors(),
-                               m::Int = order(kernel)) where {Dim, RealT}
+                               m::Int = order(kernel),
+                               local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis()) where {
+                                                                                                   Dim,
+                                                                                                   RealT
+                                                                                                   }
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    basis = RBFFDBasis(nodeset, kernel, stencil_selection; m)
+    basis = RBFFDBasis(nodeset, kernel, stencil_selection; m, local_basis)
     return SpatialDiscretization(equations, nodeset_inner, boundary_condition,
                                  nodeset_boundary, RBFFD(), basis)
 end

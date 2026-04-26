@@ -7,6 +7,30 @@ are selected for each local finite difference stencil.
 abstract type AbstractStencilSelection end
 
 """
+    AbstractRBFFDLocalBasis
+
+Abstract type selecting the local basis representation used to compute RBF-FD weights.
+"""
+abstract type AbstractRBFFDLocalBasis end
+
+"""
+    RBFFDStandardBasis()
+
+Compute local RBF-FD weights by solving the local kernel (or kernel+polynomial) system.
+"""
+struct RBFFDStandardBasis <: AbstractRBFFDLocalBasis end
+Base.show(io::IO, ::RBFFDStandardBasis) = print(io, "RBFFDStandardBasis")
+
+"""
+    RBFFDLagrangeBasis()
+
+Compute local RBF-FD weights from local cardinal (Lagrange) basis functions
+on each stencil, i.e., `w_j = 𝓛 ℓ_j(x_i)`.
+"""
+struct RBFFDLagrangeBasis <: AbstractRBFFDLocalBasis end
+Base.show(io::IO, ::RBFFDLagrangeBasis) = print(io, "RBFFDLagrangeBasis")
+
+"""
     KNearestNeighbors(k::Int)
 
 Stencil selection strategy using k-nearest neighbors. Each interior point uses its `k` nearest
@@ -25,7 +49,7 @@ end
 
 KNearestNeighbors() = KNearestNeighbors(25)
 
-Base.show(io::IO, ::KNearestNeighbors) = print(io, "KNearestNeighbors")
+Base.show(io::IO, ss::KNearestNeighbors) = print(io, "KNearestNeighbors(k=$(ss.k))")
 
 """
     RadiusSearch(radius::Float64)
@@ -204,9 +228,34 @@ function _polynomial_rhs(diff_op_or_pde, ps, xx, x_i)
     end
 end
 
+function _rbf_fd_cardinal_weights(diff_op_or_pde, x_i::AbstractVector,
+                                  neighbor_nodes::NodeSet, kernel::AbstractKernel;
+                                  m::Int = order(kernel))
+    local_basis = LagrangeBasis(neighbor_nodes, kernel; m)
+    first_value = diff_op_or_pde(local_basis[1], x_i)
+    if first_value isa Number
+        weights = Vector{typeof(first_value)}(undef, length(local_basis))
+        weights[1] = first_value
+        for j in 2:length(local_basis)
+            weights[j] = diff_op_or_pde(local_basis[j], x_i)
+        end
+        return weights
+    elseif first_value isa AbstractVector
+        d = length(first_value)
+        weights = Matrix{eltype(first_value)}(undef, length(local_basis), d)
+        weights[1, :] .= first_value
+        for j in 2:length(local_basis)
+            weights[j, :] .= diff_op_or_pde(local_basis[j], x_i)
+        end
+        return weights
+    else
+        throw(ArgumentError("Unsupported operator output type $(typeof(first_value)) for cardinal RBF-FD weights."))
+    end
+end
+
 """
     rbf_fd_weights(diff_op_or_pde, x_i, neighbor_nodes, kernel;
-                   m = order(kernel))
+                   m = order(kernel), local_basis = RBFFDStandardBasis())
 
 Compute RBF-FD finite difference weights for a given interior point and its stencil.
 
@@ -222,6 +271,8 @@ approximation \$\\mathcal{L}u_h(x_i) ≈ \\sum_{j ∈ stencil} w_j u_j\$ holds w
 - `kernel::AbstractKernel`: Kernel used for local interpolation
 - `m::Int`: Polynomial order parameter. If `m = 0`, no polynomial is added. If `m > 0`,
   monomials up to degree `m - 1` are included.
+- `local_basis::AbstractRBFFDLocalBasis`: Local basis strategy (`RBFFDStandardBasis()` or
+    `RBFFDCardinalBasis()`).
 
 # Returns
 - `weights`: Finite difference weights, vector for scalar operators and matrix for vector operators
@@ -234,8 +285,27 @@ approximation \$\\mathcal{L}u_h(x_i) ≈ \\sum_{j ∈ stencil} w_j u_j\$ holds w
 """
 function rbf_fd_weights(diff_op_or_pde, x_i::AbstractVector,
                         neighbor_nodes::NodeSet, kernel::AbstractKernel;
-                        m::Int = order(kernel))
+                        m::Int = order(kernel),
+                        local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis())
     m >= 0 || throw(ArgumentError("m must be >= 0, got $m"))
+
+    if local_basis isa RBFFDCardinalBasis
+        weights = _rbf_fd_cardinal_weights(diff_op_or_pde, x_i, neighbor_nodes, kernel; m)
+        k_matrix = kernel_matrix(neighbor_nodes, kernel)
+        svals = svdvals(k_matrix)
+        rank_tol = eps(eltype(svals)) * maximum(svals)
+        rank_est = count(>(rank_tol), svals)
+        info = (
+            stencil_size = length(neighbor_nodes),
+            condition_number = cond(k_matrix),
+            rank = rank_est,
+            singular_values = svals,
+            x_i = x_i,
+            local_basis = local_basis
+        )
+        return weights, info
+    end
+
     A = kernel_matrix(neighbor_nodes, kernel)
     rhs = _collect_operator_rhs(diff_op_or_pde, kernel, x_i, neighbor_nodes)
 
@@ -267,14 +337,16 @@ function rbf_fd_weights(diff_op_or_pde, x_i::AbstractVector,
         condition_number = cond(A),
         rank = rank_est,
         singular_values = svals,
-        x_i = x_i
+        x_i = x_i,
+        local_basis = local_basis
     )
     return weights, info
 end
 
 """
     rbf_fd_weights_at_node(kernel, operator, x_i, nodeset, stencil_selection::AbstractStencilSelection;
-                           center_nodes = nothing, m = order(kernel))
+                           center_nodes = nothing, m = order(kernel),
+                           local_basis = RBFFDStandardBasis())
 
 Convenience wrapper to compute FD weights at a single interior point with automatic neighbor selection.
 
@@ -286,6 +358,7 @@ Convenience wrapper to compute FD weights at a single interior point with automa
 - `stencil_selection::AbstractStencilSelection`: Strategy for selecting neighbors (KNearestNeighbors or RadiusSearch)
 - `center_nodes::NodeSet`: Nodes to use as kernel centers (default: neighbor nodes)
 - `m::Int`: Polynomial order parameter. If `m = 0`, no polynomial is added.
+- `local_basis::AbstractRBFFDLocalBasis`: Local basis strategy.
 
 # Returns
 - `weights::Vector`: Finite difference weights indexed by neighbor position in stencil
@@ -297,7 +370,8 @@ function rbf_fd_weights_at_node(kernel::AbstractKernel,
                                x_i::AbstractVector, nodeset::NodeSet,
                                stencil_selection::AbstractStencilSelection;
                                center_nodes::NodeSet = nothing,
-                               m::Int = order(kernel))
+                               m::Int = order(kernel),
+                               local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis())
 
     # Select neighbors
     neighbor_info = select_neighbors(x_i, nodeset, stencil_selection)
@@ -306,7 +380,7 @@ function rbf_fd_weights_at_node(kernel::AbstractKernel,
 
     # Compute weights
     weights, weight_info = rbf_fd_weights(operator, x_i, neighbor_info.nodes, kernel;
-                                          m)
+                                          m, local_basis)
 
     return weights, neighbor_info, weight_info
 end
@@ -315,7 +389,8 @@ end
 
 """
     rbf_fd_weights_all_nodes(kernel, operator, nodeset_interior, nodeset_centers,
-                            stencil_selection; m = order(kernel))
+                            stencil_selection; m = order(kernel),
+                            local_basis = RBFFDStandardBasis())
 
 Compute RBF-FD weights for all interior points. Returns a dictionary mapping each
 interior node index to its (weights, neighbor_info, diagnostics).
@@ -335,7 +410,8 @@ function rbf_fd_weights_all_nodes(kernel::AbstractKernel,
                                  nodeset_interior::NodeSet,
                                  nodeset_centers::NodeSet,
                                  stencil_selection::AbstractStencilSelection;
-                                 m::Int = order(kernel))
+                                 m::Int = order(kernel),
+                                 local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis())
 
     weight_dict = Dict()
 
@@ -343,7 +419,7 @@ function rbf_fd_weights_all_nodes(kernel::AbstractKernel,
         x_i = nodeset_interior[i]
         weights, neighbor_info, weight_info = rbf_fd_weights_at_node(
             kernel, operator, x_i, nodeset_centers, stencil_selection;
-            m
+            m, local_basis
         )
         weight_dict[i] = (weights, neighbor_info, weight_info)
     end
