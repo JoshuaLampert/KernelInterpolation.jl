@@ -31,7 +31,7 @@ function initialize_summary_callback(cb::DiscreteCallback, u, t, integrator)
 end
 
 # the summary callback does nothing when called accidentally
-(cb::SummaryCallback)(integrator) = u_modified!(integrator, false)
+(cb::SummaryCallback)(integrator) = derivative_discontinuity!(integrator, false)
 
 # At the end of the simulation, the timer is printed
 function finalize_summary_callback(cb::DiscreteCallback, u, t, integrator)
