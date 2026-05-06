@@ -23,7 +23,7 @@
 
     weights_cardinal, _ = rbf_fd_weights(Laplacian(), nodeset[3], neigh.nodes, kernel;
                                          m = 0,
-                                         local_basis = RBFDCardinalBasis())
+                                         local_basis = RBFFDCardinalBasis())
     @test length(weights_cardinal) == length(neigh.nodes)
     @test all(isfinite, weights_cardinal)
 end
@@ -95,10 +95,10 @@ end
                                  GaussKernel{1}(shape_parameter = 2.0);
                                  stencil_selection = KNearestNeighbors(4),
                                  m = 0,
-                                 local_basis = RBFDCardinalBasis())
+                                 local_basis = RBFFDCardinalBasis())
 
     @test disc.method isa RBFFD
-    @test disc.basis.local_basis isa RBFDCardinalBasis
+    @test disc.basis.local_basis isa RBFFDCardinalBasis
 
     itp = solve_stationary(disc)
     @test itp isa Interpolation
@@ -110,14 +110,14 @@ end
     stencil = KNearestNeighbors(3)
 
     basis_std = RBFFDBasis(nodeset, kernel, stencil; m = 0,
-                           local_basis = RBFDStandardBasis())
+                           local_basis = RBFFDStandardBasis())
     neigh = select_neighbors(nodeset[3], nodeset, stencil)
 
     b_std = basis_std[3, 2]
     @test b_std(nodeset[1]) ≈ kernel(nodeset[1], neigh.nodes[2])
 
     basis_card = RBFFDBasis(nodeset, kernel, stencil; m = 0,
-                            local_basis = RBFDCardinalBasis())
+                            local_basis = RBFFDCardinalBasis())
     b_card = basis_card[3, 2]
     @test b_card(neigh.nodes[2]) ≈ 1.0 atol = 1.0e-10
     @test abs(b_card(neigh.nodes[1])) ≤ 1.0e-8
