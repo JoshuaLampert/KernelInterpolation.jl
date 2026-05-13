@@ -45,7 +45,6 @@ pde = PoissonEquation(f)
 u(x, equations) = sinpi(x[1]) * cospi(x[2] / 2)
 nodeset_inner = homogeneous_hypercube(10, (0.1, 0.1), (0.9, 0.9); dim = 2)
 nodeset_boundary = homogeneous_hypercube_boundary(3; dim = 2)
-# Dirichlet boundary condition (here taken from analytical solution)
 g(x) = u(x, pde)
 
 kernel = WendlandKernel{2}(3, shape_parameter = 0.3)
