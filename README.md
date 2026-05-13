@@ -117,13 +117,13 @@ julia> sd_card = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
                                        RBFFD(), kernel;
                                        stencil_selection = KNearestNeighbors(25),
                                        m = order(kernel),
-                                       local_basis = RBFFDCardinalBasis())
+                                       local_basis = RBFFDLagrangeBasis())
 ```
 
 The `local_basis` keyword chooses how local stencil weights are formed:
 
 - `RBFFDStandardBasis()` (default): solve the local kernel/polynomial RBF-FD system.
-- `RBFFDCardinalBasis()`: build local cardinal (Lagrange) functions `\ell_j` on each stencil
+- `RBFFDLagrangeBasis()`: build local cardinal (Lagrange) functions `\ell_j` on each stencil
   and use weights `w_j = \mathcal{L}\ell_j(x_i)`.
 
 For time-dependent equations, use the same `Semidiscretization` and `semidiscretize` workflow:

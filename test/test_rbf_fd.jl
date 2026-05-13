@@ -23,7 +23,7 @@
 
     weights_cardinal, _ = rbf_fd_weights(Laplacian(), nodeset[3], neigh.nodes, kernel;
                                          m = 0,
-                                         local_basis = RBFFDCardinalBasis())
+                                         local_basis = RBFFDLagrangeBasis())
     @test length(weights_cardinal) == length(neigh.nodes)
     @test all(isfinite, weights_cardinal)
 end
@@ -95,10 +95,10 @@ end
                                  GaussKernel{1}(shape_parameter = 2.0);
                                  stencil_selection = KNearestNeighbors(4),
                                  m = 0,
-                                 local_basis = RBFFDCardinalBasis())
+                                 local_basis = RBFFDLagrangeBasis())
 
     @test disc.method isa RBFFD
-    @test disc.basis.local_basis isa RBFFDCardinalBasis
+    @test disc.basis.local_basis isa RBFFDLagrangeBasis
 
     itp = solve_stationary(disc)
     @test itp isa Interpolation
@@ -117,7 +117,7 @@ end
     @test b_std(nodeset[1]) ≈ kernel(nodeset[1], neigh.nodes[2])
 
     basis_card = RBFFDBasis(nodeset, kernel, stencil; m = 0,
-                            local_basis = RBFFDCardinalBasis())
+                            local_basis = RBFFDLagrangeBasis())
     b_card = basis_card[3, 2]
     @test b_card(neigh.nodes[2]) ≈ 1.0 atol = 1.0e-10
     @test abs(b_card(neigh.nodes[1])) ≤ 1.0e-8
@@ -126,4 +126,88 @@ end
     @test_throws BoundsError basis_std[0, 1]
     @test_throws BoundsError basis_std[3, 0]
     @test_throws BoundsError basis_std[3, 4]
+end
+
+@testitem "RBF-FD: kernel_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
+    X = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
+    Y = NodeSet([0.1, 0.3, 0.6, 0.9, 1.0, 0.0])
+    kernel = GaussKernel{1}(shape_parameter = 1.0)
+    stencil = KNearestNeighbors(3)
+
+    basis_std = RBFFDBasis(X, kernel, stencil; m = 0,
+                           local_basis = RBFFDStandardBasis())
+    C_std = kernel_matrix(basis_std, Y)
+    @test size(C_std) == (length(Y), length(X))
+
+    for j in eachindex(Y)
+        y_j = Y[j]
+        i = nearest_node_index(y_j, X)
+        neigh = select_neighbors(X[i], X, stencil)
+        nz_cols = findall(!iszero, C_std[j, :])
+        @test Set(nz_cols) == Set(neigh.indices)
+
+        for (k, global_idx) in enumerate(neigh.indices)
+            @test C_std[j, global_idx] ≈ kernel(y_j, neigh.nodes[k])
+        end
+    end
+
+    basis_lag = RBFFDBasis(X, kernel, stencil; m = 0,
+                           local_basis = RBFFDLagrangeBasis())
+    C_lag = kernel_matrix(basis_lag, Y)
+    @test size(C_lag) == (length(Y), length(X))
+
+    for j in eachindex(Y)
+        y_j = Y[j]
+        i = nearest_node_index(y_j, X)
+        neigh = select_neighbors(X[i], X, stencil)
+        local_basis = LagrangeBasis(neigh.nodes, kernel; m = 0)
+        nz_cols = findall(!iszero, C_lag[j, :])
+        @test Set(nz_cols) == Set(neigh.indices)
+
+        for (k, global_idx) in enumerate(neigh.indices)
+            @test C_lag[j, global_idx] ≈ local_basis[k](y_j)
+        end
+    end
+end
+
+@testitem "RBF-FD: operator_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
+    X = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
+    Y = NodeSet([0.1, 0.3, 0.6, 0.9, 1.0, 0.0])
+    kernel = GaussKernel{1}(shape_parameter = 1.0)
+    stencil = KNearestNeighbors(3)
+
+    basis_std = RBFFDBasis(X, kernel, stencil; m = 0,
+                           local_basis = RBFFDStandardBasis())
+    L_std = operator_matrix(Laplacian(), basis_std, Y)
+    @test size(L_std) == (length(Y), length(X))
+
+    for j in eachindex(Y)
+        y_j = Y[j]
+        i = nearest_node_index(y_j, X)
+        neigh = select_neighbors(X[i], X, stencil)
+        nz_cols = findall(!iszero, L_std[j, :])
+        @test Set(nz_cols) == Set(neigh.indices)
+
+        for (k, global_idx) in enumerate(neigh.indices)
+            @test L_std[j, global_idx] ≈ Laplacian()(kernel, y_j, neigh.nodes[k])
+        end
+    end
+
+    basis_lag = RBFFDBasis(X, kernel, stencil; m = 0,
+                           local_basis = RBFFDLagrangeBasis())
+    L_lag = operator_matrix(Laplacian(), basis_lag, Y)
+    @test size(L_lag) == (length(Y), length(X))
+
+    for j in eachindex(Y)
+        y_j = Y[j]
+        i = nearest_node_index(y_j, X)
+        neigh = select_neighbors(X[i], X, stencil)
+        local_basis = LagrangeBasis(neigh.nodes, kernel; m = 0)
+        nz_cols = findall(!iszero, L_lag[j, :])
+        @test Set(nz_cols) == Set(neigh.indices)
+
+        for (k, global_idx) in enumerate(neigh.indices)
+            @test L_lag[j, global_idx] ≈ Laplacian()(local_basis[k], y_j)
+        end
+    end
 end

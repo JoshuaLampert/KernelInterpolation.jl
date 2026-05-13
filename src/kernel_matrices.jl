@@ -36,6 +36,60 @@ function kernel_matrix(nodeset::NodeSet, kernel::AbstractKernel)
 end
 
 """
+    nearest_node_index(y, nodeset)
+
+Return the index of the node in `nodeset` that is closest to `y` in Euclidean norm.
+"""
+function nearest_node_index(y::AbstractVector, nodeset::NodeSet)
+    n = length(nodeset)
+    n > 0 || throw(ArgumentError("nodeset must be non-empty"))
+
+    best_idx = 1
+    best_dist = norm(y .- nodeset[1])
+    for i in 2:n
+        d = norm(y .- nodeset[i])
+        if d < best_dist
+            best_dist = d
+            best_idx = i
+        end
+    end
+
+    return best_idx
+end
+
+function kernel_matrix(basis::RBFFDBasis, nodeset::NodeSet = centers(basis))
+    n = length(nodeset)
+    m = length(basis)
+    rows = Int[]
+    cols = Int[]
+    vals = eltype(nodeset)[]
+    x = centers(basis)
+
+    for j in 1:n
+        y_j = nodeset[j]
+        i = nearest_node_index(y_j, x)
+        neighbor_info = select_neighbors(x[i], x, basis.stencil_selection)
+
+        if basis.local_basis isa RBFFDLagrangeBasis
+            local_basis = LagrangeBasis(neighbor_info.nodes, basis.kernel; m = basis.m)
+            for (k, global_idx) in enumerate(neighbor_info.indices)
+                push!(rows, j)
+                push!(cols, global_idx)
+                push!(vals, local_basis[k](y_j))
+            end
+        else
+            for (k, global_idx) in enumerate(neighbor_info.indices)
+                push!(rows, j)
+                push!(cols, global_idx)
+                push!(vals, basis.kernel(y_j, neighbor_info.nodes[k]))
+            end
+        end
+    end
+
+    return sparse(rows, cols, vals, n, m)
+end
+
+"""
     polynomial_matrix(nodeset, ps)
 
 Return the polynomial matrix for the nodeset and polynomials. The polynomial matrix is defined as
@@ -253,6 +307,7 @@ end
 @doc raw"""
     operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
     operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
+    operator_matrix(diff_op_or_pde, basis, nodeset = centers(basis))
 
 Compute the operator matrix ``L`` discretizing ``\mathcal{L}`` for a given kernel. The operator matrix is defined as
 ```math
@@ -276,4 +331,41 @@ end
 function operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
     basis = StandardBasis(merge(nodeset_inner, nodeset_boundary), kernel)
     return operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
+end
+
+function operator_matrix(diff_op_or_pde, basis::RBFFDBasis,
+                         nodeset::NodeSet = centers(basis))
+    n = length(nodeset)
+    m = length(basis)
+    rows = Int[]
+    cols = Int[]
+    vals = eltype(nodeset)[]
+    x = centers(basis)
+
+    for j in 1:n
+        y_j = nodeset[j]
+        i = nearest_node_index(y_j, x)
+        neighbor_info = select_neighbors(x[i], x, basis.stencil_selection)
+
+        if basis.local_basis isa RBFFDLagrangeBasis
+            local_basis = LagrangeBasis(neighbor_info.nodes, basis.kernel; m = basis.m)
+            for (k, global_idx) in enumerate(neighbor_info.indices)
+                value = diff_op_or_pde(local_basis[k], y_j)
+                value isa Number || throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
+                push!(rows, j)
+                push!(cols, global_idx)
+                push!(vals, value)
+            end
+        else
+            for (k, global_idx) in enumerate(neighbor_info.indices)
+                value = diff_op_or_pde(basis.kernel, y_j, neighbor_info.nodes[k])
+                value isa Number || throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
+                push!(rows, j)
+                push!(cols, global_idx)
+                push!(vals, value)
+            end
+        end
+    end
+
+    return sparse(rows, cols, vals, n, m)
 end

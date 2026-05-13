@@ -235,16 +235,31 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation,
     for j in eachindex(c)
         s += c[j] * diff_op_or_pde(kernel, x, xis[j])
     end
+
+    d = polynomial_coefficients(itp)
+    ps = polynomial_basis(itp)
+    xx = polyvars(itp)
+    for k in eachindex(d)
+        s += d[k] * _operator_on_polynomial(diff_op_or_pde, ps[k], xx, x)
+    end
     return s
 end
 
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(s,
                                                           itp::Interpolation{<:LagrangeBasis},
                                                           x)
+    kernel = interpolation_kernel(itp)
+    xis = centers(itp)
     c = kernel_coefficients(itp)
-    bas = basis(itp)
     for j in eachindex(c)
-        s += c[j] * diff_op_or_pde(bas[j], x)
+        s += c[j] * diff_op_or_pde(kernel, x, xis[j])
+    end
+
+    d = polynomial_coefficients(itp)
+    ps = polynomial_basis(itp)
+    xx = polyvars(itp)
+    for k in eachindex(d)
+        s += d[k] * _operator_on_polynomial(diff_op_or_pde, ps[k], xx, x)
     end
     return s
 end

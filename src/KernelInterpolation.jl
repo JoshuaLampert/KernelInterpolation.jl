@@ -48,10 +48,10 @@ include("basis.jl")
 include("regularization.jl")
 include("differential_operators.jl")
 include("equations.jl")
-include("kernel_matrices.jl")
 include("rbf_fd_weights.jl")
 include("rbf_fd_basis.jl")
 include("rbf_fd_matrices.jl")
+include("kernel_matrices.jl")
 include("interpolation.jl")
 include("discretization.jl")
 include("callbacks_step/callbacks_step.jl")
@@ -68,7 +68,7 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
 export StandardBasis, LagrangeBasis
 export AbstractSpatialMethod, Collocation, RBFFD
 export AbstractStencilSelection, KNearestNeighbors, RadiusSearch
-export AbstractRBFFDLocalBasis, RBFFDStandardBasis, RBFFDCardinalBasis
+export AbstractRBFFDLocalBasis, RBFFDStandardBasis, RBFFDLagrangeBasis
 export RBFFDBasis
 export phi, Phi, order
 export PartialDerivative, Gradient, Laplacian, EllipticOperator
@@ -82,7 +82,7 @@ export NodeSet, empty_nodeset, separation_distance, dim, eachdim,
 export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
        polynomial_coefficients, polynomial_basis, polyvars, system_matrix,
        interpolate, solve_stationary, kernel_inner_product, kernel_norm,
-    kernel_matrix, operator_matrix, pde_boundary_matrix
+    kernel_matrix, operator_matrix, pde_boundary_matrix, nearest_node_index
 export rbf_fd_weights, rbf_fd_weights_at_node, rbf_fd_weights_all_nodes,
        rbf_fd_pde_matrix, rbf_fd_boundary_matrix, rbf_fd_pde_boundary_matrix,
        select_neighbors

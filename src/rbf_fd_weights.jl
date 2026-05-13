@@ -272,7 +272,7 @@ approximation \$\\mathcal{L}u_h(x_i) ≈ \\sum_{j ∈ stencil} w_j u_j\$ holds w
 - `m::Int`: Polynomial order parameter. If `m = 0`, no polynomial is added. If `m > 0`,
   monomials up to degree `m - 1` are included.
 - `local_basis::AbstractRBFFDLocalBasis`: Local basis strategy (`RBFFDStandardBasis()` or
-    `RBFFDCardinalBasis()`).
+    `RBFFDLagrangeBasis()`).
 
 # Returns
 - `weights`: Finite difference weights, vector for scalar operators and matrix for vector operators
@@ -289,7 +289,7 @@ function rbf_fd_weights(diff_op_or_pde, x_i::AbstractVector,
                         local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis())
     m >= 0 || throw(ArgumentError("m must be >= 0, got $m"))
 
-    if local_basis isa RBFFDCardinalBasis
+    if local_basis isa RBFFDLagrangeBasis
         weights = _rbf_fd_cardinal_weights(diff_op_or_pde, x_i, neighbor_nodes, kernel; m)
         k_matrix = kernel_matrix(neighbor_nodes, kernel)
         svals = svdvals(k_matrix)
