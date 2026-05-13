@@ -67,3 +67,18 @@ sol = solve(ode, Rodas5P())
 SUITE["Advection 1D"] = @benchmarkable KernelInterpolation.rhs!($(similar(sol.u[end])),
                                                                 $(copy(sol.u[end])), $(sd),
                                                                 $(first(tspan)))
+
+f(t, x, equations) = 1.0
+pde = HeatEquation(1.0, f)
+u(t, x, equations) = 0.0
+nodeset_inner = homogeneous_hypercube(10, (0.1, 0.1), (0.9, 0.9); dim = 2)
+nodeset_boundary = homogeneous_hypercube_boundary(3; dim = 2)
+g(t, x) = 0.0
+kernel = WendlandKernel{2}(3, shape_parameter = 0.3)
+sd = Semidiscretization(pde, nodeset_inner, g, nodeset_boundary, u, kernel)
+tspan = (0.0, 0.01)
+ode = semidiscretize(sd, tspan)
+sol = solve(ode, Rodas5P())
+SUITE["Heat 2D"] = @benchmarkable KernelInterpolation.rhs!($(similar(sol.u[end])),
+                                                           $(copy(sol.u[end])), $(sd),
+                                                           $(first(tspan)))
