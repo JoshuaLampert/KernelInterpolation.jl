@@ -1,6 +1,6 @@
 using BenchmarkTools
 using Random
-using OrdinaryDiffEqNonlinearSolve, OrdinaryDiffEqNonlinearSolve
+using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 using KernelInterpolation
 Random.seed!(1234)
 
