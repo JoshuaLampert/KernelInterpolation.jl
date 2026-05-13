@@ -1,5 +1,6 @@
 using BenchmarkTools
 using Random
+using OrdinaryDiffEqNonlinearSolve, OrdinaryDiffEqNonlinearSolve
 using KernelInterpolation
 Random.seed!(1234)
 
@@ -39,38 +40,30 @@ basis = StandardBasis(centers, kernel)
 SUITE["least squares 2D"] = @benchmarkable interpolate($basis, $values, $nodeset)
 
 # stationary PDE benchmarks
-EXAMPLES_DIR = joinpath(@__DIR__, "..", "examples", "PDEs")
-examples = [joinpath(EXAMPLES_DIR, "poisson_2d_basic.jl"),
-    joinpath(EXAMPLES_DIR, "anisotropic_elliptic_2d_basic.jl"),
-    joinpath(EXAMPLES_DIR, "poisson_3d_ball.jl")]
+f(x, equations) = 5 / 4 * pi^2 * sinpi(x[1]) * cospi(x[2] / 2)
+pde = PoissonEquation(f)
+u(x, equations) = sinpi(x[1]) * cospi(x[2] / 2)
+nodeset_inner = homogeneous_hypercube(10, (0.1, 0.1), (0.9, 0.9); dim = 2)
+nodeset_boundary = homogeneous_hypercube_boundary(3; dim = 2)
+# Dirichlet boundary condition (here taken from analytical solution)
+g(x) = u(x, pde)
 
-for example in examples
-    benchname = joinpath(basename(dirname(example)), basename(example)) * " - rhs!:"
-    println("Running $benchname...")
-    mod = @__MODULE__
-    redirect_stdout(devnull) do
-        trixi_include(mod, example)
-        return nothing
-    end
-    local sd = @invokelatest mod.sd
-    SUITE[benchname] = @benchmarkable solve_stationary($sd)
-end
+kernel = WendlandKernel{2}(3, shape_parameter = 0.3)
+sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, kernel)
+SUITE["Poisson 2D"] = @benchmarkable solve_stationary($sd)
 
 # time-dependent PDE benchmarks
-examples = []
-
-for example in examples
-    benchname = joinpath(basename(dirname(example)), basename(example)) * " - rhs!:"
-    println("Running $benchname...")
-    mod = @__MODULE__
-    redirect_stdout(devnull) do
-        trixi_include(mod, example, tspan = (0.0, 1e-11))
-        return nothing
-    end
-    local sol = @invokelatest mod.sol
-    local ode = @invokelatest mod.ode
-    local tspan = @invokelatest mod.tspan
-    SUITE[benchname] = @benchmarkable KernelInterpolation.rhs!($(similar(sol.u[end])),
-                                                               $(copy(sol.u[end])),
-                                                               $(ode), $(first(tspan)))
-end
+f(t, x, equations) = 0.0
+pde = AdvectionEquation((0.5,), f)
+u(t, x, equations) = exp(-100.0 * (x[1] - equations.advection_velocity[1] * t - 0.3)^2)
+nodeset_inner = homogeneous_hypercube(20, 0.01, 1.0)
+nodeset_boundary = NodeSet([0.0])
+g(t, x) = u(t, x, pde)
+kernel = WendlandKernel{1}(3, shape_parameter = 1.0)
+sd = Semidiscretization(pde, nodeset_inner, g, nodeset_boundary, u, kernel)
+tspan = (0.0, 0.01)
+ode = semidiscretize(sd, tspan)
+sol = solve(ode, Rodas5P())
+SUITE["Advection 1D"] = @benchmarkable KernelInterpolation.rhs!($(similar(sol.u[end])),
+                                                                $(copy(sol.u[end])), $(sd),
+                                                                $(first(tspan)))
