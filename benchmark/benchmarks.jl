@@ -51,7 +51,7 @@ for example in examples
         trixi_include(@__MODULE__, example)
         return nothing
     end
-    local sd = @invokelatest Main.sd
+    local sd = @invokelatest @__MODULE__.sd
     SUITE[benchname] = @benchmarkable solve_stationary($sd)
 end
 
@@ -65,9 +65,9 @@ for example in examples
         trixi_include(@__MODULE__, example, tspan = (0.0, 1e-11))
         return nothing
     end
-    local sol = @invokelatest Main.sol
-    local ode = @invokelatest Main.ode
-    local tspan = @invokelatest Main.tspan
+    local sol = @invokelatest @__MODULE__.sol
+    local ode = @invokelatest @__MODULE__.ode
+    local tspan = @invokelatest @__MODULE__.tspan
     SUITE[benchname] = @benchmarkable KernelInterpolation.rhs!($(similar(sol.u[end])),
                                                                $(copy(sol.u[end])),
                                                                $(ode), $(first(tspan)))
