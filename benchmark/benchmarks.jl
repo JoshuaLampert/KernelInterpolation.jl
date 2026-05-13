@@ -47,11 +47,12 @@ examples = [joinpath(EXAMPLES_DIR, "poisson_2d_basic.jl"),
 for example in examples
     benchname = joinpath(basename(dirname(example)), basename(example)) * " - rhs!:"
     println("Running $benchname...")
+    mod = @__MODULE__
     redirect_stdout(devnull) do
-        trixi_include(@__MODULE__, example)
+        trixi_include(mod, example)
         return nothing
     end
-    local sd = @invokelatest @__MODULE__.sd
+    local sd = @invokelatest mod.sd
     SUITE[benchname] = @benchmarkable solve_stationary($sd)
 end
 
@@ -61,13 +62,14 @@ examples = []
 for example in examples
     benchname = joinpath(basename(dirname(example)), basename(example)) * " - rhs!:"
     println("Running $benchname...")
+    mod = @__MODULE__
     redirect_stdout(devnull) do
-        trixi_include(@__MODULE__, example, tspan = (0.0, 1e-11))
+        trixi_include(mod, example, tspan = (0.0, 1e-11))
         return nothing
     end
-    local sol = @invokelatest @__MODULE__.sol
-    local ode = @invokelatest @__MODULE__.ode
-    local tspan = @invokelatest @__MODULE__.tspan
+    local sol = @invokelatest mod.sol
+    local ode = @invokelatest mod.ode
+    local tspan = @invokelatest mod.tspan
     SUITE[benchname] = @benchmarkable KernelInterpolation.rhs!($(similar(sol.u[end])),
                                                                $(copy(sol.u[end])),
                                                                $(ode), $(first(tspan)))
