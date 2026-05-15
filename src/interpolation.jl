@@ -191,8 +191,7 @@ function interpolate(basis::AbstractBasis, values::Vector{RealT},
                          typeof(ps), typeof(xx)}(basis, nodeset, c, system_matrix, ps, xx)
 end
 function interpolate(centers::NodeSet{Dim, RealT}, nodeset::NodeSet{Dim, RealT},
-                     values::AbstractVector{RealT}, kernel = GaussKernel{Dim, RealT}();
-                     kwargs...) where {Dim, RealT}
+                     values::AbstractVector{RealT}, kernel; kwargs...) where {Dim, RealT}
     return interpolate(StandardBasis(centers, kernel), values, nodeset; kwargs...)
 end
 
@@ -280,7 +279,7 @@ for the interpolants ``f(x) = \sum_{i = 1}^Nc_i^fK(x, x_i)`` and
 
 See also [`kernel_norm`](@ref).
 """
-function kernel_inner_product(itp1, itp2)
+function kernel_inner_product(itp1::Interpolation, itp2::Interpolation)
     kernel = interpolation_kernel(itp1)
     @assert kernel == interpolation_kernel(itp2)
     c_f = kernel_coefficients(itp1)
@@ -308,7 +307,7 @@ for the interpolant ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)``.
 
 See also [`kernel_inner_product`](@ref).
 """
-kernel_norm(itp) = sqrt(kernel_inner_product(itp, itp))
+kernel_norm(itp::Interpolation) = sqrt(max(0, kernel_inner_product(itp, itp))) # Use max to avoid numerical issues with negative values due to round-off errors
 
 """
     TemporalInterpolation(ode_sol::ODESolution)
