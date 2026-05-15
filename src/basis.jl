@@ -93,14 +93,16 @@ struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation, Monomials, 
     basis_functions::Vector{I}
     ps::Monomials
     xx::PolyVars
-    function LagrangeBasis(centers::NodeSet, kernel::AbstractKernel;
-                           m = order(kernel))
+    function LagrangeBasis(centers::NodeSet{Dim, RealT},
+                           kernel::Kernel;
+                           m::Integer = order(kernel)) where {Dim, RealT,
+                                                              Kernel <: AbstractKernel}
         if dim(kernel) != dim(centers)
             throw(DimensionMismatch("The dimension of the kernel and the centers must be the same"))
         end
-        RealT = eltype(centers)
         K = length(centers)
-        values = zeros(RealT, K)
+        values = Vector{RealT}(undef, K)
+        fill!(values, zero(RealT))
         values[1] = one(RealT)
         std_basis = StandardBasis(centers, kernel)
         b = interpolate(std_basis, values; m = m)
