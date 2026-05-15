@@ -558,6 +558,8 @@ end
         @test nodeset12_3[i] == expected_nodes[i]
     end
 
+    @test_throws ArgumentError homogeneous_hypercube_boundary(())
+
     nodeset12_4 = @test_nowarn homogeneous_hypercube_boundary((3, 3))
     expected_nodes = [
         [0.0, 0.0],
