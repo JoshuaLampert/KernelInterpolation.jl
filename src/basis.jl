@@ -103,13 +103,13 @@ struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation, Monomials, 
         values = zeros(RealT, K)
         values[1] = one(RealT)
         std_basis = StandardBasis(centers, kernel)
-        b = interpolate(std_basis, kernel; m = m)
+        b = interpolate(std_basis, values; m = m)
         basis_functions = Vector{typeof(b)}(undef, K)
         basis_functions[1] = b
         for i in 2:K
             values[i - 1] = zero(RealT)
             values[i] = one(RealT)
-            basis_functions[i] = interpolate(std_basis, kernel; m = m)
+            basis_functions[i] = interpolate(std_basis, values; m = m)
         end
         # All basis functions have same polynomials
         ps = first(basis_functions).ps
