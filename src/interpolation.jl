@@ -307,7 +307,7 @@ for the interpolant ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)``.
 
 See also [`kernel_inner_product`](@ref).
 """
-kernel_norm(itp::Interpolation) = sqrt(kernel_inner_product(itp, itp))
+kernel_norm(itp::Interpolation) = sqrt(max(0, kernel_inner_product(itp, itp))) # Use max to avoid numerical issues with negative values due to round-off errors
 
 """
     TemporalInterpolation(ode_sol::ODESolution)
