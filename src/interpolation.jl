@@ -191,8 +191,7 @@ function interpolate(basis::AbstractBasis, values::Vector{RealT},
                          typeof(ps), typeof(xx)}(basis, nodeset, c, system_matrix, ps, xx)
 end
 function interpolate(centers::NodeSet{Dim, RealT}, nodeset::NodeSet{Dim, RealT},
-                     values::AbstractVector{RealT}, kernel = GaussKernel{Dim, RealT}();
-                     kwargs...) where {Dim, RealT}
+                     values::AbstractVector{RealT}, kernel; kwargs...) where {Dim, RealT}
     return interpolate(StandardBasis(centers, kernel), values, nodeset; kwargs...)
 end
 
