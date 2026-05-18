@@ -718,6 +718,10 @@ end
     itp = @test_nowarn interpolate(nodes, ff, kernel; factorization_method = cholesky)
     @test system_matrix(itp) isa Cholesky
 
+    itp = @test_nowarn interpolate(nodes, ff, kernel; linsolve = LUFactorization())
+    @test system_matrix(itp) isa Matrix
+    @test isapprox(itp([0.5, 0.5]), 1.115625820404527)
+
     # Conditionally positive definite kernel
     # Interpolation
     kernel = ThinPlateSplineKernel{dim(nodes)}()
@@ -795,6 +799,13 @@ end
                                    Matern52Kernel{dim(nodes)}(shape_parameter = 0.5);
                                    factorization_method = qr)
     @test system_matrix(itp) isa LinearAlgebra.QRCompactWY
+    @test isapprox(itp([0.5, 0.5]), 1.077146318936622)
+
+    itp = @test_nowarn interpolate(centers, nodes, ff,
+                                   Matern52Kernel{dim(nodes)}(shape_parameter = 0.5);
+                                   linsolve = QRFactorization())
+    @test system_matrix(itp) isa Matrix
+    @test isapprox(itp([0.5, 0.5]), 1.077146318936622)
 
     # Least squares with LagrangeBasis (not really recommended because you still need to solve a linear system)
     basis = LagrangeBasis(centers, kernel)
