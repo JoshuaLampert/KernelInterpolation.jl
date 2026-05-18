@@ -30,12 +30,12 @@ nodeset = random_hypercube(100; dim = 5)
 values = f.(nodeset)
 
 kernel = WendlandKernel{dim(nodeset)}(3, shape_parameter = 0.1)
-SUITE["interpolation 2D cholesky"] = @benchmarkable interpolate($nodeset, $values, $kernel;
+SUITE["interpolation 5D"] = @benchmarkable interpolate($nodeset, $values, $kernel)
+SUITE["interpolation 5D cholesky"] = @benchmarkable interpolate($nodeset, $values, $kernel;
                                                                 factorization_method = cholesky)
-SUITE["interpolation 2D KrylovJL_GMRES"] = @benchmarkable interpolate($nodeset, $values,
+SUITE["interpolation 5D KrylovJL_GMRES"] = @benchmarkable interpolate($nodeset, $values,
                                                                       $kernel;
                                                                       linsolve = KrylovJL_GMRES())
-SUITE["interpolation 5D"] = @benchmarkable interpolate($nodeset, $values, $kernel)
 
 # Least squares benchmarks
 centers = random_hypercube(81; dim = 2)
