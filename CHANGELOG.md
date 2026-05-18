@@ -9,6 +9,7 @@ for human readability.
 
 #### Added
 
+- Added support for methods from `LinearSolve.jl` in `solve_stationary` ([#178]).
 - Added support for methods from `LinearSolve.jl` in `interpolate` ([#176]).
 - Added a keyword argument `factorization_method` to `interpolate`, `interpolation_matrix`,
   and `least_squares_matrix` to allow for different factorization methods ([#130]).
