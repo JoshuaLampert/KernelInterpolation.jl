@@ -163,7 +163,7 @@ nothing # hide
 
 Finally, we pick a `kernel` function and create an [`Interpolation`](@ref) object by calling [`interpolate`](@ref). Here,
 we choose a [`PolyharmonicSplineKernel`](@ref) of second order, i.e. ``k = 2`` (also known as [`ThinPlateSplineKernel`](@ref)). The order of
-the polynomials will automatically be determined by the chosen kernel, but can also explicitly be passed as a fourth argument.
+the polynomials will automatically be determined by the chosen kernel, but can also explicitly be passed as a keyword argument `m`.
 
 ```@example interpolation
 kernel = ThinPlateSplineKernel{dim(nodes)}()

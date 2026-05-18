@@ -134,10 +134,11 @@ system_matrix(itp::Interpolation) = itp.system_matrix
 
 @doc raw"""
     interpolate(basis, values, nodeset = centers(basis); m = order(basis),
-                regularization = NoRegularization(), factorization_method = nothing)
+                regularization = NoRegularization(), factorization_method = nothing,
+                linsolve = nothing)
     interpolate(centers, [nodeset,] values, kernel = GaussKernel{dim(nodeset)}();
                 m = order(kernel), regularization = NoRegularization(),
-                factorization_method = nothing)
+                factorization_method = nothing, linsolve = nothing)
 
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
 and polynomials up to a order `m` (i.e. degree - 1), i.e., determine the coefficients ``c_j`` and ``d_k`` in the expansion
@@ -159,14 +160,18 @@ Otherwise, `nodeset` is set to `centers(basis)` or `centers`.
 
 A regularization can be applied to the kernel matrix using the `regularization` argument, cf. [`regularize!`](@ref).
 In addition, the `factorization_method` can be specified to determine how the system matrix is factorized. By default,
-the system matrix is just wrapped as a Symmetric matrix for interpolation and no factorization is applied
+the system matrix is just wrapped as a `Symmetric` matrix for interpolation and no factorization is applied
 for a least squares solution, but you can, e.g., also explicitly use `cholesky`, `lu`, or `qr` factorization.
+If `linsolve` is provided, the linear system is solved with LinearSolve.jl and any LinearSolve.jl algorithm can
+be passed there. If `linsolve` is not provided, the linear system is solved with the backslash operator, which will
+automatically use the factorization if `factorization_method` is provided.
 """
 function interpolate(basis::AbstractBasis, values::Vector{RealT},
                      nodeset::NodeSet{Dim, RealT} = centers(basis);
                      m = order(basis),
                      regularization = NoRegularization(),
-                     factorization_method = nothing) where {Dim, RealT}
+                     factorization_method = nothing,
+                     linsolve = nothing) where {Dim, RealT}
     @assert dim(basis) == Dim
     n = length(nodeset)
     @assert length(values) == n
@@ -175,20 +180,37 @@ function interpolate(basis::AbstractBasis, values::Vector{RealT},
     q = length(ps)
 
     if nodeset == centers(basis)
-        factorization_method = isnothing(factorization_method) ? Symmetric :
-                               factorization_method
-        system_matrix = interpolation_matrix(basis, ps, regularization;
-                                             factorization_method)
+        if isnothing(linsolve)
+            factorization_method = isnothing(factorization_method) ? Symmetric :
+                                   factorization_method
+            system_matrix = interpolation_matrix(basis, ps, regularization;
+                                                 factorization_method)
+        else
+            system_matrix = interpolation_matrix(basis, ps, regularization;
+                                                 factorization_method = Matrix)
+        end
     else
-        factorization_method = isnothing(factorization_method) ? Matrix :
-                               factorization_method
-        system_matrix = least_squares_matrix(basis, nodeset, ps, regularization;
-                                             factorization_method)
+        if isnothing(linsolve)
+            factorization_method = isnothing(factorization_method) ? Matrix :
+                                   factorization_method
+            system_matrix = least_squares_matrix(basis, nodeset, ps, regularization;
+                                                 factorization_method)
+        else
+            system_matrix = least_squares_matrix(basis, nodeset, ps, regularization;
+                                                 factorization_method = Matrix)
+        end
     end
     b = [values; zeros(RealT, q)]
-    c = system_matrix \ b
+    c = solve_linear_system(system_matrix, b, linsolve)
     return Interpolation{typeof(basis), dim(basis), eltype(nodeset), typeof(system_matrix),
                          typeof(ps), typeof(xx)}(basis, nodeset, c, system_matrix, ps, xx)
+end
+
+solve_linear_system(system_matrix, b, ::Nothing) = system_matrix \ b
+
+function solve_linear_system(system_matrix, b, linsolve)
+    linear_problem = SciMLBase.LinearProblem(system_matrix, b)
+    return SciMLBase.solve(linear_problem, linsolve).u
 end
 function interpolate(centers::NodeSet{Dim, RealT}, nodeset::NodeSet{Dim, RealT},
                      values::AbstractVector{RealT}, kernel; kwargs...) where {Dim, RealT}
