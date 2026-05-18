@@ -876,7 +876,8 @@ end
                            0.25 0.75
                            0.75 0.75])
     g_itp_lagrange = @test_nowarn g.(Ref(itp_lagrange), test_points)
-    @test all(isapprox.(first.(g_itp_callable.(test_points)), first.(g_itp_lagrange), atol = 0.0))
+    @test all(isapprox.(first.(g_itp_callable.(test_points)), first.(g_itp_lagrange),
+                        atol = 0.0))
     d1_itp_lagrange = @test_nowarn d1.(Ref(itp_lagrange), test_points)
     d2_itp_lagrange = @test_nowarn d2.(Ref(itp_lagrange), test_points)
 
@@ -1104,7 +1105,8 @@ end
         @test isapprox(Laplacian()(itp, node), -f1(node, pde), atol = 1e-14)
     end
     pde_itp_callable = @test_nowarn pde(itp)
-    @test isapprox(pde_itp_callable(first(nodeset_inner)), pde(itp, first(nodeset_inner)), atol = 1e-14)
+    @test isapprox(pde_itp_callable(first(nodeset_inner)), pde(itp, first(nodeset_inner)),
+                   atol = 1e-14)
     # Test if the solution satisfies the boundary conditions
     values_boundary = g1.(nodeset_boundary)
     for (node, value) in zip(nodeset_boundary, values_boundary)
