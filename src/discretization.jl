@@ -73,9 +73,9 @@ If `linsolve = nothing`, the default backslash operator is used.
 """
 function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, RealT};
                           linsolve = nothing) where {
-                                                                                      Dim,
-                                                                                      RealT
-                                                                                      }
+                                                     Dim,
+                                                     RealT
+                                                     }
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis = spatial_discretization
 
     system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
