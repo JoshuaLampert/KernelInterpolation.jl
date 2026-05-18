@@ -63,21 +63,21 @@ dim(::SpatialDiscretization{Dim}) where {Dim} = Dim
 Base.eltype(::SpatialDiscretization{Dim, RealT}) where {Dim, RealT} = RealT
 
 """
-    solve_stationary(spatial_discretization)
+    solve_stationary(spatial_discretization; linsolve = nothing)
 
 Solve a stationary partial differential equation discretized as `spatial_discretization` with Dirichlet boundary
 conditions by non-symmetric collocation (Kansa method).
 Returns an [`Interpolation`](@ref) object.
+The `linsolve` keyword argument can be used to specify a linear solver from `LinearSolve.jl` for the linear system.
+If `linsolve = nothing`, the default backslash operator is used.
 """
-function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, RealT}) where {
-                                                                                            Dim,
-                                                                                            RealT
-                                                                                            }
+function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, RealT};
+                          linsolve = nothing) where {Dim, RealT}
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis = spatial_discretization
 
     system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
     b = [rhs(nodeset_inner, equations); boundary_condition.(nodeset_boundary)]
-    c = system_matrix \ b
+    c = solve_linear_system(system_matrix, b, linsolve)
 
     # Do not support additional polynomial basis for now
     xx = polyvars(Dim)

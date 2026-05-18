@@ -9,7 +9,7 @@ end
 
 @testsnippet AdditionalImports begin
     using LinearAlgebra: LinearAlgebra, norm, cholesky, qr, Symmetric, Cholesky, I
-    using LinearSolve: LUFactorization, QRFactorization
+    using LinearSolve: LUFactorization, QRFactorization, KrylovJL_GMRES
     using OrdinaryDiffEqRosenbrock: solve, Rodas5P
     import OrdinaryDiffEqNonlinearSolve
     using StaticArrays: SVector, MVector
