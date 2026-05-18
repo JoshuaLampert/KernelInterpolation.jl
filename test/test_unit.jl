@@ -1136,6 +1136,17 @@ end
         @test isapprox(b_val, b_test_val, atol = 1e-12)
     end
 
+    # Solve stationary PDE using LinearSolve's GMRES
+    sd_ls = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, kernel)
+    itp_ls = @test_nowarn solve_stationary(sd_ls; linsolve = KrylovJL_GMRES())
+
+    for node in nodeset_inner
+        @test isapprox(pde(itp_ls, node), f1(node, pde), atol = 1e-12)
+    end
+    for (node, value) in zip(nodeset_boundary, g1.(nodeset_boundary))
+        @test isapprox(itp_ls(node), value, atol = 1e-12)
+    end
+
     # time-dependent PDE
     u2(t, x, equations) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2] + t
     f2(t, x, equations) = -3.0 # ∂_t u - Δu
