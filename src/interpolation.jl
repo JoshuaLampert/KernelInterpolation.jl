@@ -274,9 +274,8 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation, x)
     return diff_op_or_pde(zero(eltype(x)), itp, x)
 end
 
-function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation{<:LagrangeBasis},
-                                                          x)
-    return diff_op_or_pde(zero(eltype(x)), itp, x)
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation)
+    return x -> diff_op_or_pde(itp, x)
 end
 
 function (g::Gradient)(itp::Interpolation, x)

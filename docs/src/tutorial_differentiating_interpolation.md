@@ -120,13 +120,14 @@ we can compute the first derivative of the interpolation `itp` at a specific poi
 ```@example diff-itp
 d1 = PartialDerivative(1)
 x = 0.0
-itp_dx = d1(itp, x)
+itp_dx_at_x = d1(itp, x)
 ```
 
 Let's plot the first derivative of the interpolated function and compare it to the analytical first derivative.
 
 ```@example diff-itp
-itp_dx_many_nodes = d1.(Ref(itp), many_nodes)
+itp_dx = d1(itp)
+itp_dx_many_nodes = itp_dx.(many_nodes)
 f_dx(x) = 4*exp(sin(2*x[1]^2))*x[1]*cos(2*x[1]^2) + 0.2*x[1] - pi/10
 plot(many_nodes, f_dx, label = "Derivative of original function")
 plot!(many_nodes, itp_dx_many_nodes, label = "Derivative of interpolated function")
