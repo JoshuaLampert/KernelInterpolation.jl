@@ -24,7 +24,11 @@ end
                           l2=0.541153763525397, linf=0.2257866545662589)
 end
 
-@testitem "interpolation_2d_linearsolve.jl" setup=[Setup, AdditionalImports, InterpolationExamples] begin
+@testitem "interpolation_2d_linearsolve.jl" setup=[
+    Setup,
+    AdditionalImports,
+    InterpolationExamples
+] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_linearsolve.jl"),
                           l2=0.541153763531321, linf=0.22578665456898403)
 end
