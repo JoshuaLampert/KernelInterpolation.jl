@@ -5,6 +5,10 @@ function (D::AbstractDifferentialOperator)(kernel::RadialSymmetricKernel, x, y)
     return save_call(D, kernel, x .- y)
 end
 
+function (D::AbstractDifferentialOperator)(kernel::RadialSymmetricKernel)
+    return x -> D(kernel, x)
+end
+
 # Workaround to avoid evaluating the derivative at zeros to allow automatic differentiation,
 # see https://github.com/JuliaDiff/ForwardDiff.jl/issues/303
 # the same issue appears with Zygote.jl

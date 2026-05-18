@@ -843,12 +843,16 @@ end
     f_prime(x) = pi * cospi(x[1])
     many_nodes = NodeSet(LinRange(0.0, 1.0, 50))
     d1 = PartialDerivative(1)
+    d1_itp_callable = @test_nowarn d1(itp)
     d1_itp = @test_nowarn d1.(Ref(itp), many_nodes)
+    @test all(isapprox.(d1_itp_callable.(many_nodes), d1_itp, atol = 0.0))
     for i in eachindex(many_nodes)
         @test isapprox(d1_itp[i], f_prime(many_nodes[i]), atol = 0.1)
     end
     g = Gradient()
+    g_itp_callable = @test_nowarn g(itp)
     g_itp = @test_nowarn g.(Ref(itp), many_nodes)
+    @test all(isapprox.(first.(g_itp_callable.(many_nodes)), first.(g_itp), atol = 0.0))
     for i in eachindex(many_nodes)
         @test isapprox(g_itp[i][1], d1_itp[i])
     end
@@ -866,11 +870,14 @@ end
 
     g = @test_nowarn Gradient()
     d2 = @test_nowarn PartialDerivative(2)
+    g_itp_callable = @test_nowarn g(itp_lagrange)
     test_points = NodeSet([0.25 0.25
                            0.75 0.25
                            0.25 0.75
                            0.75 0.75])
     g_itp_lagrange = @test_nowarn g.(Ref(itp_lagrange), test_points)
+    @test all(isapprox.(first.(g_itp_callable.(test_points)), first.(g_itp_lagrange),
+                        atol = 0.0))
     d1_itp_lagrange = @test_nowarn d1.(Ref(itp_lagrange), test_points)
     d2_itp_lagrange = @test_nowarn d2.(Ref(itp_lagrange), test_points)
 
@@ -944,6 +951,14 @@ end
     @test isapprox(d2(kernel, x1), -0.2634286292761684)
     @test isapprox(el(kernel, x1), 0.6486985764273818)
     @test isapprox(el_l(kernel, x1), -AnalyticalLaplacian()(kernel, x1))
+    d1_kernel_callable = @test_nowarn d1(kernel)
+    g_kernel_callable = @test_nowarn g(kernel)
+    l_kernel_callable = @test_nowarn l(kernel)
+    el_kernel_callable = @test_nowarn el(kernel)
+    @test isapprox(d1_kernel_callable(x1), d1(kernel, x1))
+    @test isapprox(g_kernel_callable(x1), g(kernel, x1))
+    @test isapprox(l_kernel_callable(x1), l(kernel, x1))
+    @test isapprox(el_kernel_callable(x1), el(kernel, x1))
     kernel = GaussKernel{3}(shape_parameter = 0.5)
     x2 = [0.1, 0.2, 0.3]
     @test isapprox(l(kernel, x2), AnalyticalLaplacian()(kernel, x2))
@@ -1089,6 +1104,9 @@ end
         @test isapprox(pde(itp, node), f1(node, pde), atol = 1e-14)
         @test isapprox(Laplacian()(itp, node), -f1(node, pde), atol = 1e-14)
     end
+    pde_itp_callable = @test_nowarn pde(itp)
+    @test isapprox(pde_itp_callable(first(nodeset_inner)), pde(itp, first(nodeset_inner)),
+                   atol = 1e-14)
     # Test if the solution satisfies the boundary conditions
     values_boundary = g1.(nodeset_boundary)
     for (node, value) in zip(nodeset_boundary, values_boundary)

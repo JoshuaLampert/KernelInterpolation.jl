@@ -9,6 +9,7 @@ for human readability.
 
 #### Added
 
+- Allow applying differential operators to an `Interpolation` to get a callable object that evaluates the operator at any point ([#179]).
 - Added support for methods from `LinearSolve.jl` in `solve_stationary` ([#178]).
 - Added support for methods from `LinearSolve.jl` in `interpolate` ([#176]).
 - Added a keyword argument `factorization_method` to `interpolate`, `interpolation_matrix`,
