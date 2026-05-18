@@ -1,6 +1,8 @@
 using BenchmarkTools
 using Random
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
+using LinearAlgebra
+using LinearSolve
 using KernelInterpolation
 Random.seed!(1234)
 
@@ -29,6 +31,11 @@ values = f.(nodeset)
 
 kernel = WendlandKernel{dim(nodeset)}(3, shape_parameter = 0.1)
 SUITE["interpolation 5D"] = @benchmarkable interpolate($nodeset, $values, $kernel)
+SUITE["interpolation 5D cholesky"] = @benchmarkable interpolate($nodeset, $values, $kernel;
+                                                                factorization_method = cholesky)
+SUITE["interpolation 5D KrylovJL_GMRES"] = @benchmarkable interpolate($nodeset, $values,
+                                                                      $kernel;
+                                                                      linsolve = KrylovJL_GMRES())
 
 # Least squares benchmarks
 centers = random_hypercube(81; dim = 2)
