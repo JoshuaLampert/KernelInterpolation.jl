@@ -76,6 +76,7 @@ export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
        interpolate, solve_stationary, kernel_inner_product, kernel_norm,
        kernel_matrix, operator_matrix
 export Interpolation, TemporalInterpolation
+export MultiscaleInterpolation, multiscale_interpolate
 export AliveCallback, SaveSolutionCallback, SummaryCallback
 export vtk_save, vtk_read
 export examples_dir, get_examples, default_example

@@ -84,7 +84,7 @@ end
     end
 end
 
-@recipe function f(nodeset::NodeSet, itp::Interpolation; training_nodes = true)
+@recipe function f(nodeset::NodeSet, itp::AbstractInterpolation; training_nodes = true)
     if dim(nodeset) == 1
         if training_nodes
             @series begin
@@ -130,7 +130,7 @@ end
     end
 end
 
-@recipe function f(itp::Interpolation; x_min = 0.0, x_max = 1.0, N = 50)
+@recipe function f(itp::AbstractInterpolation; x_min = 0.0, x_max = 1.0, N = 50)
     if dim(itp) == 1
         x = LinRange(x_min, x_max, N)
         x, itp.(x)

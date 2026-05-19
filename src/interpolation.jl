@@ -34,14 +34,14 @@ end
 
 Return the dimension of the input variables of the interpolation.
 """
-dim(::Interpolation{Basis, Dim}) where {Basis, Dim} = Dim
+dim(::AbstractInterpolation{Basis, Dim}) where {Basis, Dim} = Dim
 
 """
     basis(itp)
 
 Return the basis from an interpolation object.
 """
-basis(itp::Interpolation) = itp.basis
+basis(itp::AbstractInterpolation) = itp.basis
 
 """
     interpolation_kernel(itp)
@@ -51,18 +51,20 @@ Return the kernel from an interpolation object.
 interpolation_kernel(itp::AbstractInterpolation) = interpolation_kernel(basis(itp))
 
 """
-	nodeset(itp)
+    nodeset(itp)
 
 Return the node set from an interpolation object.
 """
 nodeset(itp::AbstractInterpolation) = itp.nodeset
 
 """
-    centers(itp::Interpolation)
+    centers(itp)
 
 Return the centers from the basis of an interpolation object.
 """
-centers(itp::Interpolation) = centers(basis(itp))
+centers(itp::AbstractInterpolation) = centers(basis(itp))
+
+order(itp::AbstractInterpolation) = order(basis(itp))
 
 """
     coefficients(itp::Interpolation)
@@ -371,4 +373,85 @@ end
 function (titp::TemporalInterpolation)(t, x)
     itp = titp(t)
     return itp(x)
+end
+
+"""
+    MultiscaleInterpolation
+
+Container for a multiscale interpolation composed of several single-scale
+`Interpolation` objects. Evaluation is the sum of the evaluations of the
+individual scales.
+"""
+struct MultiscaleInterpolation{Basis, Dim, RealT, Itp} <:
+       AbstractInterpolation{Basis, Dim, RealT}
+    basis::Basis
+    nodeset::NodeSet{Dim, RealT}
+    itps::Vector{Itp}
+end
+
+function Base.show(io::IO, mitp::MultiscaleInterpolation)
+    n = sum(length(nodeset(itp)) for itp in mitp.itps)
+    return print(io, "Multiscale interpolation with $(length(mitp.itps)) scales and ~$(n) total centers")
+end
+
+function (mitp::MultiscaleInterpolation)(x)
+    s = zero(eltype(x))
+    for itp in mitp.itps
+        s += itp(x)
+    end
+    return s
+end
+
+"""
+    multiscale_interpolate(centers, values, kernels; nodeset = centers, kwargs...)
+    multiscale_interpolate(nodesets, valuesets, kernels; kwargs...)
+
+Construct a multiscale interpolation by fitting successive interpolants with
+the given `kernels` to the residual. The single-nodeset form reuses the same
+data nodes for every scale. The vector form allows the nodesets and the data
+values to vary per scale, which is useful for growing multiscale grids.
+
+In both forms, each scale is built by reusing [`interpolate`](@ref).
+"""
+function multiscale_interpolate(centers::NodeSet{Dim, RealT},
+                                values::AbstractVector{RealT},
+                                kernels::AbstractVector;
+                                nodeset = centers,
+                                kwargs...) where {Dim, RealT}
+    repeated_nodesets = [nodeset for _ in eachindex(kernels)]
+    repeated_valuesets = [copy(values) for _ in eachindex(kernels)]
+    return multiscale_interpolate(repeated_nodesets, repeated_valuesets, kernels;
+                                  kwargs...)
+end
+
+function multiscale_interpolate(nodesets::AbstractVector{<:NodeSet{Dim, RealT}},
+                                valuesets::AbstractVector{<:AbstractVector{RealT}},
+                                kernels::AbstractVector;
+                                kwargs...) where {Dim, RealT}
+    @assert length(nodesets) == length(valuesets) == length(kernels)
+    isempty(kernels) && throw(ArgumentError("At least one kernel is required for multiscale interpolation"))
+
+    itps = Any[]
+    for (i, (nodeset, values, kernel)) in enumerate(zip(nodesets, valuesets, kernels))
+        @assert length(values) == length(nodeset)
+        residual = copy(values)
+        for prev_itp in itps
+            residual .-= prev_itp.(nodeset)
+        end
+        itp = interpolate(StandardBasis(nodeset, kernel), residual, nodeset; kwargs...)
+        push!(itps, itp)
+    end
+
+    Itp = typeof(first(itps))
+    for itp in itps
+        typeof(itp) == Itp || throw(ArgumentError("All scales must produce the same concrete interpolation type"))
+    end
+    concrete_itps = Vector{Itp}(undef, length(itps))
+    for (i, itp) in enumerate(itps)
+        concrete_itps[i] = itp
+    end
+    final_basis = basis(concrete_itps[end])
+    return MultiscaleInterpolation{typeof(final_basis), Dim, RealT, Itp}(final_basis,
+                                                                         nodesets[end],
+                                                                         concrete_itps)
 end
