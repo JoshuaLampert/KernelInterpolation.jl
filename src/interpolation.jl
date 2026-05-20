@@ -64,8 +64,6 @@ Return the centers from the basis of an interpolation object.
 """
 centers(itp::AbstractInterpolation) = centers(basis(itp))
 
-order(itp::AbstractInterpolation) = order(basis(itp))
-
 """
     coefficients(itp::Interpolation)
 
@@ -120,7 +118,7 @@ polyvars(itp::Interpolation) = itp.xx
 Return the order ``m`` of the polynomial used for the interpolation, i.e.,
 the polynomial degree plus 1. If ``m = 0``, no polynomial is added.
 """
-order(itp::Interpolation) = maximum(degree.(itp.ps), init = -1) + 1
+order(itp::AbstractInterpolation) = order(basis(itp))
 
 @doc raw"""
     system_matrix(itp::Interpolation)
