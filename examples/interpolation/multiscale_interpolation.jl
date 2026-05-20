@@ -1,21 +1,28 @@
 using KernelInterpolation
 using Plots
 
-# simple 1D example demonstrating multiscale interpolation with growing nodesets
-f(x) = sinpi(x[1])
+f(x) = sinpi(2 * x[1]) + 0.25 * cospi(12 * x[1])
 
-x_min = -1.0
-x_max = 1.0
-coarse_nodeset = random_hypercube(24, x_min, x_max; dim = 1)
-fine_nodeset = random_hypercube(80, x_min, x_max; dim = 1)
-nodesets = [coarse_nodeset, fine_nodeset]
-valuesets = [f.(coarse_nodeset), f.(fine_nodeset)]
+nodeset1 = homogeneous_hypercube(5; dim = 1)
+nodeset2 = homogeneous_hypercube(9; dim = 1)
+nodeset3 = homogeneous_hypercube(17; dim = 1)
+nodesets = [nodeset1, nodeset2, nodeset3]
+valuesets = [f.(nodeset1), f.(nodeset2), f.(nodeset3)]
 
-kernel1 = GaussKernel{1}(shape_parameter = 0.5)
-kernel2 = GaussKernel{1}(shape_parameter = 0.1)
+kernels = [WendlandKernel{1}(3; shape_parameter = 0.2),
+           WendlandKernel{1}(3; shape_parameter = 0.6),
+           WendlandKernel{1}(3; shape_parameter = 1.0)]
+itp = multiscale_interpolate(nodesets, valuesets, kernels)
 
-mitp = multiscale_interpolate(nodesets, valuesets, [kernel1, kernel2])
+many_nodes = homogeneous_hypercube(200; dim = 1)
 
-many_nodes = homogeneous_hypercube(200, x_min, x_max; dim = 1)
-plot(many_nodes, mitp, label = "multiscale")
-plot!(many_nodes, f, label = "true")
+p1 = plot(many_nodes, itp[1]; training_nodes = false, label = "coarse", color = 1, title = "Partial sums")
+plot!(p1, many_nodes, itp[1].(many_nodes) + itp[2].(many_nodes); label = "medium", color = 2)
+plot!(p1, many_nodes, itp; label = "fine", color = 3)
+plot!(p1, many_nodes, f; label = "true", color = 4)
+
+p2 = plot(many_nodes, itp[1]; label = "coarse", color = 1, title = "Individual scales")
+plot!(p2, many_nodes, itp[2]; label = "medium", color = 2)
+plot!(p2, many_nodes, itp[3]; label = "fine", color = 3)
+
+plot(p1, p2)
