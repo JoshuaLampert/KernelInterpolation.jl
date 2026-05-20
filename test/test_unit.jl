@@ -1258,7 +1258,7 @@ end
     fms(x) = x[1] + x[1]^2
     valuesets = [fms.(nodeset1), fms.(nodeset2)]
     kernels = [WendlandKernel{1}(3; shape_parameter = 0.4f0),
-               WendlandKernel{1}(3; shape_parameter = 0.8f0)]
+        WendlandKernel{1}(3; shape_parameter = 0.8f0)]
     mitp = @test_nowarn multiscale_interpolate(nodesets, valuesets, kernels)
     @test mitp isa MultiscaleInterpolation
     @test nodeset(mitp) == nodeset2

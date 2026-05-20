@@ -165,5 +165,5 @@ end
     InterpolationExamples
 ] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "multiscale_interpolation_1d.jl"),
-                          l2=0.4357245115207042, linf=0.10820462936602132, atol = 1e-11)
+                          l2=0.4357245115207042, linf=0.10820462936602132, atol=1e-11)
 end

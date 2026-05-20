@@ -36,7 +36,7 @@
                 nodesets = [nodeset1, nodeset2]
                 valuesets = [f.(nodeset1), f.(nodeset2)]
                 kernels = [WendlandKernel{1}(3; shape_parameter = 0.4),
-                           WendlandKernel{1}(3; shape_parameter = 0.8)]
+                    WendlandKernel{1}(3; shape_parameter = 0.8)]
                 mitp = multiscale_interpolate(nodesets, valuesets, kernels)
                 @test_nowarn plot(nodes_fine, mitp)
                 @test_nowarn plot(mitp)
