@@ -34,14 +34,14 @@ end
 
 Return the dimension of the input variables of the interpolation.
 """
-dim(::Interpolation{Basis, Dim}) where {Basis, Dim} = Dim
+dim(::AbstractInterpolation{Basis, Dim}) where {Basis, Dim} = Dim
 
 """
     basis(itp)
 
 Return the basis from an interpolation object.
 """
-basis(itp::Interpolation) = itp.basis
+basis(itp::AbstractInterpolation) = itp.basis
 
 """
     interpolation_kernel(itp)
@@ -51,18 +51,18 @@ Return the kernel from an interpolation object.
 interpolation_kernel(itp::AbstractInterpolation) = interpolation_kernel(basis(itp))
 
 """
-	nodeset(itp)
+    nodeset(itp)
 
 Return the node set from an interpolation object.
 """
 nodeset(itp::AbstractInterpolation) = itp.nodeset
 
 """
-    centers(itp::Interpolation)
+    centers(itp)
 
 Return the centers from the basis of an interpolation object.
 """
-centers(itp::Interpolation) = centers(basis(itp))
+centers(itp::AbstractInterpolation) = centers(basis(itp))
 
 """
     coefficients(itp::Interpolation)
@@ -118,6 +118,7 @@ polyvars(itp::Interpolation) = itp.xx
 Return the order ``m`` of the polynomial used for the interpolation, i.e.,
 the polynomial degree plus 1. If ``m = 0``, no polynomial is added.
 """
+order(itp::AbstractInterpolation) = order(basis(itp))
 order(itp::Interpolation) = maximum(degree.(itp.ps), init = -1) + 1
 
 @doc raw"""
@@ -134,10 +135,11 @@ system_matrix(itp::Interpolation) = itp.system_matrix
 
 @doc raw"""
     interpolate(basis, values, nodeset = centers(basis); m = order(basis),
-                regularization = NoRegularization(), factorization_method = nothing)
+                regularization = NoRegularization(), factorization_method = nothing,
+                linsolve = nothing)
     interpolate(centers, [nodeset,] values, kernel = GaussKernel{dim(nodeset)}();
                 m = order(kernel), regularization = NoRegularization(),
-                factorization_method = nothing)
+                factorization_method = nothing, linsolve = nothing)
 
 Interpolate the `values` evaluated at the nodes in the `nodeset` to a function using the kernel `kernel`
 and polynomials up to a order `m` (i.e. degree - 1), i.e., determine the coefficients ``c_j`` and ``d_k`` in the expansion
@@ -159,14 +161,18 @@ Otherwise, `nodeset` is set to `centers(basis)` or `centers`.
 
 A regularization can be applied to the kernel matrix using the `regularization` argument, cf. [`regularize!`](@ref).
 In addition, the `factorization_method` can be specified to determine how the system matrix is factorized. By default,
-the system matrix is just wrapped as a Symmetric matrix for interpolation and no factorization is applied
+the system matrix is just wrapped as a `Symmetric` matrix for interpolation and no factorization is applied
 for a least squares solution, but you can, e.g., also explicitly use `cholesky`, `lu`, or `qr` factorization.
+If `linsolve` is provided, the linear system is solved with LinearSolve.jl and any LinearSolve.jl algorithm can
+be passed there. If `linsolve` is not provided, the linear system is solved with the backslash operator, which will
+automatically use the factorization if `factorization_method` is provided.
 """
 function interpolate(basis::AbstractBasis, values::Vector{RealT},
                      nodeset::NodeSet{Dim, RealT} = centers(basis);
                      m = order(basis),
                      regularization = NoRegularization(),
-                     factorization_method = nothing) where {Dim, RealT}
+                     factorization_method = nothing,
+                     linsolve = nothing) where {Dim, RealT}
     @assert dim(basis) == Dim
     n = length(nodeset)
     @assert length(values) == n
@@ -175,24 +181,40 @@ function interpolate(basis::AbstractBasis, values::Vector{RealT},
     q = length(ps)
 
     if nodeset == centers(basis)
-        factorization_method = isnothing(factorization_method) ? Symmetric :
-                               factorization_method
-        system_matrix = interpolation_matrix(basis, ps, regularization;
-                                             factorization_method)
+        if isnothing(linsolve)
+            factorization_method = isnothing(factorization_method) ? Symmetric :
+                                   factorization_method
+            system_matrix = interpolation_matrix(basis, ps, regularization;
+                                                 factorization_method)
+        else
+            system_matrix = interpolation_matrix(basis, ps, regularization;
+                                                 factorization_method = Matrix)
+        end
     else
-        factorization_method = isnothing(factorization_method) ? Matrix :
-                               factorization_method
-        system_matrix = least_squares_matrix(basis, nodeset, ps, regularization;
-                                             factorization_method)
+        if isnothing(linsolve)
+            factorization_method = isnothing(factorization_method) ? Matrix :
+                                   factorization_method
+            system_matrix = least_squares_matrix(basis, nodeset, ps, regularization;
+                                                 factorization_method)
+        else
+            system_matrix = least_squares_matrix(basis, nodeset, ps, regularization;
+                                                 factorization_method = Matrix)
+        end
     end
     b = [values; zeros(RealT, q)]
-    c = system_matrix \ b
+    c = solve_linear_system(system_matrix, b, linsolve)
     return Interpolation{typeof(basis), dim(basis), eltype(nodeset), typeof(system_matrix),
                          typeof(ps), typeof(xx)}(basis, nodeset, c, system_matrix, ps, xx)
 end
+
+solve_linear_system(system_matrix, b, ::Nothing) = system_matrix \ b
+
+function solve_linear_system(system_matrix, b, linsolve)
+    linear_problem = SciMLBase.LinearProblem(system_matrix, b)
+    return SciMLBase.solve(linear_problem, linsolve).u
+end
 function interpolate(centers::NodeSet{Dim, RealT}, nodeset::NodeSet{Dim, RealT},
-                     values::AbstractVector{RealT}, kernel = GaussKernel{Dim, RealT}();
-                     kwargs...) where {Dim, RealT}
+                     values::AbstractVector{RealT}, kernel; kwargs...) where {Dim, RealT}
     return interpolate(StandardBasis(centers, kernel), values, nodeset; kwargs...)
 end
 
@@ -268,9 +290,8 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation, x)
     return diff_op_or_pde(zero(eltype(x)), itp, x)
 end
 
-function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation{<:LagrangeBasis},
-                                                          x)
-    return diff_op_or_pde(zero(eltype(x)), itp, x)
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation)
+    return x -> diff_op_or_pde(itp, x)
 end
 
 function (g::Gradient)(itp::Interpolation, x)
@@ -295,7 +316,7 @@ for the interpolants ``f(x) = \sum_{i = 1}^Nc_i^fK(x, x_i)`` and
 
 See also [`kernel_norm`](@ref).
 """
-function kernel_inner_product(itp1, itp2)
+function kernel_inner_product(itp1::Interpolation, itp2::Interpolation)
     kernel = interpolation_kernel(itp1)
     @assert kernel == interpolation_kernel(itp2)
     c_f = kernel_coefficients(itp1)
@@ -323,7 +344,7 @@ for the interpolant ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)``.
 
 See also [`kernel_inner_product`](@ref).
 """
-kernel_norm(itp) = sqrt(kernel_inner_product(itp, itp))
+kernel_norm(itp::Interpolation) = sqrt(max(0, kernel_inner_product(itp, itp))) # Use max to avoid numerical issues with negative values due to round-off errors
 
 """
     TemporalInterpolation(ode_sol::ODESolution)
@@ -366,4 +387,80 @@ end
 function (titp::TemporalInterpolation)(t, x)
     itp = titp(t)
     return itp(x)
+end
+
+"""
+    MultiscaleInterpolation
+
+Container for a multiscale interpolation composed of several single-scale
+`Interpolation` objects. Evaluation is the sum of the evaluations of the
+individual scales.
+
+See also [`multiscale_interpolate`](@ref).
+"""
+struct MultiscaleInterpolation{Basis, Dim, RealT, Itp} <:
+       AbstractInterpolation{Basis, Dim, RealT}
+    basis::Basis
+    nodeset::NodeSet{Dim, RealT}
+    itps::Vector{Itp}
+end
+
+function Base.show(io::IO, mitp::MultiscaleInterpolation)
+    print(io, "Multiscale interpolation with $(length(mitp.itps)) scales")
+    return nothing
+end
+
+function (mitp::MultiscaleInterpolation)(x)
+    s = zero(eltype(x))
+    for itp in mitp.itps
+        s += itp(x)
+    end
+    return s
+end
+
+Base.lastindex(mitp::MultiscaleInterpolation) = length(mitp.itps)
+Base.getindex(mitp::MultiscaleInterpolation, i) = mitp.itps[i]
+
+"""
+    multiscale_interpolate(nodesets, valuesets, kernels; kwargs...)
+
+Construct a multiscale interpolation by fitting successive interpolants with
+the given `kernels` to the residual. The `nodesets` and `valuesets` must be provided
+as vectors of the same length as `kernels`, allowing grids and data to grow
+between scales. Each scale is constructed by calling [`interpolate`](@ref)
+on the corresponding `nodeset` and residual values.
+
+- Armin Iske (2018)
+  Multiresolution Methods in Scattered Data Modelling
+  Lecture Notes in Computational Science and Engineering (Springer)
+  [DOI: 10.1007/978-3-642-18754-4](https://doi.org/10.1007/978-3-642-18754-4)
+"""
+function multiscale_interpolate(nodesets::AbstractVector{<:NodeSet{Dim, RealT}},
+                                valuesets::AbstractVector{<:AbstractVector{RealT}},
+                                kernels::AbstractVector;
+                                kwargs...) where {Dim, RealT}
+    @assert length(nodesets) == length(valuesets) == length(kernels)
+    isempty(kernels) &&
+        throw(ArgumentError("At least one kernel is required for multiscale interpolation"))
+
+    nlevels = length(kernels)
+    itps_any = Vector{Any}(undef, nlevels)
+    for (i, (nodeset, values, kernel)) in enumerate(zip(nodesets, valuesets, kernels))
+        @assert length(values) == length(nodeset)
+        residual = copy(values)
+        for j in 1:(i - 1)
+            prev_itp = itps_any[j]
+            residual .-= prev_itp.(nodeset)
+        end
+        itp = interpolate(StandardBasis(nodeset, kernel), residual, nodeset; kwargs...)
+        itps_any[i] = itp
+    end
+
+    # Convert to a concretely-typed vector of interpolants to preserve type information
+    Itp = typeof(itps_any[end])
+    itps = Vector{Itp}(itps_any)
+    final_basis = basis(itps[end])
+    return MultiscaleInterpolation{typeof(final_basis), Dim, RealT, Itp}(final_basis,
+                                                                         nodesets[end],
+                                                                         itps)
 end

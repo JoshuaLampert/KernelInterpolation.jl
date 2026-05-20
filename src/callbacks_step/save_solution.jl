@@ -53,7 +53,7 @@ function SaveSolutionCallback(; interval::Integer = 0,
                               dt = nothing,
                               save_initial_solution = true,
                               save_final_solution = true,
-                              output_directory = "out",
+                              output_directory::String = "out",
                               extra_functions = (),
                               keys = append!(["itp"],
                                              "value_" .*

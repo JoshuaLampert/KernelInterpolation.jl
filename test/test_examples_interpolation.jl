@@ -24,6 +24,15 @@ end
                           l2=0.541153763525397, linf=0.2257866545662589)
 end
 
+@testitem "interpolation_2d_linearsolve.jl" setup=[
+    Setup,
+    AdditionalImports,
+    InterpolationExamples
+] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "interpolation_2d_linearsolve.jl"),
+                          l2=0.541153763531321, linf=0.22578665456898403)
+end
+
 @testitem "interpolation_2d_exact.jl" setup=[
     Setup,
     AdditionalImports,
@@ -148,4 +157,13 @@ end
                           l2=1.2759520194191292, linf=0.19486087346749836,
                           l2_reg=0.40908417484986226, linf_reg=0.034926306286874445,
                           interpolation_test=false, regularization_test=true)
+end
+
+@testitem "multiscale_interpolation_1d.jl" setup=[
+    Setup,
+    AdditionalImports,
+    InterpolationExamples
+] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "multiscale_interpolation_1d.jl"),
+                          l2=0.4357245115207042, linf=0.10820462936602132, atol=1e-11)
 end

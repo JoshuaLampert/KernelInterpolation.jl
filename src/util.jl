@@ -8,7 +8,7 @@ Return the directory where the example files provided with KernelInterpolation.j
 readdir(examples_dir())
 ```
 """
-examples_dir() = pkgdir(KernelInterpolation, "examples")
+examples_dir() = pkgdir(KernelInterpolation, "examples")::String
 
 """
     get_examples()

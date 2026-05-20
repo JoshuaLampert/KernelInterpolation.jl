@@ -558,6 +558,8 @@ end
         @test nodeset12_3[i] == expected_nodes[i]
     end
 
+    @test_throws ArgumentError homogeneous_hypercube_boundary(())
+
     nodeset12_4 = @test_nowarn homogeneous_hypercube_boundary((3, 3))
     expected_nodes = [
         [0.0, 0.0],
@@ -716,6 +718,10 @@ end
     itp = @test_nowarn interpolate(nodes, ff, kernel; factorization_method = cholesky)
     @test system_matrix(itp) isa Cholesky
 
+    itp = @test_nowarn interpolate(nodes, ff, kernel; linsolve = LUFactorization())
+    @test system_matrix(itp) isa Matrix
+    @test isapprox(itp([0.5, 0.5]), 1.115625820404527)
+
     # Conditionally positive definite kernel
     # Interpolation
     kernel = ThinPlateSplineKernel{dim(nodes)}()
@@ -793,6 +799,13 @@ end
                                    Matern52Kernel{dim(nodes)}(shape_parameter = 0.5);
                                    factorization_method = qr)
     @test system_matrix(itp) isa LinearAlgebra.QRCompactWY
+    @test isapprox(itp([0.5, 0.5]), 1.077146318936622)
+
+    itp = @test_nowarn interpolate(centers, nodes, ff,
+                                   Matern52Kernel{dim(nodes)}(shape_parameter = 0.5);
+                                   linsolve = QRFactorization())
+    @test system_matrix(itp) isa Matrix
+    @test isapprox(itp([0.5, 0.5]), 1.077146318936622)
 
     # Least squares with LagrangeBasis (not really recommended because you still need to solve a linear system)
     basis = LagrangeBasis(centers, kernel)
@@ -826,16 +839,44 @@ end
     @test isapprox(itp([0.12345]), 0.3783014037753514)
     @test isapprox(itp(0.12345), 0.3783014037753514) # Evaluate at scalar input
 
+    # Multiscale interpolation basic checks
+    fms(x) = x[1] + x[1]^2
+    nodeset1 = @test_nowarn NodeSet(LinRange(0.0, 1.0, 5))
+    nodeset2 = @test_nowarn NodeSet(LinRange(0.0, 1.0, 9))
+    nodesets = [nodeset1, nodeset2]
+    valuesets = [fms.(nodeset1), fms.(nodeset2)]
+    kernels_ms = [WendlandKernel{1}(3; shape_parameter = 0.4),
+        WendlandKernel{1}(3; shape_parameter = 0.8)]
+    mitp = @test_nowarn multiscale_interpolate(nodesets, valuesets, kernels_ms)
+    @test mitp isa MultiscaleInterpolation
+    @test_nowarn println(mitp)
+    @test_nowarn display(mitp)
+    @test nodeset(mitp) == nodesets[end]
+    @test KernelInterpolation.basis(mitp) == KernelInterpolation.basis(mitp[end])
+    @test KernelInterpolation.centers(mitp) == nodeset2
+    @test KernelInterpolation.basis(mitp) == KernelInterpolation.basis(mitp[end])
+    @test interpolation_kernel(mitp) == interpolation_kernel(mitp[end])
+    @test order(mitp) == 0
+    @test mitp[1] isa Interpolation
+    @test mitp[2] isa Interpolation
+    x_test = [0.5]
+    @test isapprox(mitp(x_test), fms(x_test), atol = 1e-6)
+    @test isapprox(mitp(x_test), mitp[1](x_test) + mitp[2](x_test), atol = 1e-12)
+
     # Applying operators to the interpolation
     f_prime(x) = pi * cospi(x[1])
     many_nodes = NodeSet(LinRange(0.0, 1.0, 50))
     d1 = PartialDerivative(1)
+    d1_itp_callable = @test_nowarn d1(itp)
     d1_itp = @test_nowarn d1.(Ref(itp), many_nodes)
+    @test all(isapprox.(d1_itp_callable.(many_nodes), d1_itp, atol = 0.0))
     for i in eachindex(many_nodes)
         @test isapprox(d1_itp[i], f_prime(many_nodes[i]), atol = 0.1)
     end
     g = Gradient()
+    g_itp_callable = @test_nowarn g(itp)
     g_itp = @test_nowarn g.(Ref(itp), many_nodes)
+    @test all(isapprox.(first.(g_itp_callable.(many_nodes)), first.(g_itp), atol = 0.0))
     for i in eachindex(many_nodes)
         @test isapprox(g_itp[i][1], d1_itp[i])
     end
@@ -853,11 +894,14 @@ end
 
     g = @test_nowarn Gradient()
     d2 = @test_nowarn PartialDerivative(2)
+    g_itp_callable = @test_nowarn g(itp_lagrange)
     test_points = NodeSet([0.25 0.25
                            0.75 0.25
                            0.25 0.75
                            0.75 0.75])
     g_itp_lagrange = @test_nowarn g.(Ref(itp_lagrange), test_points)
+    @test all(isapprox.(first.(g_itp_callable.(test_points)), first.(g_itp_lagrange),
+                        atol = 0.0))
     d1_itp_lagrange = @test_nowarn d1.(Ref(itp_lagrange), test_points)
     d2_itp_lagrange = @test_nowarn d2.(Ref(itp_lagrange), test_points)
 
@@ -931,6 +975,14 @@ end
     @test isapprox(d2(kernel, x1), -0.2634286292761684)
     @test isapprox(el(kernel, x1), 0.6486985764273818)
     @test isapprox(el_l(kernel, x1), -AnalyticalLaplacian()(kernel, x1))
+    d1_kernel_callable = @test_nowarn d1(kernel)
+    g_kernel_callable = @test_nowarn g(kernel)
+    l_kernel_callable = @test_nowarn l(kernel)
+    el_kernel_callable = @test_nowarn el(kernel)
+    @test isapprox(d1_kernel_callable(x1), d1(kernel, x1))
+    @test isapprox(g_kernel_callable(x1), g(kernel, x1))
+    @test isapprox(l_kernel_callable(x1), l(kernel, x1))
+    @test isapprox(el_kernel_callable(x1), el(kernel, x1))
     kernel = GaussKernel{3}(shape_parameter = 0.5)
     x2 = [0.1, 0.2, 0.3]
     @test isapprox(l(kernel, x2), AnalyticalLaplacian()(kernel, x2))
@@ -1076,6 +1128,9 @@ end
         @test isapprox(pde(itp, node), f1(node, pde), atol = 1e-14)
         @test isapprox(Laplacian()(itp, node), -f1(node, pde), atol = 1e-14)
     end
+    pde_itp_callable = @test_nowarn pde(itp)
+    @test isapprox(pde_itp_callable(first(nodeset_inner)), pde(itp, first(nodeset_inner)),
+                   atol = 1e-14)
     # Test if the solution satisfies the boundary conditions
     values_boundary = g1.(nodeset_boundary)
     for (node, value) in zip(nodeset_boundary, values_boundary)
@@ -1121,6 +1176,17 @@ end
     b_lagrange_test = L_lagrange * u_lagrange_values
     for (b_val, b_test_val) in zip(b, b_lagrange_test)
         @test isapprox(b_val, b_test_val, atol = 1e-12)
+    end
+
+    # Solve stationary PDE using LinearSolve's GMRES
+    sd_ls = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, kernel)
+    itp_ls = @test_nowarn solve_stationary(sd_ls; linsolve = KrylovJL_GMRES())
+
+    for node in nodeset_inner
+        @test isapprox(pde(itp_ls, node), f1(node, pde), atol = 1e-12)
+    end
+    for (node, value) in zip(nodeset_boundary, g1.(nodeset_boundary))
+        @test isapprox(itp_ls(node), value, atol = 1e-12)
     end
 
     # time-dependent PDE
@@ -1208,6 +1274,19 @@ end
     @test eltype(coefficients(itp)) == Float32
     @test eltype(system_matrix(itp)) == Float32
     @test typeof(@inferred itp([0.5f0, 0.5f0])) == Float32
+
+    # Multiscale interpolation
+    nodeset1 = NodeSet(Float32[0.0; 0.25; 0.5; 0.75; 1.0])
+    nodeset2 = NodeSet(Float32[0.0; 0.125; 0.25; 0.375; 0.5; 0.625; 0.75; 0.875; 1.0])
+    nodesets = [nodeset1, nodeset2]
+    fms(x) = x[1] + x[1]^2
+    valuesets = [fms.(nodeset1), fms.(nodeset2)]
+    kernels = [WendlandKernel{1}(3; shape_parameter = 0.4f0),
+        WendlandKernel{1}(3; shape_parameter = 0.8f0)]
+    mitp = @test_nowarn multiscale_interpolate(nodesets, valuesets, kernels)
+    @test typeof(@inferred mitp([0.5f0])) == Float32
+    x = Float32[0.3]
+    @test mitp(x) == mitp[1](x) + mitp[2](x)
 
     # Solving stationary PDE
     nodeset_inner = NodeSet(Float32[0.25 0.25

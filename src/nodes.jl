@@ -380,6 +380,10 @@ function number_of_nodes(n, dim)
 end
 
 # TODO: Is there a better way to create these `NodeSet`s?
+function homogeneous_hypercube_boundary(::NTuple{0}, ::NTuple{0}, ::NTuple{0}; kwargs...)
+    throw(ArgumentError("Cannot create boundary of a 0-dimensional hypercube"))
+end
+
 function homogeneous_hypercube_boundary(n::NTuple{Dim},
                                         x_min::NTuple{Dim, RealT} = ntuple(_ -> 0.0, Dim),
                                         x_max::NTuple{Dim, RealT} = ntuple(_ -> 1.0, Dim);
