@@ -1262,7 +1262,7 @@ end
     mitp = @test_nowarn multiscale_interpolate(nodesets, valuesets, kernels)
     @test mitp isa MultiscaleInterpolation
     @test nodeset(mitp) == nodeset2
-    @test centers(mitp) == nodeset2
+    @test KernelInterpolation.centers(mitp) == nodeset2
     @test basis(mitp) == basis(mitp[2])
     @test interpolation_kernel(mitp) == interpolation_kernel(mitp[2])
     @test typeof(@inferred mitp([0.5f0])) == Float32
