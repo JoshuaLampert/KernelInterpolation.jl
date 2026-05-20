@@ -22,6 +22,9 @@ values = f.(nodeset)
 kernel = ThinPlateSplineKernel{dim(nodeset)}()
 
 SUITE["interpolation 2D"] = @benchmarkable interpolate($nodeset, $values, $kernel)
+itp = interpolate(nodeset, values, kernel)
+x = [0.5, 0.5]
+SUITE["interpolation evaluation 2D"] = @benchmarkable $itp($x)
 SUITE["computing Lagrange basis"] = @benchmarkable LagrangeBasis($nodeset, $kernel)
 basis = LagrangeBasis(nodeset, kernel)
 SUITE["interpolation 2D Lagrange basis"] = @benchmarkable interpolate($basis, $values)
@@ -45,6 +48,19 @@ values = f.(nodeset)
 kernel = ThinPlateSplineKernel{dim(nodeset)}()
 basis = StandardBasis(centers, kernel)
 SUITE["least squares 2D"] = @benchmarkable interpolate($basis, $values, $nodeset)
+
+nodeset1 = NodeSet(LinRange(0.0, 1.0, 5))
+nodeset2 = NodeSet(LinRange(0.0, 1.0, 9))
+nodesets = [nodeset1, nodeset2]
+valuesets = [f.(nodeset1), f.(nodeset2)]
+kernels = [WendlandKernel{dim(nodeset1)}(3, shape_parameter = 0.4),
+    WendlandKernel{dim(nodeset2)}(3, shape_parameter = 0.8)]
+SUITE["multiscale interpolation 1D"] = @benchmarkable multiscale_interpolate($nodesets,
+                                                                             $valuesets,
+                                                                             $kernels)
+mitp = multiscale_interpolate(nodesets, valuesets, kernels)
+x = [0.5]
+SUITE["multiscale evaluation 1D"] = @benchmarkable $mitp($x)
 
 # stationary PDE benchmarks
 f(x, equations) = 5 / 4 * pi^2 * sinpi(x[1]) * cospi(x[2] / 2)
