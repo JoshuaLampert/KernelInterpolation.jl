@@ -9,6 +9,7 @@ for human readability.
 
 #### Added
 
+- Add multiscale interpolation functionality with the function `multiscale_interpolate` and the type `MultiscaleInterpolation` ([#180]).
 - Allow applying differential operators to an `Interpolation` to get a callable object that evaluates the operator at any point ([#179]).
 - Added support for methods from `LinearSolve.jl` in `solve_stationary` ([#178]).
 - Added support for methods from `LinearSolve.jl` in `interpolate` ([#176]).

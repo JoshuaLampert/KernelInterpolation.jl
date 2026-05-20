@@ -30,6 +30,17 @@
             basis = StandardBasis(nodes, kernel1)
             @test_nowarn plot(basis, nodes_fine)
             @test_throws DimensionMismatch plot(basis, random_hypercube(5; dim = dim + 1))
+            if dim == 1
+                nodeset1 = homogeneous_hypercube(5; dim = 1)
+                nodeset2 = homogeneous_hypercube(9; dim = 1)
+                nodesets = [nodeset1, nodeset2]
+                valuesets = [f.(nodeset1), f.(nodeset2)]
+                kernels = [WendlandKernel{1}(3; shape_parameter = 0.4),
+                    WendlandKernel{1}(3; shape_parameter = 0.8)]
+                mitp = multiscale_interpolate(nodesets, valuesets, kernels)
+                @test_nowarn plot(nodes_fine, mitp)
+                @test_nowarn plot(mitp)
+            end
         end
     end
 end
