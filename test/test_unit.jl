@@ -1251,6 +1251,24 @@ end
     @test eltype(system_matrix(itp)) == Float32
     @test typeof(@inferred itp([0.5f0, 0.5f0])) == Float32
 
+    # Multiscale interpolation
+    nodeset1 = NodeSet(Float32[0.0; 0.25; 0.5; 0.75; 1.0])
+    nodeset2 = NodeSet(Float32[0.0; 0.125; 0.25; 0.375; 0.5; 0.625; 0.75; 0.875; 1.0])
+    nodesets = [nodeset1, nodeset2]
+    fms(x) = x[1] + x[1]^2
+    valuesets = [fms.(nodeset1), fms.(nodeset2)]
+    kernels = [WendlandKernel{1}(3; shape_parameter = 0.4f0),
+               WendlandKernel{1}(3; shape_parameter = 0.8f0)]
+    mitp = @test_nowarn multiscale_interpolate(nodesets, valuesets, kernels)
+    @test mitp isa MultiscaleInterpolation
+    @test nodeset(mitp) == nodeset2
+    @test centers(mitp) == nodeset2
+    @test basis(mitp) == basis(mitp[2])
+    @test interpolation_kernel(mitp) == interpolation_kernel(mitp[2])
+    @test typeof(@inferred mitp([0.5f0])) == Float32
+    x = Float32[0.3]
+    @test mitp(x) == mitp[1](x) + mitp[2](x)
+
     # Solving stationary PDE
     nodeset_inner = NodeSet(Float32[0.25 0.25
                                     0.75 0.25
