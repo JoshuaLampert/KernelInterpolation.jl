@@ -429,20 +429,23 @@ function multiscale_interpolate(nodesets::AbstractVector{<:NodeSet{Dim, RealT}},
         throw(ArgumentError("At least one kernel is required for multiscale interpolation"))
 
     nlevels = length(kernels)
-    itps = Vector{Interpolation}(undef, nlevels)
+    itps_any = Vector{Any}(undef, nlevels)
     for (i, (nodeset, values, kernel)) in enumerate(zip(nodesets, valuesets, kernels))
         @assert length(values) == length(nodeset)
         residual = copy(values)
         for j in 1:(i - 1)
-            prev_itp = itps[j]
+            prev_itp = itps_any[j]
             residual .-= prev_itp.(nodeset)
         end
         itp = interpolate(StandardBasis(nodeset, kernel), residual, nodeset; kwargs...)
-        itps[i] = itp
+        itps_any[i] = itp
     end
 
+    # Convert to a concretely-typed vector of interpolants to preserve type information
+    Itp = typeof(itps_any[end])
+    itps = Vector{Itp}(itps_any)
     final_basis = basis(itps[end])
-    return MultiscaleInterpolation{typeof(final_basis), Dim, RealT, Interpolation}(final_basis,
-                                                                                   nodesets[end],
-                                                                                   itps)
+    return MultiscaleInterpolation{typeof(final_basis), Dim, RealT, Itp}(final_basis,
+                                                                         nodesets[end],
+                                                                         itps)
 end
