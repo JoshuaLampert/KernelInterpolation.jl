@@ -413,6 +413,11 @@ the given `kernels` to the residual. The `nodesets` and `valuesets` must be prov
 as vectors of the same length as `kernels`, allowing grids and data to grow
 between scales. Each scale is constructed by calling [`interpolate`](@ref)
 on the corresponding `nodeset` and residual values.
+
+- Armin Iske (2018)
+  Multiresolution Methods in Scattered Data Modelling
+  Lecture Notes in Computational Science and Engineering (Springer)
+  [DOI: 10.1007/978-3-642-18754-4](https://doi.org/10.1007/978-3-642-18754-4)
 """
 function multiscale_interpolate(nodesets::AbstractVector{<:NodeSet{Dim, RealT}},
                                 valuesets::AbstractVector{<:AbstractVector{RealT}},

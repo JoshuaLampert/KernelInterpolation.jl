@@ -5,9 +5,10 @@ f(x) = sinpi(2 * x[1]) + 0.25 * cospi(12 * x[1])
 
 nodeset1 = homogeneous_hypercube(5; dim = 1)
 nodeset2 = homogeneous_hypercube(9; dim = 1)
-nodeset3 = homogeneous_hypercube(17; dim = 1)
-nodesets = [nodeset1, nodeset2, nodeset3]
-valuesets = [f.(nodeset1), f.(nodeset2), f.(nodeset3)]
+nodeset = homogeneous_hypercube(17; dim = 1)
+nodesets = [nodeset1, nodeset2, nodeset]
+values = f.(nodeset)
+valuesets = [f.(nodeset1), f.(nodeset2), values]
 
 kernels = [WendlandKernel{1}(3; shape_parameter = 0.2),
            WendlandKernel{1}(3; shape_parameter = 0.6),
