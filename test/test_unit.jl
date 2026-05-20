@@ -839,6 +839,30 @@ end
     @test isapprox(itp([0.12345]), 0.3783014037753514)
     @test isapprox(itp(0.12345), 0.3783014037753514) # Evaluate at scalar input
 
+    # Multiscale interpolation basic checks
+    fms(x) = x[1] + x[1]^2
+    nodeset1 = @test_nowarn NodeSet(LinRange(0.0, 1.0, 5))
+    nodeset2 = @test_nowarn NodeSet(LinRange(0.0, 1.0, 9))
+    nodesets = [nodeset1, nodeset2]
+    valuesets = [fms.(nodeset1), fms.(nodeset2)]
+    kernels_ms = [WendlandKernel{1}(3; shape_parameter = 0.4),
+        WendlandKernel{1}(3; shape_parameter = 0.8)]
+    mitp = @test_nowarn multiscale_interpolate(nodesets, valuesets, kernels_ms)
+    @test mitp isa MultiscaleInterpolation
+    @test_nowarn println(mitp)
+    @test_nowarn display(mitp)
+    @test nodeset(mitp) == nodesets[end]
+    @test KernelInterpolation.basis(mitp) == KernelInterpolation.basis(mitp[end])
+    @test KernelInterpolation.centers(mitp) == nodeset2
+    @test KernelInterpolation.basis(mitp) == KernelInterpolation.basis(mitp[end])
+    @test interpolation_kernel(mitp) == interpolation_kernel(mitp[end])
+    @test order(mitp) == 0
+    @test mitp[1] isa Interpolation
+    @test mitp[2] isa Interpolation
+    x_test = [0.5]
+    @test isapprox(mitp(x_test), fms(x_test), atol = 1e-6)
+    @test isapprox(mitp(x_test), mitp[1](x_test) + mitp[2](x_test), atol = 1e-12)
+
     # Applying operators to the interpolation
     f_prime(x) = pi * cospi(x[1])
     many_nodes = NodeSet(LinRange(0.0, 1.0, 50))
@@ -1260,11 +1284,6 @@ end
     kernels = [WendlandKernel{1}(3; shape_parameter = 0.4f0),
         WendlandKernel{1}(3; shape_parameter = 0.8f0)]
     mitp = @test_nowarn multiscale_interpolate(nodesets, valuesets, kernels)
-    @test mitp isa MultiscaleInterpolation
-    @test nodeset(mitp) == nodeset2
-    @test KernelInterpolation.centers(mitp) == nodeset2
-    @test KernelInterpolation.basis(mitp) == KernelInterpolation.basis(mitp[2])
-    @test interpolation_kernel(mitp) == interpolation_kernel(mitp[2])
     @test typeof(@inferred mitp([0.5f0])) == Float32
     x = Float32[0.3]
     @test mitp(x) == mitp[1](x) + mitp[2](x)

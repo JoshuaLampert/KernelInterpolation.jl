@@ -391,7 +391,8 @@ struct MultiscaleInterpolation{Basis, Dim, RealT, Itp} <:
 end
 
 function Base.show(io::IO, mitp::MultiscaleInterpolation)
-    return print(io, "Multiscale interpolation with $(length(mitp.itps)) scales")
+    print(io, "Multiscale interpolation with $(length(mitp.itps)) scales")
+    return nothing
 end
 
 function (mitp::MultiscaleInterpolation)(x)
@@ -402,9 +403,8 @@ function (mitp::MultiscaleInterpolation)(x)
     return s
 end
 
-function Base.getindex(mitp::MultiscaleInterpolation, i)
-    return mitp.itps[i]
-end
+Base.lastindex(mitp::MultiscaleInterpolation) = length(mitp.itps)
+Base.getindex(mitp::MultiscaleInterpolation, i) = mitp.itps[i]
 
 """
     multiscale_interpolate(nodesets, valuesets, kernels; kwargs...)
