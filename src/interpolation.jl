@@ -119,6 +119,7 @@ Return the order ``m`` of the polynomial used for the interpolation, i.e.,
 the polynomial degree plus 1. If ``m = 0``, no polynomial is added.
 """
 order(itp::AbstractInterpolation) = order(basis(itp))
+order(itp::Interpolation) = maximum(degree.(itp.ps), init = -1) + 1
 
 @doc raw"""
     system_matrix(itp::Interpolation)
