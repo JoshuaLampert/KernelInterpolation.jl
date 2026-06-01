@@ -129,6 +129,7 @@ end
 end
 
 @testitem "RBF-FD: kernel_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
+    using SparseArrays: findnz
     X = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
     Y = NodeSet([0.1, 0.3, 0.6, 0.9, 1.0, 0.0])
     kernel = GaussKernel{1}(shape_parameter = 1.0)
@@ -138,13 +139,14 @@ end
                            local_basis = RBFFDStandardBasis())
     C_std = kernel_matrix(basis_std, Y)
     @test size(C_std) == (length(Y), length(X))
+    nz_rows, nz_cols, _ = findnz(C_std)
 
     for j in eachindex(Y)
         y_j = Y[j]
         i = nearest_node_index(y_j, X)
         neigh = select_neighbors(X[i], X, stencil)
-        nz_cols = findall(!iszero, C_std[j, :])
-        @test Set(nz_cols) == Set(neigh.indices)
+        stored_cols = nz_cols[nz_rows .== j]
+        @test Set(stored_cols) == Set(neigh.indices)
 
         for (k, global_idx) in enumerate(neigh.indices)
             @test C_std[j, global_idx] ≈ kernel(y_j, neigh.nodes[k])
@@ -155,14 +157,15 @@ end
                            local_basis = RBFFDLagrangeBasis())
     C_lag = kernel_matrix(basis_lag, Y)
     @test size(C_lag) == (length(Y), length(X))
+    nz_rows, nz_cols, _ = findnz(C_lag)
 
     for j in eachindex(Y)
         y_j = Y[j]
         i = nearest_node_index(y_j, X)
         neigh = select_neighbors(X[i], X, stencil)
         local_basis = LagrangeBasis(neigh.nodes, kernel; m = 0)
-        nz_cols = findall(!iszero, C_lag[j, :])
-        @test Set(nz_cols) == Set(neigh.indices)
+        stored_cols = nz_cols[nz_rows .== j]
+        @test Set(stored_cols) == Set(neigh.indices)
 
         for (k, global_idx) in enumerate(neigh.indices)
             @test C_lag[j, global_idx] ≈ local_basis[k](y_j)
