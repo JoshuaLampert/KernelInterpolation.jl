@@ -65,6 +65,13 @@ Modules = [KernelInterpolation]
 Pages = ["discretization.jl"]
 ```
 
+## RBF-FD
+
+```@autodocs
+Modules = [KernelInterpolation]
+Pages = ["rbf_fd_basis.jl", "rbf_fd_weights.jl", "rbf_fd_matrices.jl"]
+```
+
 ## Kernel matrices
 
 ```@autodocs
