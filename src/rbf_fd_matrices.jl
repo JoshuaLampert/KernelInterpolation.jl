@@ -20,7 +20,8 @@ function rbf_fd_pde_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
         weights, _ = rbf_fd_weights(diff_op_or_pde, x_i, neighbor_info.nodes, kernel;
                                     m, local_basis)
 
-        weights isa AbstractVector || throw(ArgumentError("RBF-FD PDE assembly expects scalar operator values"))
+        weights isa AbstractVector ||
+            throw(ArgumentError("RBF-FD PDE assembly expects scalar operator values"))
 
         for (j, global_idx) in enumerate(neighbor_info.indices)
             push!(rows, i)

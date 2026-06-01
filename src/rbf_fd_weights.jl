@@ -113,7 +113,8 @@ function select_neighbors(i::Int, nodeset::NodeSet, stencil::RadiusSearch)
         end
     end
 
-    isempty(neighbor_indices) && throw(ArgumentError("No neighbors found within radius $(radius) for point index $(i)"))
+    isempty(neighbor_indices) &&
+        throw(ArgumentError("No neighbors found within radius $(radius) for point index $(i)"))
 
     neighbor_nodes = NodeSet(neighbor_nodes_list)
     return (indices = neighbor_indices, nodes = neighbor_nodes)
@@ -123,7 +124,8 @@ function select_neighbors(x_i::AbstractVector, nodeset::NodeSet,
                           stencil::KNearestNeighbors)
     distances = [norm(x_i .- nodeset[j]) for j in eachindex(nodeset)]
     k = stencil.k
-    k ≤ length(nodeset) || throw(ArgumentError("k=$(k) exceeds nodeset size $(length(nodeset))"))
+    k ≤ length(nodeset) ||
+        throw(ArgumentError("k=$(k) exceeds nodeset size $(length(nodeset))"))
     neighbor_indices = sortperm(distances)[1:k]
     neighbor_nodes = NodeSet([nodeset[j] for j in neighbor_indices])
     return (indices = neighbor_indices, nodes = neighbor_nodes)
@@ -139,7 +141,8 @@ function select_neighbors(x_i::AbstractVector, nodeset::NodeSet,
             push!(neighbor_nodes_list, nodeset[j])
         end
     end
-    isempty(neighbor_indices) && throw(ArgumentError("No neighbors found within radius $(stencil.radius)"))
+    isempty(neighbor_indices) &&
+        throw(ArgumentError("No neighbors found within radius $(stencil.radius)"))
     neighbor_nodes = NodeSet(neighbor_nodes_list)
     return (indices = neighbor_indices, nodes = neighbor_nodes)
 end
@@ -188,8 +191,12 @@ function _operator_on_polynomial(op::EllipticOperator, p, xx, x)
            cc * p(xx => x)
 end
 
-_operator_on_polynomial(op::PoissonEquation, p, xx, x) = -_operator_on_polynomial(Laplacian(), p, xx, x)
-_operator_on_polynomial(op::EllipticEquation, p, xx, x) = _operator_on_polynomial(op.op, p, xx, x)
+function _operator_on_polynomial(op::PoissonEquation, p, xx, x)
+    return -_operator_on_polynomial(Laplacian(), p, xx, x)
+end
+function _operator_on_polynomial(op::EllipticEquation, p, xx, x)
+    return _operator_on_polynomial(op.op, p, xx, x)
+end
 function _operator_on_polynomial(op::AdvectionEquation, p, xx, x)
     return dot(op.advection_velocity, ForwardDiff.gradient(y -> p(xx => y), x))
 end
@@ -295,14 +302,12 @@ function rbf_fd_weights(diff_op_or_pde, x_i::AbstractVector,
         svals = svdvals(k_matrix)
         rank_tol = eps(eltype(svals)) * maximum(svals)
         rank_est = count(>(rank_tol), svals)
-        info = (
-            stencil_size = length(neighbor_nodes),
-            condition_number = cond(k_matrix),
-            rank = rank_est,
-            singular_values = svals,
-            x_i = x_i,
-            local_basis = local_basis
-        )
+        info = (stencil_size = length(neighbor_nodes),
+                condition_number = cond(k_matrix),
+                rank = rank_est,
+                singular_values = svals,
+                x_i = x_i,
+                local_basis = local_basis)
         return weights, info
     end
 
@@ -332,14 +337,12 @@ function rbf_fd_weights(diff_op_or_pde, x_i::AbstractVector,
     svals = svdvals(A)
     rank_tol = eps(eltype(svals)) * maximum(svals)
     rank_est = count(>(rank_tol), svals)
-    info = (
-        stencil_size = length(neighbor_nodes),
-        condition_number = cond(A),
-        rank = rank_est,
-        singular_values = svals,
-        x_i = x_i,
-        local_basis = local_basis
-    )
+    info = (stencil_size = length(neighbor_nodes),
+            condition_number = cond(A),
+            rank = rank_est,
+            singular_values = svals,
+            x_i = x_i,
+            local_basis = local_basis)
     return weights, info
 end
 
@@ -366,17 +369,18 @@ Convenience wrapper to compute FD weights at a single interior point with automa
 - `weight_info::NamedTuple`: Diagnostic information from weight computation
 """
 function rbf_fd_weights_at_node(kernel::AbstractKernel,
-                               operator,
-                               x_i::AbstractVector, nodeset::NodeSet,
-                               stencil_selection::AbstractStencilSelection;
-                               center_nodes::NodeSet = nothing,
-                               m::Int = order(kernel),
-                               local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis())
+                                operator,
+                                x_i::AbstractVector, nodeset::NodeSet,
+                                stencil_selection::AbstractStencilSelection;
+                                center_nodes::NodeSet = nothing,
+                                m::Int = order(kernel),
+                                local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis())
 
     # Select neighbors
     neighbor_info = select_neighbors(x_i, nodeset, stencil_selection)
 
-    center_nodes === nothing || throw(ArgumentError("`center_nodes` is not supported in RBF-FD and should be omitted."))
+    center_nodes === nothing ||
+        throw(ArgumentError("`center_nodes` is not supported in RBF-FD and should be omitted."))
 
     # Compute weights
     weights, weight_info = rbf_fd_weights(operator, x_i, neighbor_info.nodes, kernel;
@@ -406,21 +410,20 @@ the `rbf_fd_pde_matrix()` function is more suitable.
   (weights, neighbor_info, weight_info) tuples as values
 """
 function rbf_fd_weights_all_nodes(kernel::AbstractKernel,
-                                 operator,
-                                 nodeset_interior::NodeSet,
-                                 nodeset_centers::NodeSet,
-                                 stencil_selection::AbstractStencilSelection;
-                                 m::Int = order(kernel),
-                                 local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis())
-
+                                  operator,
+                                  nodeset_interior::NodeSet,
+                                  nodeset_centers::NodeSet,
+                                  stencil_selection::AbstractStencilSelection;
+                                  m::Int = order(kernel),
+                                  local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis())
     weight_dict = Dict()
 
     for i in eachindex(nodeset_interior)
         x_i = nodeset_interior[i]
-        weights, neighbor_info, weight_info = rbf_fd_weights_at_node(
-            kernel, operator, x_i, nodeset_centers, stencil_selection;
-            m, local_basis
-        )
+        weights, neighbor_info, weight_info = rbf_fd_weights_at_node(kernel, operator, x_i,
+                                                                     nodeset_centers,
+                                                                     stencil_selection;
+                                                                     m, local_basis)
         weight_dict[i] = (weights, neighbor_info, weight_info)
     end
 

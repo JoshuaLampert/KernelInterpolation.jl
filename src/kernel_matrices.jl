@@ -351,7 +351,8 @@ function operator_matrix(diff_op_or_pde, basis::RBFFDBasis,
             local_basis = LagrangeBasis(neighbor_info.nodes, basis.kernel; m = basis.m)
             for (k, global_idx) in enumerate(neighbor_info.indices)
                 value = diff_op_or_pde(local_basis[k], y_j)
-                value isa Number || throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
+                value isa Number ||
+                    throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
                 push!(rows, j)
                 push!(cols, global_idx)
                 push!(vals, value)
@@ -359,7 +360,8 @@ function operator_matrix(diff_op_or_pde, basis::RBFFDBasis,
         else
             for (k, global_idx) in enumerate(neighbor_info.indices)
                 value = diff_op_or_pde(basis.kernel, y_j, neighbor_info.nodes[k])
-                value isa Number || throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
+                value isa Number ||
+                    throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
                 push!(rows, j)
                 push!(cols, global_idx)
                 push!(vals, value)

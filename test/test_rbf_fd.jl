@@ -53,7 +53,7 @@ end
 
     L = operator_matrix(equation, nodeset_inner, nodeset_boundary, disc.basis)
     @test size(L) == (length(nodeset_inner) + length(nodeset_boundary),
-                      length(nodeset_inner) + length(nodeset_boundary))
+           length(nodeset_inner) + length(nodeset_boundary))
 
     itp = solve_stationary(disc)
     @test itp isa Interpolation
@@ -119,7 +119,7 @@ end
     basis_card = RBFFDBasis(nodeset, kernel, stencil; m = 0,
                             local_basis = RBFFDLagrangeBasis())
     b_card = basis_card[3, 2]
-    @test b_card(neigh.nodes[2]) ≈ 1.0 atol = 1.0e-10
+    @test b_card(neigh.nodes[2])≈1.0 atol=1.0e-10
     @test abs(b_card(neigh.nodes[1])) ≤ 1.0e-8
     @test abs(b_card(neigh.nodes[3])) ≤ 1.0e-8
 
