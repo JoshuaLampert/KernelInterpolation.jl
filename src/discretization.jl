@@ -176,7 +176,7 @@ function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, Rea
         return interpolate(nodeset, c, interpolation_kernel(basis))
     end
 
-    # Do not support additional polynomial basis for now
+    # TODO: Do not support additional polynomial basis for now
     xx = polyvars(Dim)
     ps = monomials(xx, 0:-1)
     nodeset = merge(nodeset_inner, nodeset_boundary)
