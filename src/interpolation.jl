@@ -270,18 +270,10 @@ end
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(s,
                                                           itp::Interpolation{<:LagrangeBasis},
                                                           x)
-    kernel = interpolation_kernel(itp)
-    xis = centers(itp)
     c = kernel_coefficients(itp)
+    bas = basis(itp)
     for j in eachindex(c)
-        s += c[j] * diff_op_or_pde(kernel, x, xis[j])
-    end
-
-    d = polynomial_coefficients(itp)
-    ps = polynomial_basis(itp)
-    xx = polyvars(itp)
-    for k in eachindex(d)
-        s += d[k] * _operator_on_polynomial(diff_op_or_pde, ps[k], xx, x)
+        s += c[j] * diff_op_or_pde(bas[j], x)
     end
     return s
 end
@@ -370,7 +362,8 @@ end
 function (titp::TemporalInterpolation)(t)
     ode_sol = titp.ode_sol
     semi = ode_sol.prob.p
-    @unpack nodeset_inner, boundary_condition, nodeset_boundary, basis = semi.spatial_discretization
+    @unpack nodeset_inner, boundary_condition, nodeset_boundary,
+            basis = semi.spatial_discretization
     c = ode_sol(t)
     # Do not support additional polynomial basis for now
     xx = polyvars(dim(semi))
