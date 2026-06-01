@@ -169,18 +169,18 @@ function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, Rea
 
     system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
     b = [rhs(nodeset_inner, equations); boundary_condition.(nodeset_boundary)]
-    coeffs = solve_linear_system(system_matrix, b, linsolve)
+    c = solve_linear_system(system_matrix, b, linsolve)
 
     if method isa RBFFD
         nodeset = merge(nodeset_inner, nodeset_boundary)
-        return interpolate(nodeset, coeffs, interpolation_kernel(basis))
+        return interpolate(nodeset, c, interpolation_kernel(basis))
     end
 
     # Do not support additional polynomial basis for now
     xx = polyvars(Dim)
     ps = monomials(xx, 0:-1)
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    return Interpolation(basis, nodeset, coeffs, system_matrix,
+    return Interpolation(basis, nodeset, c, system_matrix,
                          ps, xx)
 end
 
