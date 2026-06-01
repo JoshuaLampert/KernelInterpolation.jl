@@ -44,7 +44,7 @@ end
 
     A = rbf_fd_pde_boundary_matrix(equation, nodeset_inner, nodeset_boundary, disc.basis)
     A_dispatch = pde_boundary_matrix(equation, nodeset_inner, nodeset_boundary, disc.basis)
-    b = [rhs(nodeset_inner, equation); boundary_condition.(nodeset_boundary)]
+    b = [f.(nodeset_inner, Ref(equation)); boundary_condition.(nodeset_boundary)]
     u = A \ b
 
     @test A_dispatch == A
