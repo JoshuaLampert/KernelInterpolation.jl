@@ -13,7 +13,7 @@ module KernelInterpolation
 
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
 using ForwardDiff: ForwardDiff
-using LinearAlgebra: Symmetric, I, norm, tr, dot, diagind, svdvals, cond
+using LinearAlgebra: Diagonal, Symmetric, I, norm, tr, dot, diagind, svdvals, cond
 using Printf: @sprintf
 using Random: Random
 using ReadVTK: VTKFile, get_points, get_point_data, get_data

@@ -372,7 +372,7 @@ function rbf_fd_weights_at_node(kernel::AbstractKernel,
                                 operator,
                                 x_i::AbstractVector, nodeset::NodeSet,
                                 stencil_selection::AbstractStencilSelection;
-                                center_nodes::NodeSet = nothing,
+                                center_nodes::Union{NodeSet, Nothing} = nothing,
                                 m::Int = order(kernel),
                                 local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis())
 

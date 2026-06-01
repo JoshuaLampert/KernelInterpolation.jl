@@ -46,7 +46,7 @@ function rbf_fd_boundary_matrix(nodeset_inner::NodeSet, nodeset_boundary::NodeSe
 
     rows = collect(1:n_boundary)
     cols = collect((n_inner + 1):n_total)
-    vals = ones(eltype(nodeset_inner), n_boundary)
+    vals = fill(one(eltype(nodeset_inner)), n_boundary)
 
     return sparse(rows, cols, vals, n_boundary, n_total)
 end

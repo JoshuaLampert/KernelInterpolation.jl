@@ -206,8 +206,8 @@ struct Semidiscretization{InitialCondition, Cache}
     cache::Cache
 end
 
-function Semidiscretization(spatial_discretization::SpatialDiscretization,
-                            initial_condition)
+function Semidiscretization(spatial_discretization::SpatialDiscretization{Dim, RealT},
+                            initial_condition) where {Dim, RealT}
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, method, basis = spatial_discretization
     nodeset = merge(nodeset_inner, nodeset_boundary)
     pdeb_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
@@ -215,9 +215,9 @@ function Semidiscretization(spatial_discretization::SpatialDiscretization,
     if method isa RBFFD
         n_inner = length(nodeset_inner)
         n_total = length(nodeset)
-        mass_diag = vcat(ones(eltype(nodeset_inner), n_inner),
-                         zeros(eltype(nodeset_inner), n_total - n_inner))
-        m_matrix = sparse(1:n_total, 1:n_total, mass_diag, n_total, n_total)
+        mass_diag = zeros(RealT, n_total)
+        mass_diag[1:n_inner] .= one(RealT)
+        m_matrix = sparse(Diagonal(mass_diag))
         cache = (; kernel_matrix = I, mass_matrix = m_matrix,
                  pde_boundary_matrix = pdeb_matrix)
     else
