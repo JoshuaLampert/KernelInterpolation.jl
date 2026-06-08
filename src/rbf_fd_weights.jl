@@ -37,7 +37,7 @@ Stencil selection strategy using k-nearest neighbors. Each interior point uses i
 neighbors (by Euclidean distance) to form the local FD stencil. This ensures uniform sparsity.
 
 # Arguments
-- `k::Int`: Number of nearest neighbors to use (default: 25)
+- `k::Int`: Number of nearest neighbors to use
 """
 struct KNearestNeighbors <: AbstractStencilSelection
     k::Int
@@ -47,12 +47,10 @@ struct KNearestNeighbors <: AbstractStencilSelection
     end
 end
 
-KNearestNeighbors() = KNearestNeighbors(25)
-
 Base.show(io::IO, ss::KNearestNeighbors) = print(io, "KNearestNeighbors(k=$(ss.k))")
 
 """
-    RadiusSearch(radius::Float64)
+    RadiusSearch(radius)
 
 Stencil selection strategy using fixed radius search. Each interior point uses all neighbors
 within a given Euclidean distance `radius` to form the local FD stencil. This allows variable
@@ -74,9 +72,9 @@ Base.show(io::IO, ss::RadiusSearch) = print(io, "RadiusSearch(r=$(ss.radius))")
 # ==================== Neighbor Selection ====================
 
 """
-    select_neighbors(i, nodeset, stencil_selection::KNearestNeighbors)
+    select_neighbors(i, nodeset, stencil_selection)
 
-Select k nearest neighbors of `nodeset[i]` from `nodeset` using Euclidean distance.
+Selects neighbors of `nodeset[i]` from `nodeset` using `stencil_selection`.
 Returns a tuple of (neighbor_indices, neighbor_nodes).
 """
 function select_neighbors(i::Int, nodeset::NodeSet, stencil::KNearestNeighbors)
@@ -93,12 +91,6 @@ function select_neighbors(i::Int, nodeset::NodeSet, stencil::KNearestNeighbors)
     return (indices = neighbor_indices, nodes = neighbor_nodes)
 end
 
-"""
-    select_neighbors(i, nodeset, stencil_selection::RadiusSearch)
-
-Select all neighbors of `nodeset[i]` from `nodeset` within the search radius.
-Returns a tuple of (neighbor_indices, neighbor_nodes).
-"""
 function select_neighbors(i::Int, nodeset::NodeSet, stencil::RadiusSearch)
     radius = stencil.radius
     x_i = nodeset[i]
@@ -256,16 +248,16 @@ function _rbf_fd_cardinal_weights(diff_op_or_pde, x_i::AbstractVector,
     end
 end
 
-"""
+@doc raw"""
     rbf_fd_weights(diff_op_or_pde, x_i, neighbor_nodes, kernel;
                    m = order(kernel), local_basis = RBFFDStandardBasis())
 
 Compute RBF-FD finite difference weights for a given interior point and its stencil.
 
 This function solves a local system to find weights `w` such that the finite difference
-approximation \$\\mathcal{L}u_h(x_i) ≈ \\sum_{j ∈ stencil} w_j u_j\$ holds when:
-- \$u_h(x) = \\sum_{j ∈ stencil} c_j \\phi(\\|x - center_j\\|)\$ is the local kernel interpolant
-- \$\\mathcal{L}\$ is the differential operator
+approximation ``\mathcal{L}u_h(x_i) ≈ \sum_{j ∈ stencil} w_j u_j`` holds when:
+- ``u_h(x) = \sum_{j ∈ stencil} c_j \phi(\|x - center_j\|)`` is the local kernel interpolant
+- ``\mathcal{L}`` is the differential operator
 
 # Arguments
 - `diff_op_or_pde`: Differential operator or equation callable like `op(kernel, x, y)`
@@ -280,11 +272,6 @@ approximation \$\\mathcal{L}u_h(x_i) ≈ \\sum_{j ∈ stencil} w_j u_j\$ holds w
 # Returns
 - `weights`: Finite difference weights, vector for scalar operators and matrix for vector operators
 - `info::NamedTuple`: Diagnostic information
-
-# Notes
-- For standard RBF-FD: uses direct kernel evaluations only
-- For polyharmonic RBF-FD: augments with low-degree polynomials for better conditioning
-- The order of polynomial augmentation is determined by the kernel's `order()` property
 """
 function rbf_fd_weights(diff_op_or_pde, x_i::AbstractVector,
                         neighbor_nodes::NodeSet, kernel::AbstractKernel;
@@ -389,8 +376,8 @@ end
 
 """
     rbf_fd_weights_all_nodes(kernel, operator, nodeset_interior, nodeset_centers,
-                            stencil_selection; m = order(kernel),
-                            local_basis = RBFFDStandardBasis())
+                             stencil_selection; m = order(kernel),
+                             local_basis = RBFFDStandardBasis())
 
 Compute RBF-FD weights for all interior points. Returns a dictionary mapping each
 interior node index to its (weights, neighbor_info, diagnostics).
@@ -399,7 +386,7 @@ This is useful for inspection and debugging, but for assembly of the global matr
 the `rbf_fd_pde_matrix()` function is more suitable.
 
 # Arguments
-- All arguments same as `rbf_fd_weights_at_node`
+- All arguments same as [`rbf_fd_weights_at_node`](@ref)
 
 # Returns
 - `weight_dict::Dict`: Dictionary with interior node indices as keys and

@@ -19,7 +19,7 @@ kernel = PolyharmonicSplineKernel{2}(3)
 sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
                            RBFFD(), kernel;
                            stencil_selection = KNearestNeighbors(25),
-                           m = order(kernel))
+                           m = order(kernel), local_basis = RBFFDLagrangeBasis())
 itp = solve_stationary(sd)
 
 many_nodes = homogeneous_hypercube(20; dim = 2)
