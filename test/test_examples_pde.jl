@@ -73,3 +73,9 @@ end
                           pde_test=true, tspan=(0.0, 0.1),
                           atol=1e-7) # stability issues
 end
+
+@testitem "rbf_fd_poisson_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
+                          l2=0.3053805616553935, linf=0.03594137887707418,
+                          pde_test=true, rbf_fd_test=true)
+end
