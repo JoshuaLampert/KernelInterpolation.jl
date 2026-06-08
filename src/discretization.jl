@@ -26,7 +26,7 @@ struct RBFFD <: AbstractSpatialMethod end
                           [centers,] kernel = GaussKernel{dim(nodeset_inner)}())
     SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary,
                           RBFFD(), kernel = GaussKernel{dim(nodeset_inner)}();
-                          stencil_selection = KNearestNeighbors(), m = order(kernel),
+                          stencil_selection, m = order(kernel),
                           local_basis = RBFFDStandardBasis())
 
 Spatial discretization of a partial differential equation with Dirichlet boundary conditions.

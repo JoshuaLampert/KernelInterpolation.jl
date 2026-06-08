@@ -1,5 +1,5 @@
 """
-    RBFFDBasis(nodeset, kernel, stencil_selection = KNearestNeighbors();
+    RBFFDBasis(nodeset, kernel, stencil_selection;
                m = order(kernel), local_basis = RBFFDStandardBasis())
 
 Configuration object for RBF-FD discretizations.
@@ -19,7 +19,7 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection,
     local_basis::LocalBasis
 
     function RBFFDBasis(nodeset::NodeSet{Dim, RealT}, kernel::Kernel,
-                        stencil_selection::Stencil = KNearestNeighbors();
+                        stencil_selection::Stencil;
                         m::Int = order(kernel),
                         local_basis::LocalBasis = RBFFDStandardBasis()) where {
                                                                                Dim,
