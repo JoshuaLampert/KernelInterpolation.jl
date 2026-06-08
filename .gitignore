@@ -6,3 +6,4 @@ run/*
 out*/
 **/*.code-workspace
 .vscode/
+.claude/

@@ -14,6 +14,7 @@ implements methods for multivariate interpolation in arbitrary dimension based o
 with a focus on radial basis functions. It can be used for classical interpolation of scattered data, as well as for generalized
 (Hermite-Birkhoff) interpolation by using a meshfree collocation approach. This can be used to solve partial differential equations both
 stationary ones and time-dependent ones by using some time integration method from [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl).
+Additionally, local radial basis function finite differences (RBF-FD) are supported for sparse PDE discretization.
 
 ## Installation
 
@@ -94,51 +95,6 @@ julia> f([-1.3, 0.26])
 For more sophisticated examples also involving solving stationary or time-dependent partial differential equations, see the
 [documentation](https://joshualampert.github.io/KernelInterpolation.jl/dev/pdes).
 More examples can be found in the [`examples/`](https://github.com/JoshuaLampert/KernelInterpolation.jl/tree/main/examples) subdirectory.
-
-### RBF-FD Discretization
-
-KernelInterpolation.jl also supports local radial basis function finite differences (RBF-FD) for PDE discretization.
-Compared with global Kansa collocation, RBF-FD assembles sparse operators from local stencils.
-
-```julia
-julia> pde = PoissonEquation((x, eq) -> 1.0)
-julia> nodeset_inner = homogeneous_hypercube(12, (0.1, 0.1), (0.9, 0.9); dim = 2)
-julia> nodeset_boundary = homogeneous_hypercube_boundary(4; dim = 2)
-julia> g(x) = 0.0
-julia> kernel = PolyharmonicSplineKernel{2}(3)
-
-julia> sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
-                                  RBFFD(), kernel;
-                                  stencil_selection = KNearestNeighbors(25),
-                                  m = order(kernel))
-julia> itp = solve_stationary(sd)
-
-julia> sd_card = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
-                                       RBFFD(), kernel;
-                                       stencil_selection = KNearestNeighbors(25),
-                                       m = order(kernel),
-                                       local_basis = RBFFDLagrangeBasis())
-```
-
-The `local_basis` keyword chooses how local stencil weights are formed:
-
-- `RBFFDStandardBasis()` (default): solve the local kernel/polynomial RBF-FD system.
-- `RBFFDLagrangeBasis()`: build local cardinal (Lagrange) functions `\ell_j` on each stencil
-  and use weights `w_j = \mathcal{L}\ell_j(x_i)`.
-
-For time-dependent equations, use the same `Semidiscretization` and `semidiscretize` workflow:
-
-```julia
-julia> pde_t = HeatEquation(0.1, (t, x, eq) -> 0.0)
-julia> u0(t, x, eq) = sin(pi * x[1])
-julia> g_t(t, x) = 0.0
-
-julia> sd_t = SpatialDiscretization(pde_t, nodeset_inner, g_t,
-                                    nodeset_boundary, RBFFD(), kernel;
-                                    stencil_selection = KNearestNeighbors(25))
-julia> semi = Semidiscretization(sd_t, u0)
-julia> ode = semidiscretize(semi, (0.0, 0.2))
-```
 
 ### Visualization
 
