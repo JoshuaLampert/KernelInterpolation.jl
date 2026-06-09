@@ -93,12 +93,12 @@ Base.length(basis::RBFFDBasis) = length(basis.nodeset)
 order(basis::RBFFDBasis) = basis.m
 
 function _build_local_funcs(kernel::AbstractKernel, stencil_nodes::NodeSet, ::Int,
-                             ::RBFFDStandardBasis)
+                            ::RBFFDStandardBasis)
     return [x -> kernel(x, stencil_nodes[k]) for k in eachindex(stencil_nodes)]
 end
 
 function _build_local_funcs(kernel::AbstractKernel, stencil_nodes::NodeSet, m::Int,
-                             ::RBFFDLagrangeBasis)
+                            ::RBFFDLagrangeBasis)
     return collect(LagrangeBasis(stencil_nodes, kernel; m))
 end
 

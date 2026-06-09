@@ -383,7 +383,7 @@ function (titp::TemporalInterpolation)(t)
     ode_sol = titp.ode_sol
     semi = ode_sol.prob.p
     @unpack nodeset_inner, boundary_condition, nodeset_boundary,
-            basis = semi.spatial_discretization
+    basis = semi.spatial_discretization
     c = ode_sol(t)
     # Do not support additional polynomial basis for now
     xx = polyvars(dim(semi))
