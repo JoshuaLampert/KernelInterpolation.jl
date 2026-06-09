@@ -6,24 +6,17 @@ Each row corresponds to one inner node and contains local stencil weights.
 """
 function rbf_fd_pde_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
                            basis::RBFFDBasis)
-    @unpack nodeset, kernel, stencil_selection, m, local_basis = basis
-
     n_inner = length(nodeset_inner)
-    n_total = length(nodeset)
+    n_total = length(basis.nodeset)
     rows = Int[]
     cols = Int[]
-    vals = eltype(nodeset)[]
+    vals = eltype(basis.nodeset)[]
 
     for i in eachindex(nodeset_inner)
-        x_i = nodeset_inner[i]
-        neighbor_info = select_neighbors(x_i, nodeset, stencil_selection)
-        weights, _ = rbf_fd_weights(diff_op_or_pde, x_i, neighbor_info.nodes, kernel;
-                                    m, local_basis)
-
+        weights, _ = rbf_fd_weights(diff_op_or_pde, i, basis)
         weights isa AbstractVector ||
             throw(ArgumentError("RBF-FD PDE assembly expects scalar operator values"))
-
-        for (j, global_idx) in enumerate(neighbor_info.indices)
+        for (j, global_idx) in enumerate(basis.stencil_indices[i])
             push!(rows, i)
             push!(cols, global_idx)
             push!(vals, weights[j])

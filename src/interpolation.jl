@@ -24,6 +24,9 @@ struct Interpolation{Basis, Dim, RealT, A, Monomials, PolyVars} <:
     xx::PolyVars
 end
 
+const LagrangeInterpolation = Interpolation{<:LagrangeBasis}
+const RBFFDInterpolation = Interpolation{<:RBFFDBasis}
+
 function Base.show(io::IO, itp::Interpolation)
     return print(io,
                  "Interpolation with $(length(nodeset(itp))) nodes, kernel $(interpolation_kernel(itp)) and polynomial of order $(order(itp)).")
@@ -250,6 +253,29 @@ function (itp::Interpolation)(x::RealT) where {RealT <: Real}
     return itp([x])
 end
 
+# RBF-FD evaluation: use the local stencil at center j
+function (itp::RBFFDInterpolation)(x, j::Integer)
+    bas = basis(itp)
+    c = coefficients(itp)
+    indices = bas.stencil_indices[j]
+    funcs = bas.local_funcs[j]
+    s = zero(eltype(c))
+    for k in eachindex(indices)
+        s += c[indices[k]] * funcs[k](x)
+    end
+    return s
+end
+
+function (itp::RBFFDInterpolation)(x::Real, j::Integer)
+    @assert dim(itp) == 1
+    return itp([x], j)
+end
+
+# Default 1-arg evaluation: use the stencil of the nearest center
+function (itp::RBFFDInterpolation)(x)
+    return itp(x, nearest_node_index(x, nodeset(itp)))
+end
+
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation, x)
     kernel = interpolation_kernel(itp)
     xis = centers(itp)
@@ -267,9 +293,7 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation,
     return s
 end
 
-function (diff_op_or_pde::DifferentialOperatorOrEquation)(s,
-                                                          itp::Interpolation{<:LagrangeBasis},
-                                                          x)
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::LagrangeInterpolation, x)
     c = kernel_coefficients(itp)
     bas = basis(itp)
     for j in eachindex(c)
@@ -287,10 +311,6 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation)
 end
 
 function (g::Gradient)(itp::Interpolation, x)
-    return g(zero(x), itp, x)
-end
-
-function (g::Gradient)(itp::Interpolation{<:LagrangeBasis}, x)
     return g(zero(x), itp, x)
 end
 
@@ -362,7 +382,8 @@ end
 function (titp::TemporalInterpolation)(t)
     ode_sol = titp.ode_sol
     semi = ode_sol.prob.p
-    @unpack nodeset_inner, boundary_condition, nodeset_boundary, basis = semi.spatial_discretization
+    @unpack nodeset_inner, boundary_condition, nodeset_boundary,
+            basis = semi.spatial_discretization
     c = ode_sol(t)
     # Do not support additional polynomial basis for now
     xx = polyvars(dim(semi))

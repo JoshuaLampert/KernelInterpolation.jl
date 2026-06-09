@@ -68,21 +68,12 @@ function kernel_matrix(basis::RBFFDBasis, nodeset::NodeSet = centers(basis))
     for j in 1:n
         y_j = nodeset[j]
         i = nearest_node_index(y_j, x)
-        neighbor_info = select_neighbors(x[i], x, basis.stencil_selection)
-
-        if basis.local_basis isa RBFFDLagrangeBasis
-            local_basis = LagrangeBasis(neighbor_info.nodes, basis.kernel; m = basis.m)
-            for (k, global_idx) in enumerate(neighbor_info.indices)
-                push!(rows, j)
-                push!(cols, global_idx)
-                push!(vals, local_basis[k](y_j))
-            end
-        else
-            for (k, global_idx) in enumerate(neighbor_info.indices)
-                push!(rows, j)
-                push!(cols, global_idx)
-                push!(vals, basis.kernel(y_j, neighbor_info.nodes[k]))
-            end
+        indices = basis.stencil_indices[i]
+        funcs = basis.local_funcs[i]
+        for (k, global_idx) in enumerate(indices)
+            push!(rows, j)
+            push!(cols, global_idx)
+            push!(vals, funcs[k](y_j))
         end
     end
 
@@ -345,12 +336,12 @@ function operator_matrix(diff_op_or_pde, basis::RBFFDBasis,
     for j in 1:n
         y_j = nodeset[j]
         i = nearest_node_index(y_j, x)
-        neighbor_info = select_neighbors(x[i], x, basis.stencil_selection)
+        indices = basis.stencil_indices[i]
 
         if basis.local_basis isa RBFFDLagrangeBasis
-            local_basis = LagrangeBasis(neighbor_info.nodes, basis.kernel; m = basis.m)
-            for (k, global_idx) in enumerate(neighbor_info.indices)
-                value = diff_op_or_pde(local_basis[k], y_j)
+            funcs = basis.local_funcs[i]
+            for (k, global_idx) in enumerate(indices)
+                value = diff_op_or_pde(funcs[k], y_j)
                 value isa Number ||
                     throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
                 push!(rows, j)
@@ -358,8 +349,8 @@ function operator_matrix(diff_op_or_pde, basis::RBFFDBasis,
                 push!(vals, value)
             end
         else
-            for (k, global_idx) in enumerate(neighbor_info.indices)
-                value = diff_op_or_pde(basis.kernel, y_j, neighbor_info.nodes[k])
+            for global_idx in indices
+                value = diff_op_or_pde(basis.kernel, y_j, basis.nodeset[global_idx])
                 value isa Number ||
                     throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
                 push!(rows, j)

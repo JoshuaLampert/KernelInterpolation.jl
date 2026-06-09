@@ -10,20 +10,21 @@
     neigh_rad = select_neighbors(3, nodeset, rad)
     @test length(neigh_rad.indices) ≥ 2
 
-    weights, info = rbf_fd_weights(Laplacian(), nodeset[3], neigh.nodes, kernel)
+    basis = RBFFDBasis(nodeset, kernel, knn)
+    weights, info = rbf_fd_weights(Laplacian(), 3, basis)
     @test length(weights) == length(neigh.nodes)
     @test all(isfinite, weights)
     @test info.stencil_size == length(neigh.nodes)
 
     phs_kernel = PolyharmonicSplineKernel{1}(3)
-    weights_poly, _ = rbf_fd_weights(Laplacian(), nodeset[3], neigh.nodes, phs_kernel;
-                                     m = order(phs_kernel))
+    basis_phs = RBFFDBasis(nodeset, phs_kernel, knn; m = order(phs_kernel))
+    weights_poly, _ = rbf_fd_weights(Laplacian(), 3, basis_phs)
     @test length(weights_poly) == length(neigh.nodes)
     @test all(isfinite, weights_poly)
 
-    weights_cardinal, _ = rbf_fd_weights(Laplacian(), nodeset[3], neigh.nodes, kernel;
-                                         m = 0,
-                                         local_basis = RBFFDLagrangeBasis())
+    basis_lagrange = RBFFDBasis(nodeset, kernel, knn; m = 0,
+                                local_basis = RBFFDLagrangeBasis())
+    weights_cardinal, _ = rbf_fd_weights(Laplacian(), 3, basis_lagrange)
     @test length(weights_cardinal) == length(neigh.nodes)
     @test all(isfinite, weights_cardinal)
 end
