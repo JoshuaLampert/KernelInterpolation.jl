@@ -20,6 +20,20 @@ function save_call(D::AbstractDifferentialOperator, kernel::RadialSymmetricKerne
     return D(kernel, x)
 end
 
+# Convert a kernel or polynomial to a plain Julia function, so that differential operators
+# can be defined once for `Function` and applied to either.
+callable(kernel::RadialSymmetricKernel) = x -> Phi(kernel, x)
+callable(p::AbstractPolynomialLike) = let xx = variables(p)
+    y -> p(xx => y)
+end
+
+# Abstract fallback: convert kernel or polynomial to a callable, then apply the operator.
+# This covers the 2-arg kernel form (used internally via save_call) and polynomials.
+function (D::AbstractDifferentialOperator)(f::Union{RadialSymmetricKernel,
+                                                    AbstractPolynomialLike}, x)
+    return D(callable(f), x)
+end
+
 """
     PartialDerivative(i)
 
@@ -39,8 +53,8 @@ function Base.show(io::IO, operator::PartialDerivative)
     return nothing
 end
 
-function (operator::PartialDerivative)(kernel::RadialSymmetricKernel, x)
-    return ForwardDiff.gradient(x -> Phi(kernel, x), x)[operator.i]
+function (operator::PartialDerivative)(f::Function, x)
+    return ForwardDiff.gradient(f, x)[operator.i]
 end
 
 """
@@ -60,8 +74,8 @@ function Base.show(io::IO, ::Gradient)
     return nothing
 end
 
-function (::Gradient)(kernel::RadialSymmetricKernel, x)
-    return ForwardDiff.gradient(x -> Phi(kernel, x), x)
+function (::Gradient)(f::Function, x)
+    return ForwardDiff.gradient(f, x)
 end
 
 """
@@ -81,9 +95,8 @@ function Base.show(io::IO, ::Laplacian)
     return nothing
 end
 
-function (::Laplacian)(kernel::RadialSymmetricKernel, x)
-    H = ForwardDiff.hessian(x -> Phi(kernel, x), x)
-    return tr(H)
+function (::Laplacian)(f::Function, x)
+    return tr(ForwardDiff.hessian(f, x))
 end
 
 @doc raw"""
@@ -115,15 +128,14 @@ function Base.show(io::IO, ::EllipticOperator)
     return nothing
 end
 
-function (operator::EllipticOperator)(kernel::RadialSymmetricKernel, x)
+function (operator::EllipticOperator)(f::Function, x)
     @unpack A, b, c = operator
     AA = A(x)
     bb = b(x)
     cc = c(x)
-    H = ForwardDiff.hessian(x -> Phi(kernel, x), x)
-    gr = ForwardDiff.gradient(x -> Phi(kernel, x), x)
-
-    return sum(-AA[i, j] * H[i, j] for i in 1:dim(kernel), j in 1:dim(kernel)) +
-           sum(bb[i] * gr[i] for i in 1:dim(kernel)) +
-           cc * Phi(kernel, x)
+    H = ForwardDiff.hessian(f, x)
+    gr = ForwardDiff.gradient(f, x)
+    return sum(-AA[i, j] * H[i, j] for i in eachindex(gr), j in eachindex(gr)) +
+           sum(bb[i] * gr[i] for i in eachindex(gr)) +
+           cc * f(x)
 end

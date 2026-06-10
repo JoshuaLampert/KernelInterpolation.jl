@@ -2,6 +2,12 @@ abstract type AbstractEquation end
 
 const DifferentialOperatorOrEquation = Union{AbstractDifferentialOperator, AbstractEquation}
 
+# Abstract fallback for equations: polynomial argument is converted to a plain function.
+# (Kernels use the 3-arg form below; no 2-arg kernel form exists for equations.)
+function (eq::AbstractEquation)(p::AbstractPolynomialLike, x)
+    return eq(callable(p), x)
+end
+
 abstract type AbstractStationaryEquation <: AbstractEquation end
 
 function rhs(nodeset::NodeSet, equations::AbstractStationaryEquation)
@@ -41,6 +47,10 @@ function (::PoissonEquation)(kernel::RadialSymmetricKernel, x, y)
     return -Laplacian()(kernel, x, y)
 end
 
+function (::PoissonEquation)(f, x)
+    return -Laplacian()(f, x)
+end
+
 @doc raw"""
     EllipticEquation(A, b, c, f)
 
@@ -71,6 +81,10 @@ end
 
 function (equations::EllipticEquation)(kernel::RadialSymmetricKernel, x, y)
     return equations.op(kernel, x, y)
+end
+
+function (equations::EllipticEquation)(f, x)
+    return equations.op(f, x)
 end
 
 abstract type AbstractTimeDependentEquation <: AbstractEquation end
@@ -114,6 +128,10 @@ function (equations::AdvectionEquation)(kernel::RadialSymmetricKernel, x, y)
     return dot(equations.advection_velocity, Gradient()(kernel, x, y))
 end
 
+function (equations::AdvectionEquation)(f, x)
+    return dot(equations.advection_velocity, Gradient()(f, x))
+end
+
 @doc raw"""
     HeatEquation(diffusivity, f)
 
@@ -139,6 +157,10 @@ end
 
 function (equations::HeatEquation)(kernel::RadialSymmetricKernel, x, y)
     return -equations.diffusivity * Laplacian()(kernel, x, y)
+end
+
+function (equations::HeatEquation)(f, x)
+    return -equations.diffusivity * Laplacian()(f, x)
 end
 
 @doc raw"""
@@ -178,4 +200,9 @@ end
 function (equations::AdvectionDiffusionEquation)(kernel::RadialSymmetricKernel, x, y)
     return dot(equations.advection_velocity, Gradient()(kernel, x, y)) -
            equations.diffusivity * Laplacian()(kernel, x, y)
+end
+
+function (equations::AdvectionDiffusionEquation)(f, x)
+    return dot(equations.advection_velocity, Gradient()(f, x)) -
+           equations.diffusivity * Laplacian()(f, x)
 end

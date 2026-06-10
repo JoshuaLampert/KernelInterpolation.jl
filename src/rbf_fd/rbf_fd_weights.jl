@@ -22,55 +22,13 @@ function _collect_operator_rhs(diff_op_or_pde, kernel, x_i, neighbor_nodes)
     end
 end
 
-function _operator_on_polynomial(op::PartialDerivative, p, xx, x)
-    return ForwardDiff.gradient(y -> p(xx => y), x)[op.i]
-end
-
-function _operator_on_polynomial(::Laplacian, p, xx, x)
-    return tr(ForwardDiff.hessian(y -> p(xx => y), x))
-end
-
-function _operator_on_polynomial(op::EllipticOperator, p, xx, x)
-    @unpack A, b, c = op
-    AA = A(x)
-    bb = b(x)
-    cc = c(x)
-    H = ForwardDiff.hessian(y -> p(xx => y), x)
-    gr = ForwardDiff.gradient(y -> p(xx => y), x)
-    return sum(-AA[i, j] * H[i, j] for i in eachindex(gr), j in eachindex(gr)) +
-           sum(bb[i] * gr[i] for i in eachindex(gr)) +
-           cc * p(xx => x)
-end
-
-function _operator_on_polynomial(op::PoissonEquation, p, xx, x)
-    return -_operator_on_polynomial(Laplacian(), p, xx, x)
-end
-function _operator_on_polynomial(op::EllipticEquation, p, xx, x)
-    return _operator_on_polynomial(op.op, p, xx, x)
-end
-function _operator_on_polynomial(op::AdvectionEquation, p, xx, x)
-    return dot(op.advection_velocity, ForwardDiff.gradient(y -> p(xx => y), x))
-end
-function _operator_on_polynomial(op::HeatEquation, p, xx, x)
-    return -op.diffusivity * _operator_on_polynomial(Laplacian(), p, xx, x)
-end
-function _operator_on_polynomial(op::AdvectionDiffusionEquation, p, xx, x)
-    gr = ForwardDiff.gradient(y -> p(xx => y), x)
-    return dot(op.advection_velocity, gr) -
-           op.diffusivity * _operator_on_polynomial(Laplacian(), p, xx, x)
-end
-
-function _operator_on_polynomial(op, p, xx, x)
-    throw(ArgumentError("Polynomial augmentation is not implemented for operator type $(typeof(op))."))
-end
-
-function _polynomial_rhs(diff_op_or_pde, ps, xx, x_i)
-    first_value = _operator_on_polynomial(diff_op_or_pde, ps[1], xx, x_i)
+function _polynomial_rhs(diff_op_or_pde, ps, x_i)
+    first_value = diff_op_or_pde(ps[1], x_i)
     if first_value isa Number
         rhs_p = Vector{typeof(first_value)}(undef, length(ps))
         rhs_p[1] = first_value
         for j in 2:length(ps)
-            rhs_p[j] = _operator_on_polynomial(diff_op_or_pde, ps[j], xx, x_i)
+            rhs_p[j] = diff_op_or_pde(ps[j], x_i)
         end
         return rhs_p
     elseif first_value isa AbstractVector
@@ -78,7 +36,7 @@ function _polynomial_rhs(diff_op_or_pde, ps, xx, x_i)
         rhs_p = Matrix{eltype(first_value)}(undef, length(ps), d)
         rhs_p[1, :] .= first_value
         for j in 2:length(ps)
-            rhs_p[j, :] .= _operator_on_polynomial(diff_op_or_pde, ps[j], xx, x_i)
+            rhs_p[j, :] .= diff_op_or_pde(ps[j], x_i)
         end
         return rhs_p
     else
@@ -158,7 +116,7 @@ function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis,
         P = polynomial_matrix(neighbor_nodes, ps)
         A_aug = [A P
                  P' zeros(eltype(A), q, q)]
-        rhs_poly = _polynomial_rhs(diff_op_or_pde, ps, xx, x_i)
+        rhs_poly = _polynomial_rhs(diff_op_or_pde, ps, x_i)
         sol = A_aug \ [rhs_vec; rhs_poly]
         weights = sol isa AbstractVector ? sol[1:length(neighbor_nodes)] :
                   sol[1:length(neighbor_nodes), :]

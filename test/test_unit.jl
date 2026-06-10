@@ -960,7 +960,7 @@ end
     struct AnalyticalLaplacian <: KernelInterpolation.AbstractDifferentialOperator
     end
 
-    function (::AnalyticalLaplacian)(kernel::KernelInterpolation.AbstractKernel{Dim},
+    function (::AnalyticalLaplacian)(kernel::KernelInterpolation.RadialSymmetricKernel{Dim},
                                      x) where {Dim}
         r = norm(x)
         return (Dim - 1) * phi_deriv_over_r(kernel, r, 1) + phi_deriv(kernel, r, 2)
@@ -993,6 +993,35 @@ end
     x3 = rand(4)
     @test isapprox(l(kernel, x3, x3), AnalyticalLaplacian()(kernel, x3, x3))
     @test isapprox(el_l(kernel, x3, x3), -AnalyticalLaplacian()(kernel, x3, x3))
+
+    # Operators on polynomials: p(x) = x₁² + 2x₁x₂ + 3x₂² at x = (1, 2)
+    # ∂/∂x₁ p = 2x₁ + 2x₂  →  6 at (1,2)
+    # ∂/∂x₂ p = 2x₁ + 6x₂  →  14 at (1,2)
+    # ∇p = [6, 14] at (1,2)
+    # Δp = 2 + 6 = 8
+    xx2 = polyvars(Val(2))
+    ps2 = KernelInterpolation.monomials(xx2, 0:2)
+    # ps2 = [1, x₂, x₁, x₂², x₁x₂, x₁²]  (graded reverse lex order)
+    p = ps2[6] + 2 * ps2[5] + 3 * ps2[4]  # x₁² + 2x₁x₂ + 3x₂²
+    xp = [1.0, 2.0]
+    @test isapprox(d1(p, xp), 6.0)
+    @test isapprox(d2(p, xp), 14.0)
+    @test isapprox(g(p, xp), [6.0, 14.0])
+    @test isapprox(l(p, xp), 8.0)
+
+    # EllipticOperator on polynomial: use constant coefficients A=I, b=0, c=0 → should equal -Laplacian
+    el_l_p = EllipticOperator(x -> I, zero, x -> 0)
+    @test isapprox(el_l_p(p, xp), -l(p, xp))
+
+    # 1D: p(x) = x₁³, ∂/∂x₁ p = 3x₁²  →  3 at x=1, Δp = 6x₁  →  6 at x=1
+    xx1 = polyvars(Val(1))
+    ps1 = KernelInterpolation.monomials(xx1, 0:3)
+    # ps1 = [1, x₁, x₁², x₁³]
+    p1 = ps1[4]  # x₁³
+    xp1 = [1.0]
+    @test isapprox(PartialDerivative(1)(p1, xp1), 3.0)
+    @test isapprox(Laplacian()(p1, xp1), 6.0)
+    @test isapprox(Gradient()(p1, xp1), [3.0])
 end
 
 @testitem "PDEs" setup=[Setup, AdditionalImports] begin

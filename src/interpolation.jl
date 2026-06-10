@@ -310,9 +310,8 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation,
 
     d = polynomial_coefficients(itp)
     ps = polynomial_basis(itp)
-    xx = polyvars(itp)
     for k in eachindex(d)
-        s += d[k] * _operator_on_polynomial(diff_op_or_pde, ps[k], xx, x)
+        s += d[k] * diff_op_or_pde(ps[k], x)
     end
     return s
 end

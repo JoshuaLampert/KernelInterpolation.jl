@@ -27,7 +27,7 @@ using Reexport: @reexport
 using TimerOutputs: TimerOutputs, print_timer, reset_timer!
 @reexport using TrixiBase: trixi_include
 using TrixiBase: @trixi_timeit, timer
-using TypedPolynomials: Variable, monomials, degree
+using TypedPolynomials: Variable, monomials, degree, AbstractPolynomialLike, variables
 using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
                 CollectionFile
 
