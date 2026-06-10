@@ -337,26 +337,14 @@ function operator_matrix(diff_op_or_pde, basis::RBFFDBasis,
         y_j = nodeset[j]
         i = nearest_node_index(y_j, x)
         indices = basis.stencil_indices[i]
-
-        if basis.local_basis isa RBFFDLagrangeBasis
-            funcs = basis.local_funcs[i]
-            for (k, global_idx) in enumerate(indices)
-                value = diff_op_or_pde(funcs[k], y_j)
-                value isa Number ||
-                    throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
-                push!(rows, j)
-                push!(cols, global_idx)
-                push!(vals, value)
-            end
-        else
-            for global_idx in indices
-                value = diff_op_or_pde(basis.kernel, y_j, basis.nodeset[global_idx])
-                value isa Number ||
-                    throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
-                push!(rows, j)
-                push!(cols, global_idx)
-                push!(vals, value)
-            end
+        funcs = basis.local_funcs[i]
+        for (k, global_idx) in enumerate(indices)
+            value = diff_op_or_pde(funcs[k], y_j)
+            value isa Number ||
+                throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
+            push!(rows, j)
+            push!(cols, global_idx)
+            push!(vals, value)
         end
     end
 

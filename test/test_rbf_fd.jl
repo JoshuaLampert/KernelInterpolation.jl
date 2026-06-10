@@ -114,8 +114,11 @@ end
                            local_basis = RBFFDStandardBasis())
     neigh = select_neighbors(nodeset[3], nodeset, stencil)
 
+    # local_funcs always holds cardinal functions regardless of local_basis type
     b_std = basis_std[3, 2]
-    @test b_std(nodeset[1]) ≈ kernel(nodeset[1], neigh.nodes[2])
+    @test b_std(neigh.nodes[2])≈1.0 atol=1.0e-10
+    @test abs(b_std(neigh.nodes[1])) ≤ 1.0e-8
+    @test abs(b_std(neigh.nodes[3])) ≤ 1.0e-8
 
     basis_card = RBFFDBasis(nodeset, kernel, stencil; m = 0,
                             local_basis = RBFFDLagrangeBasis())
@@ -140,26 +143,16 @@ end
                            local_basis = RBFFDStandardBasis())
     C_std = kernel_matrix(basis_std, Y)
     @test size(C_std) == (length(Y), length(X))
-    nz_rows, nz_cols, _ = findnz(C_std)
-
-    for j in eachindex(Y)
-        y_j = Y[j]
-        i = nearest_node_index(y_j, X)
-        neigh = select_neighbors(X[i], X, stencil)
-        stored_cols = nz_cols[nz_rows .== j]
-        @test Set(stored_cols) == Set(neigh.indices)
-
-        for (k, global_idx) in enumerate(neigh.indices)
-            @test C_std[j, global_idx] ≈ kernel(y_j, neigh.nodes[k])
-        end
-    end
 
     basis_lag = RBFFDBasis(X, kernel, stencil; m = 0,
                            local_basis = RBFFDLagrangeBasis())
     C_lag = kernel_matrix(basis_lag, Y)
     @test size(C_lag) == (length(Y), length(X))
-    nz_rows, nz_cols, _ = findnz(C_lag)
 
+    # Both basis types store cardinal functions in local_funcs, so matrices are equal
+    @test C_std == C_lag
+
+    nz_rows, nz_cols, _ = findnz(C_lag)
     for j in eachindex(Y)
         y_j = Y[j]
         i = nearest_node_index(y_j, X)
@@ -185,22 +178,13 @@ end
     L_std = operator_matrix(Laplacian(), basis_std, Y)
     @test size(L_std) == (length(Y), length(X))
 
-    for j in eachindex(Y)
-        y_j = Y[j]
-        i = nearest_node_index(y_j, X)
-        neigh = select_neighbors(X[i], X, stencil)
-        nz_cols = findall(!iszero, L_std[j, :])
-        @test Set(nz_cols) == Set(neigh.indices)
-
-        for (k, global_idx) in enumerate(neigh.indices)
-            @test L_std[j, global_idx] ≈ Laplacian()(kernel, y_j, neigh.nodes[k])
-        end
-    end
-
     basis_lag = RBFFDBasis(X, kernel, stencil; m = 0,
                            local_basis = RBFFDLagrangeBasis())
     L_lag = operator_matrix(Laplacian(), basis_lag, Y)
     @test size(L_lag) == (length(Y), length(X))
+
+    # Both basis types store cardinal functions in local_funcs, so matrices are equal
+    @test L_std == L_lag
 
     for j in eachindex(Y)
         y_j = Y[j]

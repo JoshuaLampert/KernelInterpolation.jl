@@ -25,6 +25,31 @@ struct Interpolation{Basis, Dim, RealT, A, Monomials, PolyVars} <:
 end
 
 const LagrangeInterpolation = Interpolation{<:LagrangeBasis}
+
+@doc raw"""
+    RBFFDInterpolation
+
+Type alias for `Interpolation{<:RBFFDBasis}`.
+
+The coefficient vector `c` holds **nodal values** ``u(x_i)`` for all nodes
+``x_1,\ldots,x_N`` (inner nodes first, then boundary nodes), ordered consistently
+with `merge(nodeset_inner, nodeset_boundary)`.
+
+Evaluation at a point `x` uses the local stencil ``S(j)`` of the nearest center
+``x_j``:
+```math
+u_h(x) = \sum_{k \in S(j)} c_k \, \ell_k(x;\, S(j)),
+```
+where ``\ell_k`` are Lagrange cardinal functions precomputed on ``S(j)``.  This
+formula is valid for **both** `RBFFDLagrangeBasis` and `RBFFDStandardBasis` because
+`local_funcs` always stores cardinal functions — the `local_basis` field only
+controls which algorithm is used to compute the RBF-FD weights.
+
+For `RBFFDLagrangeBasis`, the nodal values are simultaneously the Lagrange
+expansion coefficients (cardinality: ``\ell_k(x_l) = \delta_{kl}``).  For
+`RBFFDStandardBasis`, the same nodal values serve as coefficients thanks to the
+uniformly precomputed cardinal basis.
+"""
 const RBFFDInterpolation = Interpolation{<:RBFFDBasis}
 
 function Base.show(io::IO, itp::Interpolation)

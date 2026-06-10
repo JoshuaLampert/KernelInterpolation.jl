@@ -33,7 +33,15 @@ local RBF-FD weights. All stencils and local basis functions are precomputed at
 construction time and stored for reuse in weight computation, matrix assembly, and
 interpolant evaluation.
 
-Use `basis[i, k]` to access the `k`-th local basis function on the stencil around
+The `local_funcs` field always stores Lagrange cardinal functions (one per stencil
+node), regardless of `local_basis`. The `local_basis` field only controls the
+*weight computation algorithm*:
+- `RBFFDLagrangeBasis`: weights are computed by applying the differential operator
+  directly to the precomputed cardinal functions, `w_k = 𝓛ℓ_k(x_i)`.
+- `RBFFDStandardBasis`: weights are computed by solving the local kernel system
+  `A w = rhs` where `rhs_k = 𝓛K(x_i, x_k)`.
+
+Use `basis[i, k]` to access the `k`-th local cardinal function on the stencil around
 center index `i`.
 """
 struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection,
@@ -92,13 +100,8 @@ Base.eltype(::RBFFDBasis{Dim, RealT}) where {Dim, RealT} = RealT
 Base.length(basis::RBFFDBasis) = length(basis.nodeset)
 order(basis::RBFFDBasis) = basis.m
 
-function _build_local_funcs(kernel::AbstractKernel, stencil_nodes::NodeSet, ::Int,
-                            ::RBFFDStandardBasis)
-    return [x -> kernel(x, stencil_nodes[k]) for k in eachindex(stencil_nodes)]
-end
-
 function _build_local_funcs(kernel::AbstractKernel, stencil_nodes::NodeSet, m::Int,
-                            ::RBFFDLagrangeBasis)
+                            ::AbstractRBFFDLocalBasis)
     return collect(LagrangeBasis(stencil_nodes, kernel; m))
 end
 
