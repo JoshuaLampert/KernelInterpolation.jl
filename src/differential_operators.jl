@@ -23,8 +23,9 @@ end
 # Convert a kernel or polynomial to a plain Julia function, so that differential operators
 # can be defined once for `Function` and applied to either.
 callable(kernel::RadialSymmetricKernel) = x -> Phi(kernel, x)
-callable(p::AbstractPolynomialLike) = let xx = variables(p)
-    y -> p(xx => y)
+function callable(p::AbstractPolynomialLike)
+    xx = variables(p)
+    return y -> p(xx => y)
 end
 
 # Abstract fallback: convert kernel or polynomial to a callable, then apply the operator.
