@@ -1097,6 +1097,36 @@ end
     el_advection_diffusion = EllipticEquation(x -> [2 0; 0 2], x -> [2, 0.5], x -> 0.0,
                                               f1)
     @test el_advection_diffusion(kernel, x, y) == advection_diffusion(kernel, x, y)
+
+    # Evaluating PDEs on a kernel at one point and on a polynomial
+    # Use GaussKernel and a fixed point for reproducibility
+    kernel2 = GaussKernel{2}(shape_parameter = 0.5)
+    x1 = [0.4, 0.6]
+    poisson2 = PoissonEquation(f1)
+    advection2 = AdvectionEquation([2.0, 0.5], f2)
+    heat2 = HeatEquation(2.0, f2)
+    advection_diffusion2 = AdvectionDiffusionEquation(2.0, [2.0, 0.5], f2)
+
+    # Kernel 3-arg: each PDE is defined by its relation to the base operators
+    @test isapprox(poisson2(kernel2, x1, x1), -Laplacian()(kernel2, x1, x1))
+    @test isapprox(heat2(kernel2, x1, x1), -2.0 * Laplacian()(kernel2, x1, x1))
+    @test isapprox(advection2(kernel2, x1, x1),
+                   dot([2.0, 0.5], Gradient()(kernel2, x1, x1)))
+    @test isapprox(advection_diffusion2(kernel2, x1, x1),
+                   advection2(kernel2, x1, x1) + heat2(kernel2, x1, x1))
+
+    # Polynomial: p = x₁² + 2x₁x₂ + 3x₂² at xp = (1, 2)
+    # Δp = 8,  ∇p = [6, 14]
+    xx2 = polyvars(Val(2))
+    ps2 = KernelInterpolation.monomials(xx2, 0:2)
+    # ps2 = [1, x₂, x₁, x₂², x₁x₂, x₁²]  (graded reverse lex order)
+    p2 = ps2[6] + 2 * ps2[5] + 3 * ps2[4]  # x₁² + 2x₁x₂ + 3x₂²
+    xp = [1.0, 2.0]
+    @test isapprox(poisson2(p2, xp), -8.0)                         # -Δp = -8
+    @test isapprox(heat2(p2, xp), -2.0 * 8.0)                      # -κΔp = -16
+    @test isapprox(advection2(p2, xp), dot([2.0, 0.5], [6.0, 14.0]))  # a⋅∇p = 19
+    @test isapprox(advection_diffusion2(p2, xp),
+                   advection2(p2, xp) + heat2(p2, xp))              # sum of both
 end
 
 @testitem "Discretization" setup=[Setup, AdditionalImports] begin

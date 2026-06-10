@@ -47,7 +47,7 @@ function (::PoissonEquation)(kernel::RadialSymmetricKernel, x, y)
     return -Laplacian()(kernel, x, y)
 end
 
-function (::PoissonEquation)(f, x)
+function (::PoissonEquation)(f::Function, x)
     return -Laplacian()(f, x)
 end
 
@@ -83,7 +83,7 @@ function (equations::EllipticEquation)(kernel::RadialSymmetricKernel, x, y)
     return equations.op(kernel, x, y)
 end
 
-function (equations::EllipticEquation)(f, x)
+function (equations::EllipticEquation)(f::Function, x)
     return equations.op(f, x)
 end
 
@@ -128,7 +128,7 @@ function (equations::AdvectionEquation)(kernel::RadialSymmetricKernel, x, y)
     return dot(equations.advection_velocity, Gradient()(kernel, x, y))
 end
 
-function (equations::AdvectionEquation)(f, x)
+function (equations::AdvectionEquation)(f::Function, x)
     return dot(equations.advection_velocity, Gradient()(f, x))
 end
 
@@ -159,7 +159,7 @@ function (equations::HeatEquation)(kernel::RadialSymmetricKernel, x, y)
     return -equations.diffusivity * Laplacian()(kernel, x, y)
 end
 
-function (equations::HeatEquation)(f, x)
+function (equations::HeatEquation)(f::Function, x)
     return -equations.diffusivity * Laplacian()(f, x)
 end
 
@@ -202,7 +202,7 @@ function (equations::AdvectionDiffusionEquation)(kernel::RadialSymmetricKernel, 
            equations.diffusivity * Laplacian()(kernel, x, y)
 end
 
-function (equations::AdvectionDiffusionEquation)(f, x)
+function (equations::AdvectionDiffusionEquation)(f::Function, x)
     return dot(equations.advection_velocity, Gradient()(f, x)) -
            equations.diffusivity * Laplacian()(f, x)
 end
