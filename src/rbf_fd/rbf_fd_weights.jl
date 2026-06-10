@@ -119,11 +119,13 @@ data from `basis`. Dispatches on the local basis type stored in `basis`.
 - `weights`: Finite difference weights (vector for scalar operators, matrix for vector operators)
 - `info::NamedTuple`: Diagnostic information (stencil size, condition number, rank, SVD values)
 """
-function rbf_fd_weights(diff_op_or_pde, i::Integer, basis::RBFFDBasis)
-    return _rbf_fd_weights(diff_op_or_pde, i, basis, basis.local_basis)
+function rbf_fd_weights(diff_op_or_pde, i::Integer, basis::RBFFDBasis,
+                        local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
+    return _rbf_fd_weights(diff_op_or_pde, i, basis, local_basis)
 end
 
-function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis, ::RBFFDLagrangeBasis)
+function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis,
+                         local_basis::RBFFDLagrangeBasis)
     x_i = basis.nodeset[i]
     indices = basis.stencil_indices[i]
     neighbor_nodes = NodeSet(basis.nodeset.nodes[indices])
@@ -137,11 +139,12 @@ function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis, ::RBFFDLagrangeBa
             rank = rank_est,
             singular_values = svals,
             x_i = x_i,
-            local_basis = basis.local_basis)
+            local_basis = local_basis)
     return weights, info
 end
 
-function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis, ::RBFFDStandardBasis)
+function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis,
+                         local_basis::RBFFDStandardBasis)
     x_i = basis.nodeset[i]
     indices = basis.stencil_indices[i]
     neighbor_nodes = NodeSet(basis.nodeset.nodes[indices])
@@ -171,7 +174,7 @@ function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis, ::RBFFDStandardBa
             rank = rank_est,
             singular_values = svals,
             x_i = x_i,
-            local_basis = basis.local_basis)
+            local_basis = local_basis)
     return weights, info
 end
 
@@ -181,9 +184,10 @@ end
 Compute RBF-FD weights at an arbitrary point `x_i` using the stencil of the nearest
 node in `basis`. Returns `(weights, info)`.
 """
-function rbf_fd_weights_at_node(diff_op_or_pde, x_i::AbstractVector, basis::RBFFDBasis)
+function rbf_fd_weights_at_node(diff_op_or_pde, x_i::AbstractVector, basis::RBFFDBasis,
+                                local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
     i = nearest_node_index(x_i, basis.nodeset)
-    return rbf_fd_weights(diff_op_or_pde, i, basis)
+    return rbf_fd_weights(diff_op_or_pde, i, basis, local_basis)
 end
 
 # ==================== Batch Weight Computation ====================
@@ -194,7 +198,8 @@ end
 Compute RBF-FD weights for all nodes in `basis`. Returns a `Dict` mapping each node
 index to its `(weights, info)` tuple.
 """
-function rbf_fd_weights_all_nodes(diff_op_or_pde, basis::RBFFDBasis)
-    return Dict(i => rbf_fd_weights(diff_op_or_pde, i, basis)
+function rbf_fd_weights_all_nodes(diff_op_or_pde, basis::RBFFDBasis,
+                                   local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
+    return Dict(i => rbf_fd_weights(diff_op_or_pde, i, basis, local_basis)
                 for i in eachindex(basis.nodeset))
 end

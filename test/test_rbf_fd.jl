@@ -11,20 +11,18 @@
     @test length(neigh_rad.indices) ≥ 2
 
     basis = RBFFDBasis(nodeset, kernel, knn)
-    weights, info = rbf_fd_weights(Laplacian(), 3, basis)
+    weights, info = rbf_fd_weights(Laplacian(), 3, basis, RBFFDStandardBasis())
     @test length(weights) == length(neigh.nodes)
     @test all(isfinite, weights)
     @test info.stencil_size == length(neigh.nodes)
 
     phs_kernel = PolyharmonicSplineKernel{1}(3)
     basis_phs = RBFFDBasis(nodeset, phs_kernel, knn; m = order(phs_kernel))
-    weights_poly, _ = rbf_fd_weights(Laplacian(), 3, basis_phs)
+    weights_poly, _ = rbf_fd_weights(Laplacian(), 3, basis_phs, RBFFDStandardBasis())
     @test length(weights_poly) == length(neigh.nodes)
     @test all(isfinite, weights_poly)
 
-    basis_lagrange = RBFFDBasis(nodeset, kernel, knn; m = 0,
-                                local_basis = RBFFDLagrangeBasis())
-    weights_cardinal, _ = rbf_fd_weights(Laplacian(), 3, basis_lagrange)
+    weights_cardinal, _ = rbf_fd_weights(Laplacian(), 3, basis, RBFFDLagrangeBasis())
     @test length(weights_cardinal) == length(neigh.nodes)
     @test all(isfinite, weights_cardinal)
 end
@@ -92,14 +90,13 @@ end
 
     disc = SpatialDiscretization(equation, nodeset_inner,
                                  boundary_condition, nodeset_boundary,
-                                 RBFFD(),
+                                 RBFFD(RBFFDLagrangeBasis()),
                                  GaussKernel{1}(shape_parameter = 2.0);
                                  stencil_selection = KNearestNeighbors(4),
-                                 m = 0,
-                                 local_basis = RBFFDLagrangeBasis())
+                                 m = 0)
 
     @test disc.method isa RBFFD
-    @test disc.basis.local_basis isa RBFFDLagrangeBasis
+    @test disc.method.local_basis isa RBFFDLagrangeBasis
 
     itp = solve_stationary(disc)
     @test itp isa Interpolation
@@ -110,22 +107,14 @@ end
     kernel = GaussKernel{1}(shape_parameter = 1.0)
     stencil = KNearestNeighbors(3)
 
-    basis_std = RBFFDBasis(nodeset, kernel, stencil; m = 0,
-                           local_basis = RBFFDStandardBasis())
+    basis = RBFFDBasis(nodeset, kernel, stencil; m = 0)
     neigh = select_neighbors(nodeset[3], nodeset, stencil)
 
-    # local_funcs always holds cardinal functions regardless of local_basis type
-    b_std = basis_std[3, 2]
-    @test b_std(neigh.nodes[2])≈1.0 atol=1.0e-10
-    @test abs(b_std(neigh.nodes[1])) ≤ 1.0e-8
-    @test abs(b_std(neigh.nodes[3])) ≤ 1.0e-8
-
-    basis_card = RBFFDBasis(nodeset, kernel, stencil; m = 0,
-                            local_basis = RBFFDLagrangeBasis())
-    b_card = basis_card[3, 2]
-    @test b_card(neigh.nodes[2])≈1.0 atol=1.0e-10
-    @test abs(b_card(neigh.nodes[1])) ≤ 1.0e-8
-    @test abs(b_card(neigh.nodes[3])) ≤ 1.0e-8
+    # local_funcs always holds Lagrange cardinal functions
+    b = basis[3, 2]
+    @test b(neigh.nodes[2])≈1.0 atol=1.0e-10
+    @test abs(b(neigh.nodes[1])) ≤ 1.0e-8
+    @test abs(b(neigh.nodes[3])) ≤ 1.0e-8
 
     @test_throws BoundsError basis_std[0, 1]
     @test_throws BoundsError basis_std[3, 0]
@@ -139,20 +128,11 @@ end
     kernel = GaussKernel{1}(shape_parameter = 1.0)
     stencil = KNearestNeighbors(3)
 
-    basis_std = RBFFDBasis(X, kernel, stencil; m = 0,
-                           local_basis = RBFFDStandardBasis())
-    C_std = kernel_matrix(basis_std, Y)
-    @test size(C_std) == (length(Y), length(X))
+    basis = RBFFDBasis(X, kernel, stencil; m = 0)
+    C = kernel_matrix(basis, Y)
+    @test size(C) == (length(Y), length(X))
 
-    basis_lag = RBFFDBasis(X, kernel, stencil; m = 0,
-                           local_basis = RBFFDLagrangeBasis())
-    C_lag = kernel_matrix(basis_lag, Y)
-    @test size(C_lag) == (length(Y), length(X))
-
-    # Both basis types store cardinal functions in local_funcs, so matrices are equal
-    @test C_std == C_lag
-
-    nz_rows, nz_cols, _ = findnz(C_lag)
+    nz_rows, nz_cols, _ = findnz(C)
     for j in eachindex(Y)
         y_j = Y[j]
         i = nearest_node_index(y_j, X)
@@ -162,7 +142,7 @@ end
         @test Set(stored_cols) == Set(neigh.indices)
 
         for (k, global_idx) in enumerate(neigh.indices)
-            @test C_lag[j, global_idx] ≈ local_basis[k](y_j)
+            @test C[j, global_idx] ≈ local_basis[k](y_j)
         end
     end
 end
@@ -173,29 +153,20 @@ end
     kernel = GaussKernel{1}(shape_parameter = 1.0)
     stencil = KNearestNeighbors(3)
 
-    basis_std = RBFFDBasis(X, kernel, stencil; m = 0,
-                           local_basis = RBFFDStandardBasis())
-    L_std = operator_matrix(Laplacian(), basis_std, Y)
-    @test size(L_std) == (length(Y), length(X))
-
-    basis_lag = RBFFDBasis(X, kernel, stencil; m = 0,
-                           local_basis = RBFFDLagrangeBasis())
-    L_lag = operator_matrix(Laplacian(), basis_lag, Y)
-    @test size(L_lag) == (length(Y), length(X))
-
-    # Both basis types store cardinal functions in local_funcs, so matrices are equal
-    @test L_std == L_lag
+    basis = RBFFDBasis(X, kernel, stencil; m = 0)
+    L = operator_matrix(Laplacian(), basis, Y)
+    @test size(L) == (length(Y), length(X))
 
     for j in eachindex(Y)
         y_j = Y[j]
         i = nearest_node_index(y_j, X)
         neigh = select_neighbors(X[i], X, stencil)
         local_basis = LagrangeBasis(neigh.nodes, kernel; m = 0)
-        nz_cols = findall(!iszero, L_lag[j, :])
+        nz_cols = findall(!iszero, L[j, :])
         @test Set(nz_cols) == Set(neigh.indices)
 
         for (k, global_idx) in enumerate(neigh.indices)
-            @test L_lag[j, global_idx] ≈ Laplacian()(local_basis[k], y_j)
+            @test L[j, global_idx] ≈ Laplacian()(local_basis[k], y_j)
         end
     end
 end

@@ -5,7 +5,8 @@ Assemble sparse RBF-FD operator matrix for inner nodes.
 Each row corresponds to one inner node and contains local stencil weights.
 """
 function rbf_fd_pde_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
-                           basis::RBFFDBasis)
+                           basis::RBFFDBasis,
+                           local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
     n_inner = length(nodeset_inner)
     n_total = length(basis.nodeset)
     rows = Int[]
@@ -13,7 +14,7 @@ function rbf_fd_pde_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
     vals = eltype(basis.nodeset)[]
 
     for i in eachindex(nodeset_inner)
-        weights, _ = rbf_fd_weights(diff_op_or_pde, i, basis)
+        weights, _ = rbf_fd_weights(diff_op_or_pde, i, basis, local_basis)
         weights isa AbstractVector ||
             throw(ArgumentError("RBF-FD PDE assembly expects scalar operator values"))
         for (j, global_idx) in enumerate(basis.stencil_indices[i])
@@ -54,20 +55,24 @@ A = \begin{pmatrix}L\\B\end{pmatrix}
 where `L` is the RBF-FD operator matrix on inner nodes and `B` enforces Dirichlet constraints.
 """
 function rbf_fd_pde_boundary_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
-                                    nodeset_boundary::NodeSet, basis::RBFFDBasis)
-    L = rbf_fd_pde_matrix(diff_op_or_pde, nodeset_inner, basis)
+                                    nodeset_boundary::NodeSet, basis::RBFFDBasis,
+                                    local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
+    L = rbf_fd_pde_matrix(diff_op_or_pde, nodeset_inner, basis, local_basis)
     B = rbf_fd_boundary_matrix(nodeset_inner, nodeset_boundary)
     return [L
             B]
 end
 
 function pde_boundary_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
-                             nodeset_boundary::NodeSet, basis::RBFFDBasis)
+                             nodeset_boundary::NodeSet, basis::RBFFDBasis,
+                             local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
     return rbf_fd_pde_boundary_matrix(diff_op_or_pde, nodeset_inner,
-                                      nodeset_boundary, basis)
+                                      nodeset_boundary, basis, local_basis)
 end
 
 function operator_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
-                         nodeset_boundary::NodeSet, basis::RBFFDBasis)
-    return pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
+                         nodeset_boundary::NodeSet, basis::RBFFDBasis,
+                         local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
+    return pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis,
+                               local_basis)
 end

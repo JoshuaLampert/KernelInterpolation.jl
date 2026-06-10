@@ -13,11 +13,20 @@ Global collocation strategy (Kansa method).
 struct Collocation <: AbstractSpatialMethod end
 
 """
-    RBFFD()
+    RBFFD(local_basis = RBFFDStandardBasis())
 
 Local radial basis function finite difference strategy.
+
+The `local_basis` argument selects the algorithm used to compute local RBF-FD weights:
+- `RBFFDStandardBasis()`: solve the local kernel system `A w = rhs`, `rhs_k = 𝓛K(x_i, x_k)`.
+- `RBFFDLagrangeBasis()`: apply the operator directly to precomputed cardinal functions, `w_k = 𝓛ℓ_k(x_i)`.
+
+Both algorithms produce the same weights up to numerical precision.
 """
-struct RBFFD <: AbstractSpatialMethod end
+struct RBFFD{LocalBasis <: AbstractRBFFDLocalBasis} <: AbstractSpatialMethod
+    local_basis::LocalBasis
+    RBFFD(local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis()) = new{typeof(local_basis)}(local_basis)
+end
 
 """
     SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary, basis)
@@ -25,9 +34,8 @@ struct RBFFD <: AbstractSpatialMethod end
     SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary,
                           [centers,] kernel = GaussKernel{dim(nodeset_inner)}())
     SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary,
-                          RBFFD(), kernel = GaussKernel{dim(nodeset_inner)}();
-                          stencil_selection, m = order(kernel),
-                          local_basis = RBFFDStandardBasis())
+                          RBFFD(local_basis), kernel = GaussKernel{dim(nodeset_inner)}();
+                          stencil_selection, m = order(kernel))
 
 Spatial discretization of a partial differential equation with Dirichlet boundary conditions.
 The `nodeset_inner` are the nodes in the domain and `nodeset_boundary` are the nodes on the boundary. The `boundary_condition`
@@ -128,18 +136,14 @@ end
 function SpatialDiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
                                boundary_condition,
                                nodeset_boundary::NodeSet{Dim, RealT},
-                               ::RBFFD,
+                               rbffd::RBFFD,
                                kernel::AbstractKernel{Dim} = GaussKernel{Dim}();
                                stencil_selection::AbstractStencilSelection,
-                               m::Int = order(kernel),
-                               local_basis::AbstractRBFFDLocalBasis = RBFFDStandardBasis()) where {
-                                                                                                   Dim,
-                                                                                                   RealT
-                                                                                                   }
+                               m::Int = order(kernel)) where {Dim, RealT}
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    basis = RBFFDBasis(nodeset, kernel, stencil_selection; m, local_basis)
+    basis = RBFFDBasis(nodeset, kernel, stencil_selection; m)
     return SpatialDiscretization(equations, nodeset_inner, boundary_condition,
-                                 nodeset_boundary, RBFFD(), basis)
+                                 nodeset_boundary, rbffd, basis)
 end
 
 function Base.show(io::IO, sd::SpatialDiscretization)
@@ -165,9 +169,14 @@ If `linsolve = nothing`, the default backslash operator is used.
 """
 function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, RealT};
                           linsolve = nothing) where {Dim, RealT}
-    @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis = spatial_discretization
+    @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis, method = spatial_discretization
 
-    system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
+    if method isa RBFFD
+        system_matrix = rbf_fd_pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary,
+                                                   basis, method.local_basis)
+    else
+        system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
+    end
     b = [rhs(nodeset_inner, equations); boundary_condition.(nodeset_boundary)]
     c = solve_linear_system(system_matrix, b, linsolve)
 
@@ -204,7 +213,12 @@ function Semidiscretization(spatial_discretization::SpatialDiscretization{Dim, R
                             initial_condition) where {Dim, RealT}
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, method, basis = spatial_discretization
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    pdeb_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
+    if method isa RBFFD
+        pdeb_matrix = rbf_fd_pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary,
+                                                 basis, method.local_basis)
+    else
+        pdeb_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
+    end
 
     if method isa RBFFD
         n_inner = length(nodeset_inner)

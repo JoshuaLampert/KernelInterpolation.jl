@@ -41,9 +41,8 @@ Evaluation at a point `x` uses the local stencil ``S(j)`` of the nearest center
 u_h(x) = \sum_{k \in S(j)} c_k \, \ell_k(x;\, S(j)),
 ```
 where ``\ell_k`` are Lagrange cardinal functions precomputed on ``S(j)``.  This
-formula is valid for **both** `RBFFDLagrangeBasis` and `RBFFDStandardBasis` because
-`local_funcs` always stores cardinal functions — the `local_basis` field only
-controls which algorithm is used to compute the RBF-FD weights.
+formula holds regardless of the weight computation algorithm (`RBFFDLagrangeBasis`
+or `RBFFDStandardBasis`) because `local_funcs` always stores cardinal functions.
 
 For `RBFFDLagrangeBasis`, the nodal values are simultaneously the Lagrange
 expansion coefficients (cardinality: ``\ell_k(x_l) = \delta_{kl}``).  For
