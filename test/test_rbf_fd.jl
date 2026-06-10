@@ -116,9 +116,9 @@ end
     @test abs(b(neigh.nodes[1])) ≤ 1.0e-8
     @test abs(b(neigh.nodes[3])) ≤ 1.0e-8
 
-    @test_throws BoundsError basis_std[0, 1]
-    @test_throws BoundsError basis_std[3, 0]
-    @test_throws BoundsError basis_std[3, 4]
+    @test_throws BoundsError basis[0, 1]
+    @test_throws BoundsError basis[3, 0]
+    @test_throws BoundsError basis[3, 4]
 end
 
 @testitem "RBF-FD: kernel_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
