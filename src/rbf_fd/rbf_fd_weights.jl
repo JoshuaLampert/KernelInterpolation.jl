@@ -199,7 +199,7 @@ Compute RBF-FD weights for all nodes in `basis`. Returns a `Dict` mapping each n
 index to its `(weights, info)` tuple.
 """
 function rbf_fd_weights_all_nodes(diff_op_or_pde, basis::RBFFDBasis,
-                                   local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
+                                  local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
     return Dict(i => rbf_fd_weights(diff_op_or_pde, i, basis, local_basis)
                 for i in eachindex(basis.nodeset))
 end

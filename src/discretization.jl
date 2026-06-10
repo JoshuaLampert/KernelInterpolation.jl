@@ -25,7 +25,9 @@ Both algorithms produce the same weights up to numerical precision.
 """
 struct RBFFD{LocalBasis <: AbstractRBFFDLocalBasis} <: AbstractSpatialMethod
     local_basis::LocalBasis
-    RBFFD(local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis()) = new{typeof(local_basis)}(local_basis)
+    function RBFFD(local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
+        return new{typeof(local_basis)}(local_basis)
+    end
 end
 
 """
@@ -172,10 +174,12 @@ function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, Rea
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis, method = spatial_discretization
 
     if method isa RBFFD
-        system_matrix = rbf_fd_pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary,
+        system_matrix = rbf_fd_pde_boundary_matrix(equations, nodeset_inner,
+                                                   nodeset_boundary,
                                                    basis, method.local_basis)
     else
-        system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
+        system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary,
+                                            basis)
     end
     b = [rhs(nodeset_inner, equations); boundary_condition.(nodeset_boundary)]
     c = solve_linear_system(system_matrix, b, linsolve)
