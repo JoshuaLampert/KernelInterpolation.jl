@@ -1,38 +1,15 @@
 abstract type AbstractDifferentialOperator end
 
-function (D::AbstractDifferentialOperator)(kernel::RadialSymmetricKernel, x, y)
-    @assert length(x) == length(y) == dim(kernel)
-    return save_call(D, kernel, x .- y)
-end
-
 function (D::AbstractDifferentialOperator)(kernel::RadialSymmetricKernel)
     return x -> D(kernel, x)
 end
 
-# Workaround to avoid evaluating the derivative at zeros to allow automatic differentiation,
-# see https://github.com/JuliaDiff/ForwardDiff.jl/issues/303
-# the same issue appears with Zygote.jl
-function save_call(D::AbstractDifferentialOperator, kernel::RadialSymmetricKernel, x)
-    if all(iszero, x)
-        x[1] = eps(typeof(x[1]))
-    end
-    # x .+= eps(typeof(x[1]))
-    return D(kernel, x)
-end
-
-# Convert a kernel or polynomial to a plain Julia function, so that differential operators
+# Convert a kernel or polynomial to a plain Julia function, so that operators/equations
 # can be defined once for `Function` and applied to either.
 callable(kernel::RadialSymmetricKernel) = x -> Phi(kernel, x)
 function callable(p::AbstractPolynomialLike)
     xx = variables(p)
     return y -> p(xx => y)
-end
-
-# Abstract fallback: convert kernel or polynomial to a callable, then apply the operator.
-# This covers the 2-arg kernel form (used internally via save_call) and polynomials.
-function (D::AbstractDifferentialOperator)(f::Union{RadialSymmetricKernel,
-                                                    AbstractPolynomialLike}, x)
-    return D(callable(f), x)
 end
 
 """

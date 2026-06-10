@@ -2,10 +2,24 @@ abstract type AbstractEquation end
 
 const DifferentialOperatorOrEquation = Union{AbstractDifferentialOperator, AbstractEquation}
 
-# Abstract fallback for equations: polynomial argument is converted to a plain function.
-# (Kernels use the 3-arg form below; no 2-arg kernel form exists for equations.)
-function (eq::AbstractEquation)(p::AbstractPolynomialLike, x)
-    return eq(callable(p), x)
+function (op::DifferentialOperatorOrEquation)(kernel::RadialSymmetricKernel, x, y)
+    @assert length(x) == length(y) == dim(kernel)
+    return save_call(op, kernel, x .- y)
+end
+
+# Workaround to avoid evaluating the derivative at zeros to allow automatic differentiation,
+# see https://github.com/JuliaDiff/ForwardDiff.jl/issues/303
+function save_call(op::DifferentialOperatorOrEquation, kernel::RadialSymmetricKernel, x)
+    if all(iszero, x)
+        x[1] = eps(typeof(x[1]))
+    end
+    return op(kernel, x)
+end
+
+# Abstract fallback: convert kernel or polynomial to a callable, then apply the operator/equation.
+function (op::DifferentialOperatorOrEquation)(f::Union{RadialSymmetricKernel,
+                                                       AbstractPolynomialLike}, x)
+    return op(callable(f), x)
 end
 
 abstract type AbstractStationaryEquation <: AbstractEquation end
@@ -43,10 +57,6 @@ function Base.show(io::IO, ::PoissonEquation)
     return nothing
 end
 
-function (::PoissonEquation)(kernel::RadialSymmetricKernel, x, y)
-    return -Laplacian()(kernel, x, y)
-end
-
 function (::PoissonEquation)(f::Function, x)
     return -Laplacian()(f, x)
 end
@@ -77,10 +87,6 @@ function Base.show(io::IO, ::EllipticEquation)
     print(io,
           "-∑_{i,j = 1}^d aᵢⱼ (x)∂_{x_i,x_j}^2u + ∑_{i = 1}^d bᵢ(x)∂_{x_i}u + c(x)u = f")
     return nothing
-end
-
-function (equations::EllipticEquation)(kernel::RadialSymmetricKernel, x, y)
-    return equations.op(kernel, x, y)
 end
 
 function (equations::EllipticEquation)(f::Function, x)
@@ -124,10 +130,6 @@ function Base.show(io::IO, ::AdvectionEquation)
     return nothing
 end
 
-function (equations::AdvectionEquation)(kernel::RadialSymmetricKernel, x, y)
-    return dot(equations.advection_velocity, Gradient()(kernel, x, y))
-end
-
 function (equations::AdvectionEquation)(f::Function, x)
     return dot(equations.advection_velocity, Gradient()(f, x))
 end
@@ -153,10 +155,6 @@ end
 function Base.show(io::IO, ::HeatEquation)
     print(io, "∂_t u = κΔu + f")
     return nothing
-end
-
-function (equations::HeatEquation)(kernel::RadialSymmetricKernel, x, y)
-    return -equations.diffusivity * Laplacian()(kernel, x, y)
 end
 
 function (equations::HeatEquation)(f::Function, x)
@@ -195,11 +193,6 @@ end
 function Base.show(io::IO, ::AdvectionDiffusionEquation)
     print(io, "∂_t u + a⋅∇u = κΔu + f")
     return nothing
-end
-
-function (equations::AdvectionDiffusionEquation)(kernel::RadialSymmetricKernel, x, y)
-    return dot(equations.advection_velocity, Gradient()(kernel, x, y)) -
-           equations.diffusivity * Laplacian()(kernel, x, y)
 end
 
 function (equations::AdvectionDiffusionEquation)(f::Function, x)
