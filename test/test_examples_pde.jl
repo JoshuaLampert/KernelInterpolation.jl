@@ -14,7 +14,7 @@ end
 @testitem "poisson_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "poisson_2d_basic.jl"),
                           kernel=PolyharmonicSplineKernel{2}(3),
-                          l2=0.038429436830987575, linf=0.21521434341247836,
+                          l2=0.21521434341247836, linf=0.038429436830987575,
                           pde_test=true)
 end
 
