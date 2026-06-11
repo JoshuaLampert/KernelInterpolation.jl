@@ -287,20 +287,21 @@ end
     @test isapprox(D1_m2 * ones(length(X)), zeros(length(X)), atol = 1e-14)
     @test isapprox(D1_m2 * first.(X), ones(length(X)), atol = 1e-13)
 
-    # 2D: PartialDerivative(1) and (2) are exact on linear functions with m=3 ({1, x₁, x₂}).
+    # 2D: PartialDerivative(1) and (2) are exact on linear functions with order(kernel_2d)=m=2
+    # (monomials of degree ≤ 1 in 2D: {1, x₁, x₂}).
     nodes_2d = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
-    kernel_2d = GaussKernel{2}(shape_parameter = 1.5)
-    basis_2d = RBFFDBasis(nodes_2d, kernel_2d, KNearestNeighbors(6); m = 3)
+    kernel_2d = PolyharmonicSplineKernel{2}(3)
+    basis_2d = RBFFDBasis(nodes_2d, kernel_2d, KNearestNeighbors(6))
     N_2d = length(nodes_2d)
     x1_vals = first.(nodes_2d)
     x2_vals = last.(nodes_2d)
     D1_2d = differentiation_matrix(PartialDerivative(1), basis_2d)
     D2_2d = differentiation_matrix(PartialDerivative(2), basis_2d)
-    @test_broken isapprox(D1_2d * ones(N_2d), zeros(N_2d), atol = 1e-13)
-    @test_broken isapprox(D1_2d * x1_vals, ones(N_2d), atol = 1e-10)
-    @test_broken isapprox(D1_2d * x2_vals, zeros(N_2d), atol = 1e-10)
-    @test_broken isapprox(D2_2d * x1_vals, zeros(N_2d), atol = 1e-10)
-    @test_broken isapprox(D2_2d * x2_vals, ones(N_2d), atol = 1e-10)
+    @test isapprox(D1_2d * ones(N_2d), zeros(N_2d), atol = 1e-13)
+    @test isapprox(D1_2d * x1_vals, ones(N_2d), atol = 1e-13)
+    @test isapprox(D1_2d * x2_vals, zeros(N_2d), atol = 1e-13)
+    @test isapprox(D2_2d * x1_vals, zeros(N_2d), atol = 1e-13)
+    @test isapprox(D2_2d * x2_vals, ones(N_2d), atol = 1e-13)
 
     # 2D kernel translate exactness: weights per row equal PartialDerivative applied to
     # the local Lagrange basis functions.
