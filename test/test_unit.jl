@@ -1413,6 +1413,44 @@ end
     @test L_kernel ≈ L_basis
 end
 
+@testitem "differentiation_matrix" setup=[Setup, AdditionalImports] begin
+    nodes = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    kernel = Matern52Kernel{2}(shape_parameter = 0.7)
+    f(x) = sinpi(x[1]) * cospi(x[2])
+    values = f.(nodes)
+    itp = interpolate(nodes, values, kernel)
+    standard_basis = StandardBasis(nodes, kernel)
+
+    # `differentiation_matrix` maps the nodal values to `𝓛s` evaluated at the centers, i.e.
+    # the operator applied to the interpolant.
+    D = differentiation_matrix(Laplacian(), standard_basis)
+    @test size(D) == (length(nodes), length(nodes))
+    Du = D * values
+    for (i, x) in enumerate(nodes)
+        @test isapprox(Du[i], Laplacian()(itp, x), atol = 1e-10)
+    end
+
+    # The kernel convenience form agrees with the basis form, and evaluation at an
+    # arbitrary set of points works as well.
+    @test differentiation_matrix(Laplacian(), nodes, kernel) ≈ D
+    other = NodeSet([0.1 0.2; 0.42 0.6; 0.7 0.9])
+    D_other = differentiation_matrix(Laplacian(), standard_basis, other)
+    @test size(D_other) == (length(other), length(nodes))
+    for (i, x) in enumerate(other)
+        @test isapprox((D_other * values)[i], Laplacian()(itp, x), atol = 1e-10)
+    end
+
+    # Relation to `operator_matrix`: the inner block of the BVP system operator equals the
+    # differentiation matrix restricted to the inner nodes.
+    ni = NodeSet([0.25 0.25; 0.75 0.25; 0.25 0.75; 0.75 0.75])
+    nb = NodeSet([0.0 0.0; 1.0 0.0; 0.0 1.0; 1.0 1.0])
+    pde = PoissonEquation((x, eq) -> -4.0)
+    basis = StandardBasis(merge(ni, nb), kernel)
+    Op = operator_matrix(pde, ni, nb, basis)
+    Diff = differentiation_matrix(pde, basis, ni)
+    @test Matrix(Op[1:length(ni), :]) ≈ Matrix(Diff)
+end
+
 @testitem "Callbacks" setup=[Setup, AdditionalImports] begin
     # AliveCallback
     alive_callback = AliveCallback(dt = 0.1)

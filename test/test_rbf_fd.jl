@@ -41,12 +41,10 @@ end
                                  GaussKernel{1}(shape_parameter = 2.0);
                                  stencil_selection = KNearestNeighbors(4))
 
-    A = rbf_fd_pde_boundary_matrix(equation, nodeset_inner, nodeset_boundary, disc.basis)
-    A_dispatch = pde_boundary_matrix(equation, nodeset_inner, nodeset_boundary, disc.basis)
+    A = pde_boundary_matrix(equation, nodeset_inner, nodeset_boundary, disc.basis)
     b = [f.(nodeset_inner, Ref(equation)); boundary_condition.(nodeset_boundary)]
     u = A \ b
 
-    @test A_dispatch == A
     @test length(u) == length(nodeset_inner) + length(nodeset_boundary)
     @test norm(u) ≤ 1.0e-8
 
@@ -246,14 +244,14 @@ end
     end
 end
 
-@testitem "RBF-FD: operator_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
+@testitem "RBF-FD: differentiation_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
     X = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
     Y = NodeSet([0.1, 0.3, 0.6, 0.9, 1.0, 0.0])
     kernel = GaussKernel{1}(shape_parameter = 1.0)
     stencil = KNearestNeighbors(3)
 
     basis = RBFFDBasis(X, kernel, stencil; m = 0)
-    L = operator_matrix(Laplacian(), basis, Y)
+    L = differentiation_matrix(Laplacian(), basis, Y)
     @test size(L) == (length(Y), length(X))
 
     for j in eachindex(Y)

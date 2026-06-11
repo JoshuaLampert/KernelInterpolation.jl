@@ -80,9 +80,9 @@ export NodeSet, empty_nodeset, separation_distance, dim, eachdim,
 export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
        polynomial_coefficients, polynomial_basis, basis, polyvars, system_matrix,
        interpolate, solve_stationary, kernel_inner_product, kernel_norm,
-       kernel_matrix, operator_matrix, pde_boundary_matrix, nearest_node_index
+       kernel_matrix, operator_matrix, differentiation_matrix, pde_boundary_matrix,
+       nearest_node_index
 export rbf_fd_weights, rbf_fd_weights_at_node, rbf_fd_weights_all_nodes,
-       rbf_fd_pde_matrix, rbf_fd_boundary_matrix, rbf_fd_pde_boundary_matrix,
        select_neighbors
 export Interpolation, TemporalInterpolation
 export MultiscaleInterpolation, multiscale_interpolate

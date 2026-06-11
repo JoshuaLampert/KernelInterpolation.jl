@@ -57,29 +57,6 @@ function nearest_node_index(y::AbstractVector, nodeset::NodeSet)
     return best_idx
 end
 
-function kernel_matrix(basis::RBFFDBasis, nodeset::NodeSet = centers(basis))
-    n = length(nodeset)
-    m = length(basis)
-    rows = Int[]
-    cols = Int[]
-    vals = eltype(nodeset)[]
-    x = centers(basis)
-
-    for j in 1:n
-        y_j = nodeset[j]
-        i = nearest_node_index(y_j, x)
-        indices = basis.stencil_indices[i]
-        funcs = basis.local_funcs[i]
-        for (k, global_idx) in enumerate(indices)
-            push!(rows, j)
-            push!(cols, global_idx)
-            push!(vals, funcs[k](y_j))
-        end
-    end
-
-    return sparse(rows, cols, vals, n, m)
-end
-
 """
     polynomial_matrix(nodeset, ps)
 
@@ -298,7 +275,6 @@ end
 @doc raw"""
     operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
     operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
-    operator_matrix(diff_op_or_pde, basis, nodeset = centers(basis))
 
 Compute the operator matrix ``L`` discretizing ``\mathcal{L}`` for a given kernel. The operator matrix is defined as
 ```math
@@ -309,7 +285,15 @@ If a `basis` is passed, `A` is built via [`kernel_matrix`](@ref) for that basis 
 `merge(nodeset_inner, nodeset_boundary)` and ``A_\mathcal{L}`` via
 [`pde_boundary_matrix`](@ref) for the same basis.
 
-See also [`pde_boundary_matrix`](@ref) and [`kernel_matrix`](@ref).
+For an [`RBFFDBasis`](@ref), the operator matrix is assembled directly from the local
+stencil weights instead.
+
+In contrast to [`differentiation_matrix`](@ref), the boundary rows act as the identity
+(the nodal values are imposed there), so this is the system operator of the boundary value
+problem rather than the plain matrix of ``\mathcal{L}``.
+
+See also [`differentiation_matrix`](@ref), [`pde_boundary_matrix`](@ref), and
+[`kernel_matrix`](@ref).
 """
 function operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
                          basis::AbstractBasis)
@@ -324,29 +308,36 @@ function operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel
     return operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
 end
 
-function operator_matrix(diff_op_or_pde, basis::RBFFDBasis,
-                         nodeset::NodeSet = centers(basis))
-    n = length(nodeset)
-    m = length(basis)
-    rows = Int[]
-    cols = Int[]
-    vals = eltype(nodeset)[]
-    x = centers(basis)
+@doc raw"""
+    differentiation_matrix(diff_op_or_pde, basis, nodeset = centers(basis))
+    differentiation_matrix(diff_op_or_pde, centers, kernel, nodeset = centers)
 
-    for j in 1:n
-        y_j = nodeset[j]
-        i = nearest_node_index(y_j, x)
-        indices = basis.stencil_indices[i]
-        funcs = basis.local_funcs[i]
-        for (k, global_idx) in enumerate(indices)
-            value = diff_op_or_pde(funcs[k], y_j)
-            value isa Number ||
-                throw(ArgumentError("operator_matrix for RBFFDBasis expects scalar-valued operators"))
-            push!(rows, j)
-            push!(cols, global_idx)
-            push!(vals, value)
-        end
-    end
+Compute the differentiation matrix ``D`` discretizing the differential operator (or PDE)
+``\mathcal{L}``. It maps the vector of nodal values to the values of ``\mathcal{L}u``
+evaluated at the nodes in `nodeset`,
+```math
+    D = A_\mathcal{L} A^{-1},
+```
+where ``A_\mathcal{L}`` is the [`pde_matrix`](@ref) of ``\mathcal{L}`` evaluated at
+`nodeset` and ``A`` the [`kernel_matrix`](@ref) of the `basis`. In contrast to
+[`operator_matrix`](@ref), no boundary rows are added, so ``D`` is the plain matrix of the
+operator and `nodeset` may be any set of evaluation points (it defaults to the centers of
+the `basis`). If a node set of `centers` and a `kernel` are given, the matrix is computed
+for the [`StandardBasis`](@ref).
 
-    return sparse(rows, cols, vals, n, m)
+For an [`RBFFDBasis`](@ref) the matrix is sparse and assembled directly from the local
+stencil weights instead.
+
+See also [`operator_matrix`](@ref), [`pde_matrix`](@ref), and [`kernel_matrix`](@ref).
+"""
+function differentiation_matrix(diff_op_or_pde, basis::AbstractBasis,
+                                nodeset::NodeSet = centers(basis))
+    A = kernel_matrix(basis)
+    A_L = pde_matrix(diff_op_or_pde, nodeset, basis)
+    return A_L / A
+end
+
+function differentiation_matrix(diff_op_or_pde, centers::NodeSet, kernel::AbstractKernel,
+                                nodeset::NodeSet = centers)
+    return differentiation_matrix(diff_op_or_pde, StandardBasis(centers, kernel), nodeset)
 end

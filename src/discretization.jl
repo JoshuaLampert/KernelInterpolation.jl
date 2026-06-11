@@ -143,7 +143,8 @@ function SpatialDiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
                                stencil_selection::AbstractStencilSelection,
                                m::Int = order(kernel)) where {Dim, RealT}
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    basis = RBFFDBasis(nodeset, kernel, stencil_selection; m)
+    basis = RBFFDBasis(nodeset, kernel, stencil_selection; m,
+                       local_basis = rbffd.local_basis)
     return SpatialDiscretization(equations, nodeset_inner, boundary_condition,
                                  nodeset_boundary, rbffd, basis)
 end
@@ -171,16 +172,9 @@ If `linsolve = nothing`, the default backslash operator is used.
 """
 function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, RealT};
                           linsolve = nothing) where {Dim, RealT}
-    @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis, method = spatial_discretization
+    @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis = spatial_discretization
 
-    if method isa RBFFD
-        system_matrix = rbf_fd_pde_boundary_matrix(equations, nodeset_inner,
-                                                   nodeset_boundary,
-                                                   basis, method.local_basis)
-    else
-        system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary,
-                                            basis)
-    end
+    system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
     b = [rhs(nodeset_inner, equations); boundary_condition.(nodeset_boundary)]
     c = solve_linear_system(system_matrix, b, linsolve)
 
@@ -217,12 +211,7 @@ function Semidiscretization(spatial_discretization::SpatialDiscretization{Dim, R
                             initial_condition) where {Dim, RealT}
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, method, basis = spatial_discretization
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    if method isa RBFFD
-        pdeb_matrix = rbf_fd_pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary,
-                                                 basis, method.local_basis)
-    else
-        pdeb_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
-    end
+    pdeb_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
 
     if method isa RBFFD
         n_inner = length(nodeset_inner)

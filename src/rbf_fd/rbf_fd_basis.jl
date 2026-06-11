@@ -24,7 +24,7 @@ Base.show(io::IO, ::RBFFDLagrangeBasis) = print(io, "RBFFDLagrangeBasis")
 
 """
     RBFFDBasis(nodeset, kernel, stencil_selection;
-               m = order(kernel), local_basis = RBFFDStandardBasis())
+               m = order(kernel), local_basis = RBFFDLagrangeBasis())
 
 Configuration object for RBF-FD discretizations.
 
@@ -34,23 +34,28 @@ construction time and stored for reuse in weight computation, matrix assembly, a
 interpolant evaluation.
 
 The `local_funcs` field always stores Lagrange cardinal functions (one per stencil
-node). The weight computation algorithm is chosen separately via the `local_basis`
-argument to [`rbf_fd_weights`](@ref) or the [`RBFFD`](@ref) method object.
+node). The `local_basis` selects the algorithm used to compute the RBF-FD weights when
+assembling operator matrices (see [`RBFFDStandardBasis`](@ref) and
+[`RBFFDLagrangeBasis`](@ref)); it is stored in the basis so that all weight and matrix
+routines can read it instead of receiving it as an extra argument.
 
 Use `basis[i, k]` to access the `k`-th local cardinal function on the stencil around
 center index `i`.
 """
-struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection, F}
+struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection, F,
+                  LocalBasis <: AbstractRBFFDLocalBasis}
     nodeset::NodeSet{Dim, RealT}
     kernel::Kernel
     stencil_selection::Stencil
     m::Int
     local_funcs::Vector{Vector{F}}
     stencil_indices::Vector{Vector{Int}}
+    local_basis::LocalBasis
 
     function RBFFDBasis(nodeset::NodeSet{Dim, RealT}, kernel::Kernel,
                         stencil_selection::Stencil;
-                        m::Int = order(kernel)) where {
+                        m::Int = order(kernel),
+                        local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis()) where {
                                                        Dim, RealT,
                                                        Kernel <: AbstractKernel{Dim},
                                                        Stencil <: AbstractStencilSelection
@@ -73,8 +78,11 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection, F}
             local_funcs_vec[i] = _build_local_funcs(kernel, neigh.nodes, m)
         end
 
-        return new{Dim, RealT, Kernel, Stencil, F}(nodeset, kernel, stencil_selection, m,
-                                                   local_funcs_vec, stencil_indices_vec)
+        return new{Dim, RealT, Kernel, Stencil, F, typeof(local_basis)}(nodeset, kernel,
+                                                                        stencil_selection, m,
+                                                                        local_funcs_vec,
+                                                                        stencil_indices_vec,
+                                                                        local_basis)
     end
 end
 
