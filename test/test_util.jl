@@ -25,9 +25,9 @@ macro test_include_example(example, args...)
     for arg in args
         if (arg.head == :(=) &&
             !(arg.args[1] in (:l2, :linf, :l2_ls, :linf_ls, :l2_reg, :linf_reg,
-               :atol, :rtol,
-               :interpolation_test, :least_square_test, :regularization_test,
-               :pde_test)))
+                              :atol, :rtol,
+                              :interpolation_test, :least_square_test, :regularization_test,
+                              :pde_test)))
             push!(kwargs, Pair(arg.args...))
         end
     end
