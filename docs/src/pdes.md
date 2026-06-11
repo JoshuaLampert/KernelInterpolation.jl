@@ -271,17 +271,20 @@ sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(), ker
 itp = solve_stationary(sd)
 ```
 
-The `local_basis` keyword controls how local stencil weights are formed:
+The `local_basis` keyword of [`SpatialDiscretization`](@ref) controls how local stencil weights are
+computed:
 
-- `RBFFDStandardBasis()` (default): solves the local kernel/polynomial RBF-FD system directly.
-- `RBFFDLagrangeBasis()`: builds local cardinal (Lagrange) functions $\ell_j$ on each stencil and uses weights
-  $w_j = \mathcal{L}\ell_j(x_i)$.
+- `RBFFDLagrangeBasis()` (default): builds local cardinal (Lagrange) functions $\ell_j$ on each stencil
+  and uses weights $w_j = \mathcal{L}\ell_j(x_i)$.
+- `RBFFDStandardBasis()`: solves the local kernel/polynomial RBF-FD system directly for the weights.
+
+Both algorithms produce the same weights up to numerical precision. To use the standard-basis algorithm:
 
 ```julia
-sd_card = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(), kernel;
-                                stencil_selection = KNearestNeighbors(25),
-                                m = order(kernel),
-                                local_basis = RBFFDLagrangeBasis())
+sd_std = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(), kernel;
+                               stencil_selection = KNearestNeighbors(25),
+                               m = order(kernel),
+                               local_basis = RBFFDStandardBasis())
 ```
 
 For time-dependent equations, the same [`Semidiscretization`](@ref) and [`semidiscretize`](@ref) workflow applies:

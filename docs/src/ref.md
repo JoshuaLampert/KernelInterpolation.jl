@@ -69,7 +69,7 @@ Pages = ["discretization.jl"]
 
 ```@autodocs
 Modules = [KernelInterpolation]
-Pages = [joinpath("rbf_fd", "rbf_fd_stencil_selection.jl"), joinpath("rbf_fd", "rbf_fd_weights.jl"), joinpath("rbf_fd", "rbf_fd_matrices.jl")]
+Pages = [joinpath("rbf_fd", "rbf_fd_basis.jl"), joinpath("rbf_fd", "rbf_fd_stencil_selection.jl"), joinpath("rbf_fd", "rbf_fd_weights.jl"), joinpath("rbf_fd", "rbf_fd_matrices.jl")]
 ```
 
 ## Kernel matrices

@@ -82,7 +82,7 @@ end
 
 @testitem "rbf_fd_poisson_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
-                          method=RBFFD(RBFFDStandardBasis()),
+                          local_basis=RBFFDStandardBasis(),
                           l2=0.31009752227695275, linf=0.03589356269153325,
                           pde_test=true)
 end

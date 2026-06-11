@@ -13,22 +13,18 @@ Global collocation strategy (Kansa method).
 struct Collocation <: AbstractSpatialMethod end
 
 """
-    RBFFD(local_basis = RBFFDLagrangeBasis())
+    RBFFD()
 
 Local radial basis function finite difference strategy.
 
-The `local_basis` argument selects the algorithm used to compute local RBF-FD weights:
+The algorithm used to compute local stencil weights is controlled by the `local_basis`
+keyword argument of [`SpatialDiscretization`](@ref):
+- `RBFFDLagrangeBasis()` (default): apply the operator to precomputed cardinal functions, `w_k = 𝓛ℓ_k(x_i)`.
 - `RBFFDStandardBasis()`: solve the local kernel system `A w = rhs`, `rhs_k = 𝓛K(x_i, x_k)`.
-- `RBFFDLagrangeBasis()`: apply the operator directly to precomputed cardinal functions, `w_k = 𝓛ℓ_k(x_i)`.
 
 Both algorithms produce the same weights up to numerical precision.
 """
-struct RBFFD{LocalBasis <: AbstractRBFFDLocalBasis} <: AbstractSpatialMethod
-    local_basis::LocalBasis
-    function RBFFD(local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis())
-        return new{typeof(local_basis)}(local_basis)
-    end
-end
+struct RBFFD <: AbstractSpatialMethod end
 
 """
     SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary, basis)
@@ -36,8 +32,9 @@ end
     SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary,
                           [centers,] kernel = GaussKernel{dim(nodeset_inner)}())
     SpatialDiscretization(equations, nodeset_inner, boundary_condition, nodeset_boundary,
-                          RBFFD(local_basis), kernel = GaussKernel{dim(nodeset_inner)}();
-                          stencil_selection, m = order(kernel))
+                          RBFFD(), kernel = GaussKernel{dim(nodeset_inner)}();
+                          stencil_selection, m = order(kernel),
+                          local_basis = RBFFDLagrangeBasis())
 
 Spatial discretization of a partial differential equation with Dirichlet boundary conditions.
 The `nodeset_inner` are the nodes in the domain and `nodeset_boundary` are the nodes on the boundary. The `boundary_condition`
@@ -138,15 +135,18 @@ end
 function SpatialDiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
                                boundary_condition,
                                nodeset_boundary::NodeSet{Dim, RealT},
-                               rbffd::RBFFD,
+                               ::RBFFD,
                                kernel::AbstractKernel{Dim} = GaussKernel{Dim}();
                                stencil_selection::AbstractStencilSelection,
-                               m::Int = order(kernel)) where {Dim, RealT}
+                               m::Int = order(kernel),
+                               local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis()) where {
+                                                                                                   Dim,
+                                                                                                   RealT
+                                                                                                   }
     nodeset = merge(nodeset_inner, nodeset_boundary)
-    basis = RBFFDBasis(nodeset, kernel, stencil_selection; m,
-                       local_basis = rbffd.local_basis)
+    basis = RBFFDBasis(nodeset, kernel, stencil_selection; m, local_basis)
     return SpatialDiscretization(equations, nodeset_inner, boundary_condition,
-                                 nodeset_boundary, rbffd, basis)
+                                 nodeset_boundary, RBFFD(), basis)
 end
 
 function Base.show(io::IO, sd::SpatialDiscretization)

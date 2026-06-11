@@ -88,13 +88,14 @@ end
 
     disc = SpatialDiscretization(equation, nodeset_inner,
                                  boundary_condition, nodeset_boundary,
-                                 RBFFD(RBFFDLagrangeBasis()),
+                                 RBFFD(),
                                  GaussKernel{1}(shape_parameter = 2.0);
                                  stencil_selection = KNearestNeighbors(4),
-                                 m = 0)
+                                 m = 0,
+                                 local_basis = RBFFDLagrangeBasis())
 
     @test disc.method isa RBFFD
-    @test disc.method.local_basis isa RBFFDLagrangeBasis
+    @test disc.basis.local_basis isa RBFFDLagrangeBasis
 
     itp = solve_stationary(disc)
     @test itp isa Interpolation
@@ -131,7 +132,7 @@ end
     # are used to assemble the operator matrix, so the PDE and operator are reproduced at
     # the inner nodes up to the linear-solve residual.
     disc = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
-                                 RBFFD(RBFFDLagrangeBasis()), kernel;
+                                 RBFFD(), kernel;
                                  stencil_selection = KNearestNeighbors(5))
     itp = solve_stationary(disc)
     @test itp isa KernelInterpolation.RBFFDInterpolation
@@ -190,8 +191,9 @@ end
     # Standard local basis: assembly and evaluation use different numerical routes for the
     # same mathematical weights, so the PDE is reproduced only approximately.
     disc_std = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
-                                     RBFFD(RBFFDStandardBasis()), kernel;
-                                     stencil_selection = KNearestNeighbors(5))
+                                     RBFFD(), kernel;
+                                     stencil_selection = KNearestNeighbors(5),
+                                     local_basis = RBFFDStandardBasis())
     itp_std = solve_stationary(disc_std)
     @test itp_std isa KernelInterpolation.RBFFDInterpolation
     for node in nodeset_inner
