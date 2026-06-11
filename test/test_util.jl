@@ -21,18 +21,17 @@ macro test_include_example(example, args...)
     local least_square_test = get_kwarg(args, :least_square_test, false)
     local regularization_test = get_kwarg(args, :regularization_test, false)
     local pde_test = get_kwarg(args, :pde_test, false)
-    local rbf_fd_test = get_kwarg(args, :rbf_fd_test, false)
     local kwargs = Pair{Symbol, Any}[]
     for arg in args
         if (arg.head == :(=) &&
             !(arg.args[1] in (:l2, :linf, :l2_ls, :linf_ls, :l2_reg, :linf_reg,
-                              :atol, :rtol,
-                              :interpolation_test, :least_square_test, :regularization_test,
-                              :pde_test, :rbf_fd_test)))
+               :atol, :rtol,
+               :interpolation_test, :least_square_test, :regularization_test,
+               :pde_test)))
             push!(kwargs, Pair(arg.args...))
         end
     end
-    quote
+    return quote
         println("═"^100)
         println($example)
 
@@ -79,24 +78,9 @@ macro test_include_example(example, args...)
                 if pde_2 isa KernelInterpolation.AbstractStationaryEquation
                     if !$least_square_test
                         rhs_values = KernelInterpolation.rhs(nodeset_inner, pde_2)
-                        if $rbf_fd_test
-                            # For RBF-FD, check the local stencil system A*u ≈ b instead of
-                            # the global kernel operator, which is not satisfied by construction.
-                            # kernel_coefficients(itp) stores K⁻¹*u (not the nodal values u),
-                            # so we recover nodal values by evaluating itp at the training nodes.
-                            A_fd = KernelInterpolation.pde_boundary_matrix(pde_2,
-                                                                           nodeset_inner,
-                                                                           nodeset_boundary,
-                                                                           sd.basis)
-                            u_fd = itp.(KernelInterpolation.nodeset(itp))
-                            b_fd = [rhs_values; g.(nodeset_boundary)]
-                            @test isapprox(A_fd * u_fd, b_fd;
+                        for i in eachindex(nodeset_inner)
+                            @test isapprox(pde_2(itp, nodeset_inner[i]), rhs_values[i],
                                            atol = $atol, rtol = $rtol)
-                        else
-                            for i in eachindex(nodeset_inner)
-                                @test isapprox(pde_2(itp, nodeset_inner[i]), rhs_values[i],
-                                               atol = $atol, rtol = $rtol)
-                            end
                         end
                         values_boundary = g.(nodeset_boundary)
                     end

@@ -325,16 +325,44 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::LagrangeInterp
     return s
 end
 
+# RBF-FD: the coefficients are nodal values and the interpolant is represented by local
+# cardinal functions on the stencil of the nearest center (see the evaluation above).
+# Applying the operator must therefore act on those local cardinal functions, not on a
+# global kernel expansion.
+
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::RBFFDInterpolation, x, j)
+    bas = basis(itp)
+    c = coefficients(itp)
+    indices = bas.stencil_indices[j]
+    funcs = bas.local_funcs[j]
+    for k in eachindex(indices)
+        s += c[indices[k]] * diff_op_or_pde(funcs[k], x)
+    end
+    return s
+end
+
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::RBFFDInterpolation, x)
+    return diff_op_or_pde(s, itp, x, nearest_node_index(x, nodeset(itp)))
+end
+
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation, x)
     return diff_op_or_pde(zero(eltype(x)), itp, x)
 end
 
-function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation)
-    return x -> diff_op_or_pde(itp, x)
-end
-
 function (g::Gradient)(itp::Interpolation, x)
     return g(zero(x), itp, x)
+end
+
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::RBFFDInterpolation, x, j)
+    return diff_op_or_pde(zero(eltype(x)), itp, x, j)
+end
+
+function (g::Gradient)(itp::RBFFDInterpolation, x, j)
+    return g(zero(x), itp, x, j)
+end
+
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation)
+    return x -> diff_op_or_pde(itp, x)
 end
 
 # TODO: Does this also make sense for conditionally positive definite kernels?

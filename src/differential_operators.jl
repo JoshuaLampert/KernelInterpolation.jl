@@ -19,8 +19,7 @@ Partial derivative operator with respect to the `i`-th component.
 The operator can be called with a [`RadialSymmetricKernel`](@ref) and points
 `x` and `y` to evaluate the derivative of the `kernel` at `x - y`.
 It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
-the first partial derivative of the interpolation at `x` in the `i`-th direction. Note that this
-is only supported for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
+the first partial derivative of the interpolation at `x` in the `i`-th direction.
 """
 struct PartialDerivative <: AbstractDifferentialOperator
     i::Int
@@ -41,8 +40,7 @@ end
 The gradient operator. It can be called with a [`RadialSymmetricKernel`](@ref) and points
 `x` and `y` to evaluate the gradient of the `kernel` at `x - y`.
 It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
-the gradient of the interpolation at `x`. Note that this is only supported
-for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
+the gradient of the interpolation at `x`.
 """
 struct Gradient <: AbstractDifferentialOperator
 end
@@ -62,8 +60,7 @@ end
 The Laplacian operator. It can be called with a [`RadialSymmetricKernel`](@ref) and points
 `x` and `y` to evaluate the Laplacian of the `kernel` at `x - y`.
 It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
-the Laplacian of the interpolation at `x`. Note that this is only supported
-for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
+the Laplacian of the interpolation at `x`.
 """
 struct Laplacian <: AbstractDifferentialOperator
 end
@@ -91,8 +88,7 @@ respectively. The matrix `A` should be symmetric and positive definite for any i
 The operator can be called with a [`RadialSymmetricKernel`](@ref) and points `x` and `y` to
 evaluate the operator of the `kernel` at `x - y`.
 It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
-the elliptic operator of the interpolation at `x`. Note that this is only supported
-for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
+the elliptic operator of the interpolation at `x`.
 """
 struct EllipticOperator{AType, BType, CType} <:
        AbstractDifferentialOperator where {AType, BType, CType}

@@ -13,7 +13,7 @@ Global collocation strategy (Kansa method).
 struct Collocation <: AbstractSpatialMethod end
 
 """
-    RBFFD(local_basis = RBFFDStandardBasis())
+    RBFFD(local_basis = RBFFDLagrangeBasis())
 
 Local radial basis function finite difference strategy.
 
