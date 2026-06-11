@@ -102,7 +102,10 @@ end
     @test itp isa Interpolation
 end
 
-@testitem "RBF-FD: PDE and operator evaluation at interpolation" setup=[Setup, AdditionalImports] begin
+@testitem "RBF-FD: PDE and operator evaluation at interpolation" setup=[
+    Setup,
+    AdditionalImports
+] begin
     nodeset_inner = NodeSet([0.25 0.25
                              0.5 0.25
                              0.75 0.25
