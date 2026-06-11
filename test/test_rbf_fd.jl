@@ -266,4 +266,55 @@ end
             @test L[j, global_idx] ≈ Laplacian()(local_basis[k], y_j)
         end
     end
+
+    # PartialDerivative(1) in 1D is d/dx. Weights per row equal PartialDerivative(1)(ℓ_k, y_j).
+    D1_1d = differentiation_matrix(PartialDerivative(1), basis, Y)
+    @test size(D1_1d) == (length(Y), length(X))
+    for j in eachindex(Y)
+        y_j = Y[j]
+        i = nearest_node_index(y_j, X)
+        neigh = select_neighbors(X[i], X, stencil)
+        local_basis_j = LagrangeBasis(neigh.nodes, kernel; m = 0)
+        for (k, global_idx) in enumerate(neigh.indices)
+            @test D1_1d[j, global_idx] ≈ PartialDerivative(1)(local_basis_j[k], y_j)
+        end
+    end
+
+    # PartialDerivative(1) with polynomial augmentation m=2 ({1, x} in 1D) is exact on
+    # linear functions: D * x_vals = ones, D * ones = zeros.
+    basis_m2 = RBFFDBasis(X, kernel, stencil; m = 2)
+    D1_m2 = differentiation_matrix(PartialDerivative(1), basis_m2)
+    @test isapprox(D1_m2 * ones(length(X)), zeros(length(X)), atol = 1e-14)
+    @test isapprox(D1_m2 * first.(X), ones(length(X)), atol = 1e-13)
+
+    # 2D: PartialDerivative(1) and (2) are exact on linear functions with m=3 ({1, x₁, x₂}).
+    nodes_2d = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    kernel_2d = GaussKernel{2}(shape_parameter = 1.5)
+    basis_2d = RBFFDBasis(nodes_2d, kernel_2d, KNearestNeighbors(6); m = 3)
+    N_2d = length(nodes_2d)
+    x1_vals = first.(nodes_2d)
+    x2_vals = last.(nodes_2d)
+    D1_2d = differentiation_matrix(PartialDerivative(1), basis_2d)
+    D2_2d = differentiation_matrix(PartialDerivative(2), basis_2d)
+    @test_broken isapprox(D1_2d * ones(N_2d), zeros(N_2d), atol = 1e-13)
+    @test_broken isapprox(D1_2d * x1_vals, ones(N_2d), atol = 1e-10)
+    @test_broken isapprox(D1_2d * x2_vals, zeros(N_2d), atol = 1e-10)
+    @test_broken isapprox(D2_2d * x1_vals, zeros(N_2d), atol = 1e-10)
+    @test_broken isapprox(D2_2d * x2_vals, ones(N_2d), atol = 1e-10)
+
+    # 2D kernel translate exactness: weights per row equal PartialDerivative applied to
+    # the local Lagrange basis functions.
+    basis_2d_m0 = RBFFDBasis(nodes_2d, kernel_2d, KNearestNeighbors(6); m = 0)
+    D1_2d_m0 = differentiation_matrix(PartialDerivative(1), basis_2d_m0)
+    D2_2d_m0 = differentiation_matrix(PartialDerivative(2), basis_2d_m0)
+    stencil_2d = KNearestNeighbors(6)
+    for j in eachindex(nodes_2d)
+        x_j = nodes_2d[j]
+        neigh = select_neighbors(j, nodes_2d, stencil_2d)
+        local_basis_j = LagrangeBasis(neigh.nodes, kernel_2d; m = 0)
+        for (k, global_idx) in enumerate(neigh.indices)
+            @test D1_2d_m0[j, global_idx] ≈ PartialDerivative(1)(local_basis_j[k], x_j)
+            @test D2_2d_m0[j, global_idx] ≈ PartialDerivative(2)(local_basis_j[k], x_j)
+        end
+    end
 end

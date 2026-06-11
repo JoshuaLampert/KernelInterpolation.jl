@@ -1449,6 +1449,32 @@ end
     Op = operator_matrix(pde, ni, nb, basis)
     Diff = differentiation_matrix(pde, basis, ni)
     @test Matrix(Op[1:length(ni), :]) ≈ Matrix(Diff)
+
+    # PartialDerivative exactness on polynomials: with m=3 ({1, x₁, x₂} in 2D),
+    # ∂₁x₁ = 1, ∂₁x₂ = 0, ∂₂x₁ = 0, ∂₂x₂ = 1.
+    nodes_pd = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    kernel_pd = GaussKernel{2}(shape_parameter = 1.0)
+    sb_pd = StandardBasis(nodes_pd, kernel_pd)
+    N_pd = length(nodes_pd)
+    x1_vals = first.(nodes_pd)
+    x2_vals = last.(nodes_pd)
+    D1_pd = differentiation_matrix(PartialDerivative(1), sb_pd; m = 3)
+    D2_pd = differentiation_matrix(PartialDerivative(2), sb_pd; m = 3)
+    @test isapprox(D1_pd * x1_vals, ones(N_pd), atol = 1e-11)
+    @test isapprox(D1_pd * x2_vals, zeros(N_pd), atol = 1e-11)
+    @test isapprox(D2_pd * x1_vals, zeros(N_pd), atol = 1e-11)
+    @test isapprox(D2_pd * x2_vals, ones(N_pd), atol = 1e-11)
+
+    # PartialDerivative exactness on a kernel translate: D * nodal_values_of_K(·, cⱼ)
+    # equals the exact partial derivative at the evaluation nodes (D = A_L * A⁻¹).
+    c_j = nodes_pd[3]
+    u_ker = [kernel_pd(x, c_j) for x in nodes_pd]
+    D1_ker = differentiation_matrix(PartialDerivative(1), sb_pd)
+    D2_ker = differentiation_matrix(PartialDerivative(2), sb_pd)
+    @test isapprox(D1_ker * u_ker,
+                   [PartialDerivative(1)(kernel_pd, x, c_j) for x in nodes_pd], atol = 1e-13)
+    @test isapprox(D2_ker * u_ker,
+                   [PartialDerivative(2)(kernel_pd, x, c_j) for x in nodes_pd], atol = 1e-13)
 end
 
 @testitem "polynomial augmentation (collocation)" setup=[Setup, AdditionalImports] begin
