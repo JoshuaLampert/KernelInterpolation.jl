@@ -168,6 +168,27 @@ end
                    for k in eachindex(bas.stencil_indices[j]))
     @test isapprox(Laplacian()(itp, x), expected)
 
+    # Three-argument form `op(itp, x, j)` evaluates with the stencil of center `j`
+    # explicitly (mirroring `itp(x, j)`). With the nearest index it matches the
+    # two-argument form, both for scalar operators/PDEs and the vector-valued gradient.
+    @test isapprox(Laplacian()(itp, x, j), Laplacian()(itp, x))
+    @test isapprox(pde(itp, x, j), pde(itp, x))
+    @test isapprox(Laplacian()(itp, x, j), expected)
+    grad_x = Gradient()(itp, x, j)
+    @test grad_x isa AbstractVector
+    @test length(grad_x) == 2
+    @test isapprox(grad_x, Gradient()(itp, x))
+    grad_expected = sum(c[bas.stencil_indices[j][k]] * Gradient()(bas.local_funcs[j][k], x)
+                        for k in eachindex(bas.stencil_indices[j]))
+    @test isapprox(grad_x, grad_expected)
+    # At an inner node the matching stencil index (global index of the node) reproduces the
+    # right-hand side, for the scalar PDE/operator and consistently for the gradient.
+    for (i, inner_node) in enumerate(nodeset_inner)
+        @test isapprox(pde(itp, inner_node, i), f(inner_node, pde), atol = 1e-11)
+        @test isapprox(Laplacian()(itp, inner_node, i), -f(inner_node, pde), atol = 1e-11)
+        @test isapprox(Gradient()(itp, inner_node, i), Gradient()(itp, inner_node))
+    end
+
     # Standard local basis: assembly and evaluation use different numerical routes for the
     # same mathematical weights, so the PDE is reproduced only approximately.
     disc_std = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
