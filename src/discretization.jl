@@ -161,6 +161,11 @@ end
 dim(::SpatialDiscretization{Dim}) where {Dim} = Dim
 Base.eltype(::SpatialDiscretization{Dim, RealT}) where {Dim, RealT} = RealT
 
+# Polynomials used for the collocation system. Conditionally positive definite kernels are
+# augmented up to `order(basis)`; RBF-FD handles polynomials per stencil, so it uses none.
+polynomials(basis::AbstractBasis, xx) = monomials(xx, 0:(order(basis) - 1))
+polynomials(::RBFFDBasis, xx) = monomials(xx, 0:-1)
+
 """
     solve_stationary(spatial_discretization; linsolve = nothing)
 
@@ -175,11 +180,6 @@ conditionally positive definite kernels are augmented automatically, while
 strictly positive definite kernels (`order == 0`) use no polynomials. RBF-FD discretizations handle
 polynomial augmentation locally via the stencils.
 """
-# Polynomials used for the collocation system. Conditionally positive definite kernels are
-# augmented up to `order(basis)`; RBF-FD handles polynomials per stencil, so it uses none.
-polynomials(basis::AbstractBasis, xx) = monomials(xx, 0:(order(basis) - 1))
-polynomials(::RBFFDBasis, xx) = monomials(xx, 0:-1)
-
 function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, RealT};
                           linsolve = nothing) where {Dim, RealT}
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis = spatial_discretization
