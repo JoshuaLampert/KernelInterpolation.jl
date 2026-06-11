@@ -56,10 +56,13 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection, F,
                         stencil_selection::Stencil;
                         m::Int = order(kernel),
                         local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis()) where {
-                                                       Dim, RealT,
-                                                       Kernel <: AbstractKernel{Dim},
-                                                       Stencil <: AbstractStencilSelection
-                                                       }
+                                                                                            Dim,
+                                                                                            RealT,
+                                                                                            Kernel <:
+                                                                                            AbstractKernel{Dim},
+                                                                                            Stencil <:
+                                                                                            AbstractStencilSelection
+                                                                                            }
         m >= 0 || throw(ArgumentError("m must be >= 0, got $m"))
         n = length(nodeset)
 
@@ -79,7 +82,8 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection, F,
         end
 
         return new{Dim, RealT, Kernel, Stencil, F, typeof(local_basis)}(nodeset, kernel,
-                                                                        stencil_selection, m,
+                                                                        stencil_selection,
+                                                                        m,
                                                                         local_funcs_vec,
                                                                         stencil_indices_vec,
                                                                         local_basis)

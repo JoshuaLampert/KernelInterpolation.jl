@@ -390,7 +390,8 @@ end
 
 function operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel; kwargs...)
     basis = StandardBasis(merge(nodeset_inner, nodeset_boundary), kernel)
-    return operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis; kwargs...)
+    return operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis;
+                           kwargs...)
 end
 
 @doc raw"""
@@ -435,5 +436,6 @@ end
 
 function differentiation_matrix(diff_op_or_pde, centers::NodeSet, kernel::AbstractKernel,
                                 nodeset::NodeSet = centers; m = order(kernel))
-    return differentiation_matrix(diff_op_or_pde, StandardBasis(centers, kernel), nodeset; m)
+    return differentiation_matrix(diff_op_or_pde, StandardBasis(centers, kernel), nodeset;
+                                  m)
 end
