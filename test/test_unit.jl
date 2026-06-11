@@ -1472,9 +1472,11 @@ end
     D1_ker = differentiation_matrix(PartialDerivative(1), sb_pd)
     D2_ker = differentiation_matrix(PartialDerivative(2), sb_pd)
     @test isapprox(D1_ker * u_ker,
-                   [PartialDerivative(1)(kernel_pd, x, c_j) for x in nodes_pd], atol = 1e-13)
+                   [PartialDerivative(1)(kernel_pd, x, c_j) for x in nodes_pd],
+                   atol = 1e-13)
     @test isapprox(D2_ker * u_ker,
-                   [PartialDerivative(2)(kernel_pd, x, c_j) for x in nodes_pd], atol = 1e-13)
+                   [PartialDerivative(2)(kernel_pd, x, c_j) for x in nodes_pd],
+                   atol = 1e-13)
 end
 
 @testitem "polynomial augmentation (collocation)" setup=[Setup, AdditionalImports] begin
