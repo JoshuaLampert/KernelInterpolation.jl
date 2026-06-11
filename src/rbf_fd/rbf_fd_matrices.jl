@@ -117,6 +117,15 @@ function pde_boundary_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
             B]
 end
 
+# RBF-FD handles polynomial augmentation locally via the stencils, so no global polynomial
+# blocks are added. This method only exists so callers can pass `ps` uniformly; it must be
+# empty.
+function pde_boundary_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
+                             nodeset_boundary::NodeSet, basis::RBFFDBasis, ps)
+    @assert isempty(ps) "RBF-FD augments polynomials per stencil; pass an empty `ps`."
+    return pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
+end
+
 # For an `RBFFDBasis` the local stencil weights already are the operator matrix in
 # nodal-value space, so the system operator matrix is just the PDE + boundary matrix (no
 # division by a kernel matrix as in the collocation case).

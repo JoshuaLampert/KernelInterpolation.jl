@@ -223,6 +223,29 @@ function pde_matrix(diff_op_or_pde, nodeset::NodeSet, basis::StandardBasis)
 end
 
 @doc raw"""
+    pde_polynomial_matrix(diff_op_or_pde, nodeset, ps)
+
+Return the matrix of a differential operator (or PDE) applied to the polynomials `ps`,
+```math
+    (A_{\mathcal{L}}^p)_{ik} = \mathcal{L}p_k(x_i),
+```
+where ``x_i`` are the nodes in `nodeset` and ``p_k`` the polynomials. This is the
+polynomial counterpart of [`pde_matrix`](@ref) used for polynomial augmentation.
+"""
+function pde_polynomial_matrix(diff_op_or_pde, nodeset::NodeSet, ps)
+    n = length(nodeset)
+    q = length(ps)
+    A = Matrix{eltype(nodeset)}(undef, n, q)
+    for i in 1:n
+        x_i = nodeset[i]
+        for k in 1:q
+            A[i, k] = diff_op_or_pde(ps[k], x_i)
+        end
+    end
+    return A
+end
+
+@doc raw"""
     pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, [centers,] kernel)
     pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
 
@@ -273,6 +296,58 @@ function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, ke
 end
 
 @doc raw"""
+    pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis, ps)
+
+Polynomial-augmented variant of [`pde_boundary_matrix`](@ref). With the polynomials `ps`
+the system matrix becomes the saddle-point matrix
+```math
+    \begin{pmatrix}\tilde A_\mathcal{L} & \mathcal{L}P_\mathrm{i}\\ \tilde A & P_\mathrm{b}\\ P^T & 0\end{pmatrix},
+```
+where ``\mathcal{L}P_\mathrm{i}`` ([`pde_polynomial_matrix`](@ref)) and ``P_\mathrm{b}``
+([`polynomial_matrix`](@ref)) are the operator/evaluation of the polynomials at the inner
+and boundary nodes, and ``P`` the [`polynomial_matrix`](@ref) of the `centers` enforcing
+``\sum_j c_j p_k(\xi_j) = 0``. If `ps` is empty, this reduces to the unaugmented
+[`pde_boundary_matrix`](@ref).
+"""
+function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
+                             basis::AbstractBasis, ps)
+    isempty(ps) &&
+        return pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
+    A_out = _pde_boundary_output_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
+                                        basis, ps)
+    P = polynomial_matrix(centers(basis), ps)
+    q = length(ps)
+    return [A_out
+            P' zeros(eltype(centers(basis)), q, q)]
+end
+
+# Output matrix mapping the augmented coefficients `[c; d]` to the values
+# `[𝓛s at the inner nodes; s at the boundary nodes]`.
+function _pde_boundary_output_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
+                                     basis::AbstractBasis, ps)
+    A_L = pde_matrix(diff_op_or_pde, nodeset_inner, basis)
+    A_b = kernel_matrix(basis, nodeset_boundary)
+    isempty(ps) && return [A_L; A_b]
+    A_Lp = pde_polynomial_matrix(diff_op_or_pde, nodeset_inner, ps)
+    A_bp = polynomial_matrix(nodeset_boundary, ps)
+    return [A_L A_Lp
+            A_b A_bp]
+end
+
+# Map nodal values (at the centers of `basis`) to the augmented coefficients `[c; d]` of the
+# kernel + polynomial interpolant, i.e. apply `[K P; Pᵀ 0]⁻¹ [I; 0]`. Together with an
+# output matrix this expresses an operator acting on nodal values.
+function _values_to_coefficients(basis::AbstractBasis, ps)
+    N = length(basis)
+    q = length(ps)
+    RealT = eltype(centers(basis))
+    M = interpolation_matrix(basis, ps; factorization_method = Matrix)
+    rhs = [Matrix{RealT}(I, N, N)
+           zeros(RealT, q, N)]
+    return M \ rhs
+end
+
+@doc raw"""
     operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
     operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
 
@@ -292,20 +367,30 @@ In contrast to [`differentiation_matrix`](@ref), the boundary rows act as the id
 (the nodal values are imposed there), so this is the system operator of the boundary value
 problem rather than the plain matrix of ``\mathcal{L}``.
 
+Polynomials up to order `m` (i.e. degree `m - 1`) are added to the kernel space; `m`
+defaults to `order(basis)`, so conditionally positive definite kernels are augmented
+automatically, while strictly positive definite kernels (`order == 0`) use no polynomials.
+
 See also [`differentiation_matrix`](@ref), [`pde_boundary_matrix`](@ref), and
 [`kernel_matrix`](@ref).
 """
 function operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
-                         basis::AbstractBasis)
-    nodeset = merge(nodeset_inner, nodeset_boundary)
-    A = kernel_matrix(basis, nodeset)
-    A_L = pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
-    return A_L / A
+                         basis::AbstractBasis; m = order(basis))
+    ps = monomials(polyvars(dim(basis)), 0:(m - 1))
+    if isempty(ps)
+        nodeset = merge(nodeset_inner, nodeset_boundary)
+        A = kernel_matrix(basis, nodeset)
+        A_L = pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
+        return A_L / A
+    end
+    A_out = _pde_boundary_output_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
+                                        basis, ps)
+    return A_out * _values_to_coefficients(basis, ps)
 end
 
-function operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)
+function operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel; kwargs...)
     basis = StandardBasis(merge(nodeset_inner, nodeset_boundary), kernel)
-    return operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
+    return operator_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis; kwargs...)
 end
 
 @doc raw"""
@@ -325,19 +410,30 @@ operator and `nodeset` may be any set of evaluation points (it defaults to the c
 the `basis`). If a node set of `centers` and a `kernel` are given, the matrix is computed
 for the [`StandardBasis`](@ref).
 
+Polynomials up to order `m` (i.e. degree `m - 1`) are added to the kernel space; `m`
+defaults to `order(basis)`. With polynomial augmentation the matrix is exact for the full
+kernel + polynomial space; e.g. with `m >= 1` it reproduces constants, so `D * ones(N)`
+vanishes for operators that annihilate constants (such as the [`Laplacian`](@ref)).
+
 For an [`RBFFDBasis`](@ref) the matrix is sparse and assembled directly from the local
-stencil weights instead.
+stencil weights instead (the polynomial order is taken from the basis).
 
 See also [`operator_matrix`](@ref), [`pde_matrix`](@ref), and [`kernel_matrix`](@ref).
 """
 function differentiation_matrix(diff_op_or_pde, basis::AbstractBasis,
-                                nodeset::NodeSet = centers(basis))
-    A = kernel_matrix(basis)
-    A_L = pde_matrix(diff_op_or_pde, nodeset, basis)
-    return A_L / A
+                                nodeset::NodeSet = centers(basis); m = order(basis))
+    ps = monomials(polyvars(dim(basis)), 0:(m - 1))
+    if isempty(ps)
+        A = kernel_matrix(basis)
+        A_L = pde_matrix(diff_op_or_pde, nodeset, basis)
+        return A_L / A
+    end
+    A_L = [pde_matrix(diff_op_or_pde, nodeset, basis) pde_polynomial_matrix(diff_op_or_pde,
+                                                                            nodeset, ps)]
+    return A_L * _values_to_coefficients(basis, ps)
 end
 
 function differentiation_matrix(diff_op_or_pde, centers::NodeSet, kernel::AbstractKernel,
-                                nodeset::NodeSet = centers)
-    return differentiation_matrix(diff_op_or_pde, StandardBasis(centers, kernel), nodeset)
+                                nodeset::NodeSet = centers; m = order(kernel))
+    return differentiation_matrix(diff_op_or_pde, StandardBasis(centers, kernel), nodeset; m)
 end

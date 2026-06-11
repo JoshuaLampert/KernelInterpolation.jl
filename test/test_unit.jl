@@ -1451,6 +1451,57 @@ end
     @test Matrix(Op[1:length(ni), :]) ≈ Matrix(Diff)
 end
 
+@testitem "polynomial augmentation (collocation)" setup=[Setup, AdditionalImports] begin
+    nodes = homogeneous_hypercube(5, (0.0, 0.0), (1.0, 1.0))
+    N = length(nodes)
+    kernel = GaussKernel{2}(shape_parameter = 2.0)
+    sb = StandardBasis(nodes, kernel)
+
+    # Without polynomials the Laplacian does not annihilate constants; with `m >= 1` it does
+    # (the polynomial-augmented space reproduces constants exactly).
+    @test maximum(abs.(differentiation_matrix(Laplacian(), sb; m = 0) * ones(N))) > 1e-2
+    @test isapprox(maximum(abs.(differentiation_matrix(Laplacian(), sb; m = 1) * ones(N))),
+                   0.0, atol = 1e-11)
+    # Δ(x₁² + x₂²) = 4 is reproduced exactly with degree-2 polynomials (`m = 3`).
+    quad(x) = x[1]^2 + x[2]^2
+    D3 = differentiation_matrix(Laplacian(), sb; m = 3)
+    @test all(isapprox.(D3 * quad.(nodes), 4.0, atol = 1e-11))
+
+    # `solve_stationary` augments conditionally positive definite kernels and reproduces a
+    # linear solution exactly (it lies in the linear polynomial space of the spline).
+    ni = NodeSet([0.25 0.25; 0.5 0.25; 0.75 0.25; 0.25 0.5; 0.5 0.5; 0.75 0.5; 0.25 0.75;
+                  0.5 0.75; 0.75 0.75])
+    nb = NodeSet([0.0 0.0; 0.5 0.0; 1.0 0.0; 0.0 0.5; 1.0 0.5; 0.0 1.0; 0.5 1.0; 1.0 1.0])
+    ulin(x) = 2.0 * x[1] + 3.0 * x[2] + 1.0 # Δu = 0
+    pde = PoissonEquation((x, eq) -> 0.0)
+    phs = PolyharmonicSplineKernel{2}(3) # order 2 -> linear polynomials augmented
+    sd = SpatialDiscretization(pde, ni, ulin, nb, phs)
+    itp = solve_stationary(sd)
+    @test length(coefficients(itp)) == length(ni) + length(nb) + 3 # 3 linear monomials in 2D
+    @test length(polynomial_coefficients(itp)) == 3
+    for x in (rand(2) for _ in 1:100)
+        @test isapprox(itp(x), ulin(x), atol = 1e-14)
+    end
+
+    # An order-0 kernel adds no polynomials, i.e. the unaugmented behavior is unchanged.
+    sd0 = SpatialDiscretization(pde, ni, ulin, nb,
+                                WendlandKernel{2}(3, shape_parameter = 0.4))
+    itp0 = solve_stationary(sd0)
+    @test length(coefficients(itp0)) == length(ni) + length(nb)
+    @test isempty(polynomial_coefficients(itp0))
+
+    # Least-squares collocation (`centers` ≠ `merge(inner, boundary)`) with a conditionally
+    # positive definite kernel still augments polynomials and reproduces the linear solution.
+    centers = NodeSet([0.0 0.0; 1.0 0.0; 0.0 1.0; 1.0 1.0; 0.5 0.5; 0.25 0.75; 0.75 0.25])
+    sd_ls = SpatialDiscretization(pde, ni, ulin, nb, centers, phs)
+    itp_ls = solve_stationary(sd_ls)
+    @test length(coefficients(itp_ls)) == length(centers) + 3
+    @test length(polynomial_coefficients(itp_ls)) == 3
+    for x in (rand(2) for _ in 1:100)
+        @test isapprox(itp_ls(x), ulin(x), atol = 1e-14)
+    end
+end
+
 @testitem "Callbacks" setup=[Setup, AdditionalImports] begin
     # AliveCallback
     alive_callback = AliveCallback(dt = 0.1)

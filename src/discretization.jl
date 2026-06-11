@@ -169,18 +169,30 @@ conditions by non-symmetric collocation (Kansa method).
 Returns an [`Interpolation`](@ref) object.
 The `linsolve` keyword argument can be used to specify a linear solver from `LinearSolve.jl` for the linear system.
 If `linsolve = nothing`, the default backslash operator is used.
+
+For kernel collocation, the kernel space is augmented with polynomials up to `order(basis)`, so that
+conditionally positive definite kernels are augmented automatically, while
+strictly positive definite kernels (`order == 0`) use no polynomials. RBF-FD discretizations handle
+polynomial augmentation locally via the stencils.
 """
+# Polynomials used for the collocation system. Conditionally positive definite kernels are
+# augmented up to `order(basis)`; RBF-FD handles polynomials per stencil, so it uses none.
+polynomials(basis::AbstractBasis, xx) = monomials(xx, 0:(order(basis) - 1))
+polynomials(::RBFFDBasis, xx) = monomials(xx, 0:-1)
+
 function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, RealT};
                           linsolve = nothing) where {Dim, RealT}
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary, basis = spatial_discretization
 
-    system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
-    b = [rhs(nodeset_inner, equations); boundary_condition.(nodeset_boundary)]
+    xx = polyvars(Dim)
+    ps = polynomials(basis, xx)
+    q = length(ps)
+    system_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis,
+                                        ps)
+    b = [rhs(nodeset_inner, equations); boundary_condition.(nodeset_boundary);
+         zeros(RealT, q)]
     c = solve_linear_system(system_matrix, b, linsolve)
 
-    # TODO: Do not support additional polynomial basis for now
-    xx = polyvars(Dim)
-    ps = monomials(xx, 0:-1)
     nodeset = merge(nodeset_inner, nodeset_boundary)
     return Interpolation(basis, nodeset, c, system_matrix, ps, xx)
 end
