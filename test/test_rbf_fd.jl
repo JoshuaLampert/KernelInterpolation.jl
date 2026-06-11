@@ -102,6 +102,81 @@ end
     @test itp isa Interpolation
 end
 
+@testitem "RBF-FD: PDE and operator evaluation at interpolation" setup=[Setup, AdditionalImports] begin
+    nodeset_inner = NodeSet([0.25 0.25
+                             0.5 0.25
+                             0.75 0.25
+                             0.25 0.5
+                             0.5 0.5
+                             0.75 0.5
+                             0.25 0.75
+                             0.5 0.75
+                             0.75 0.75])
+    nodeset_boundary = NodeSet([0.0 0.0
+                                0.5 0.0
+                                1.0 0.0
+                                0.0 0.5
+                                1.0 0.5
+                                0.0 1.0
+                                0.5 1.0
+                                1.0 1.0])
+    u(x) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2]
+    f(x, eq) = -4.0 # -Δu
+    g(x) = u(x)
+    kernel = GaussKernel{2}(shape_parameter = 0.5)
+    pde = PoissonEquation(f)
+
+    # Lagrange local basis: the evaluation acts on the same local cardinal functions that
+    # are used to assemble the operator matrix, so the PDE and operator are reproduced at
+    # the inner nodes up to the linear-solve residual.
+    disc = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
+                                 RBFFD(RBFFDLagrangeBasis()), kernel;
+                                 stencil_selection = KNearestNeighbors(5))
+    itp = solve_stationary(disc)
+    @test itp isa KernelInterpolation.RBFFDInterpolation
+    for node in nodeset_inner
+        @test isapprox(pde(itp, node), f(node, pde), atol = 1e-11)
+        @test isapprox(Laplacian()(itp, node), -f(node, pde), atol = 1e-11)
+    end
+
+    # Curried (one-argument) form returns a callable consistent with the two-argument form
+    pde_itp = @test_nowarn pde(itp)
+    @test isapprox(pde_itp(first(nodeset_inner)), pde(itp, first(nodeset_inner)))
+    laplacian_itp = @test_nowarn Laplacian()(itp)
+    @test isapprox(laplacian_itp(first(nodeset_inner)),
+                   Laplacian()(itp, first(nodeset_inner)))
+
+    # Gradient returns a vector (covers the vector-valued `s` initialization path) and
+    # agrees componentwise with the partial derivatives.
+    node = first(nodeset_inner)
+    grad = Gradient()(itp, node)
+    @test grad isa AbstractVector
+    @test length(grad) == 2
+    @test isapprox(grad[1], PartialDerivative(1)(itp, node))
+    @test isapprox(grad[2], PartialDerivative(2)(itp, node))
+
+    # At an arbitrary point (not a node) the operator uses the stencil of the nearest node,
+    # consistent with the local cardinal expansion of the interpolant.
+    x = [0.42, 0.6]
+    j = nearest_node_index(x, nodeset(itp))
+    bas = KernelInterpolation.basis(itp)
+    c = coefficients(itp)
+    expected = sum(c[bas.stencil_indices[j][k]] * Laplacian()(bas.local_funcs[j][k], x)
+                   for k in eachindex(bas.stencil_indices[j]))
+    @test isapprox(Laplacian()(itp, x), expected)
+
+    # Standard local basis: assembly and evaluation use different numerical routes for the
+    # same mathematical weights, so the PDE is reproduced only approximately.
+    disc_std = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
+                                     RBFFD(RBFFDStandardBasis()), kernel;
+                                     stencil_selection = KNearestNeighbors(5))
+    itp_std = solve_stationary(disc_std)
+    @test itp_std isa KernelInterpolation.RBFFDInterpolation
+    for node in nodeset_inner
+        @test isapprox(pde(itp_std, node), f(node, pde), atol = 1e-10)
+    end
+end
+
 @testitem "RBF-FD: basis indexing API" setup=[Setup, AdditionalImports] begin
     nodeset = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
     kernel = GaussKernel{1}(shape_parameter = 1.0)
