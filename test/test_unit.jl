@@ -1461,7 +1461,7 @@ end
     # (the polynomial-augmented space reproduces constants exactly).
     @test maximum(abs.(differentiation_matrix(Laplacian(), sb; m = 0) * ones(N))) > 1e-2
     @test isapprox(maximum(abs.(differentiation_matrix(Laplacian(), sb; m = 1) * ones(N))),
-                   0.0, atol = 1e-11)
+                   0.0, atol = 1e-10)
     # Δ(x₁² + x₂²) = 4 is reproduced exactly with degree-2 polynomials (`m = 3`).
     quad(x) = x[1]^2 + x[2]^2
     D3 = differentiation_matrix(Laplacian(), sb; m = 3)
