@@ -77,7 +77,7 @@ export NoRegularization, L2Regularization
 export NodeSet, empty_nodeset, separation_distance, dim, eachdim,
        distance_matrix, random_hypercube, random_hypercube_boundary, homogeneous_hypercube,
        homogeneous_hypercube_boundary, random_hypersphere, random_hypersphere_boundary
-export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
+export interpolation_kernel, nodeset, centers, coefficients, kernel_coefficients,
        polynomial_coefficients, polynomial_basis, basis, polyvars, system_matrix,
        interpolate, solve_stationary, kernel_inner_product, kernel_norm,
        kernel_matrix, operator_matrix, differentiation_matrix, pde_boundary_matrix,
