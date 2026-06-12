@@ -1487,6 +1487,45 @@ end
                    atol = 1e-13)
 end
 
+@testitem "differentiation_matrix least-squares" setup=[Setup, AdditionalImports] begin
+    # Fewer centers than evaluation nodes: D is (|nodeset|, |centers|) and maps
+    # nodal values at the centers to operator values at the evaluation nodes.
+    centers = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    nodeset = homogeneous_hypercube(6, (0.0, 0.0), (1.0, 1.0))
+    kernel = GaussKernel{2}(shape_parameter = 1.0)
+    basis = StandardBasis(centers, kernel)
+
+    D = differentiation_matrix(Laplacian(), basis, nodeset)
+
+    # Size is (|nodeset|, |centers|): rectangular and overdetermined.
+    @test size(D) == (length(nodeset), length(centers))
+
+    # D * u_at_centers ≈ Δu(nodeset) for any function u in the kernel span.
+    # Use a kernel translate: u(x) = K(x, c_j), for which Δu is known exactly.
+    c_j = centers[3]
+    u_ker = [kernel(x, c_j) for x in centers]
+    @test isapprox(D * u_ker,
+                   [Laplacian()(kernel, x, c_j) for x in nodeset],
+                   atol = 1e-11)
+
+    # Polynomial exactness with m=3 ({1, x₁, x₂} in 2D):
+    # D * p.(centers) = Lp.(nodeset) for polynomials of degree ≤ 1.
+    x1_at_centers = first.(centers)
+    x2_at_centers = last.(centers)
+    D1 = differentiation_matrix(PartialDerivative(1), basis, nodeset; m = 3)
+    D2 = differentiation_matrix(PartialDerivative(2), basis, nodeset; m = 3)
+    @test size(D1) == (length(nodeset), length(centers))
+    @test isapprox(D1 * ones(length(centers)), zeros(length(nodeset)), atol = 1e-10)
+    @test isapprox(D1 * x1_at_centers, ones(length(nodeset)), atol = 1e-11)
+    @test isapprox(D1 * x2_at_centers, zeros(length(nodeset)), atol = 1e-11)
+    @test isapprox(D2 * ones(length(centers)), zeros(length(nodeset)), atol = 1e-10)
+    @test isapprox(D2 * x1_at_centers, zeros(length(nodeset)), atol = 1e-11)
+    @test isapprox(D2 * x2_at_centers, ones(length(nodeset)), atol = 1e-11)
+
+    # Kernel convenience form agrees with the basis form.
+    @test differentiation_matrix(Laplacian(), centers, kernel, nodeset) ≈ D
+end
+
 @testitem "polynomial augmentation (collocation)" setup=[Setup, AdditionalImports] begin
     nodes = homogeneous_hypercube(5, (0.0, 0.0), (1.0, 1.0))
     N = length(nodes)
