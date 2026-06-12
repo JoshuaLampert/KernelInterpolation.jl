@@ -70,14 +70,13 @@ end
 @doc raw"""
     rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis, local_basis = basis.local_basis)
 
-Compute RBF-FD weights for node index `i` using precomputed stencil
-data from `basis`. Dispatches on the local basis type stored in `basis`.
-If `local_basis` is [`RBFFDLagrangeBasis`](@ref), the function computes weights using the cardinal function approach.
-If `local_basis` is [`RBFFDStandardBasis`](@ref), it computes weights using the standard augmented system approach.
+Compute RBF-FD weights for node index `i` using precomputed stencil data from `basis`.
+Dispatches on the local basis type stored in `basis`.
+If `local_basis` is [`RBFFDLagrangeBasis`](@ref), weights are computed via the cardinal
+function approach. If `local_basis` is [`RBFFDStandardBasis`](@ref), the local
+kernel/polynomial system is solved directly.
 
-# Returns
-- `weights`: Finite difference weights (vector for scalar operators, matrix for vector operators)
-- `info::NamedTuple`: Diagnostic information (stencil size, condition number, rank, SVD values)
+Returns the weight vector (scalar operator) or matrix (vector operator).
 """
 function rbf_fd_weights(diff_op_or_pde, i::Integer, basis::RBFFDBasis,
                         local_basis::AbstractRBFFDLocalBasis = basis.local_basis)
@@ -85,26 +84,13 @@ function rbf_fd_weights(diff_op_or_pde, i::Integer, basis::RBFFDBasis,
 end
 
 function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis,
-                         local_basis::RBFFDLagrangeBasis)
+                         ::RBFFDLagrangeBasis)
     x_i = basis.nodeset[i]
-    indices = basis.stencil_indices[i]
-    neighbor_nodes = NodeSet(basis.nodeset.nodes[indices])
-    weights = _rbf_fd_cardinal_weights(diff_op_or_pde, x_i, basis.local_funcs[i])
-    k_matrix = kernel_matrix(neighbor_nodes, basis.kernel)
-    svals = svdvals(k_matrix)
-    rank_tol = eps(eltype(svals)) * maximum(svals)
-    rank_est = count(>(rank_tol), svals)
-    info = (stencil_size = length(neighbor_nodes),
-            condition_number = cond(k_matrix),
-            rank = rank_est,
-            singular_values = svals,
-            x_i = x_i,
-            local_basis = local_basis)
-    return weights, info
+    return _rbf_fd_cardinal_weights(diff_op_or_pde, x_i, basis.local_funcs[i])
 end
 
 function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis,
-                         local_basis::RBFFDStandardBasis)
+                         ::RBFFDStandardBasis)
     x_i = basis.nodeset[i]
     indices = basis.stencil_indices[i]
     neighbor_nodes = NodeSet(basis.nodeset.nodes[indices])
@@ -120,29 +106,18 @@ function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis,
                  P' zeros(eltype(A), q, q)]
         rhs_poly = _polynomial_rhs(diff_op_or_pde, ps, x_i)
         sol = A_aug \ [rhs_vec; rhs_poly]
-        weights = sol isa AbstractVector ? sol[1:length(neighbor_nodes)] :
-                  sol[1:length(neighbor_nodes), :]
+        return sol isa AbstractVector ? sol[1:length(neighbor_nodes)] :
+               sol[1:length(neighbor_nodes), :]
     else
-        weights = A \ rhs_vec
+        return A \ rhs_vec
     end
-
-    svals = svdvals(A)
-    rank_tol = eps(eltype(svals)) * maximum(svals)
-    rank_est = count(>(rank_tol), svals)
-    info = (stencil_size = length(neighbor_nodes),
-            condition_number = cond(A),
-            rank = rank_est,
-            singular_values = svals,
-            x_i = x_i,
-            local_basis = local_basis)
-    return weights, info
 end
 
 """
     rbf_fd_weights_at_node(diff_op_or_pde, x_i, basis::RBFFDBasis)
 
 Compute RBF-FD weights at an arbitrary point `x_i` using the stencil of the nearest
-node in `basis`. Returns `(weights, info)`.
+node in `basis`.
 
 See [`rbf_fd_weights`](@ref) for more details.
 """
@@ -158,7 +133,7 @@ end
     rbf_fd_weights_all_nodes(diff_op_or_pde, basis::RBFFDBasis)
 
 Compute RBF-FD weights for all nodes in `basis`. Returns a `Dict` mapping each node
-index to its `(weights, info)` tuple.
+index to its weight vector (or matrix for vector operators).
 
 See [`rbf_fd_weights`](@ref) for more details.
 """

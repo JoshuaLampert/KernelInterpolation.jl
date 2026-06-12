@@ -68,7 +68,7 @@ function pde_matrix(diff_op_or_pde, nodeset_inner::NodeSet, basis::RBFFDBasis)
     vals = eltype(basis.nodeset)[]
 
     for i in eachindex(nodeset_inner)
-        weights, _ = rbf_fd_weights(diff_op_or_pde, i, basis)
+        weights = rbf_fd_weights(diff_op_or_pde, i, basis)
         weights isa AbstractVector ||
             throw(ArgumentError("RBF-FD PDE assembly expects scalar operator values"))
         for (j, global_idx) in enumerate(basis.stencil_indices[i])
