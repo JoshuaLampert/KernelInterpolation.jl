@@ -68,10 +68,12 @@ function _rbf_fd_cardinal_weights(diff_op_or_pde, x_i::AbstractVector,
 end
 
 @doc raw"""
-    rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis)
+    rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis, local_basis = basis.local_basis)
 
-Compute RBF-FD finite difference weights for node index `i` using precomputed stencil
+Compute RBF-FD weights for node index `i` using precomputed stencil
 data from `basis`. Dispatches on the local basis type stored in `basis`.
+If `local_basis` is [`RBFFDLagrangeBasis`](@ref), the function computes weights using the cardinal function approach.
+If `local_basis` is [`RBFFDStandardBasis`](@ref), it computes weights using the standard augmented system approach.
 
 # Returns
 - `weights`: Finite difference weights (vector for scalar operators, matrix for vector operators)
@@ -141,6 +143,8 @@ end
 
 Compute RBF-FD weights at an arbitrary point `x_i` using the stencil of the nearest
 node in `basis`. Returns `(weights, info)`.
+
+See [`rbf_fd_weights`](@ref) for more details.
 """
 function rbf_fd_weights_at_node(diff_op_or_pde, x_i::AbstractVector, basis::RBFFDBasis,
                                 local_basis::AbstractRBFFDLocalBasis = basis.local_basis)
@@ -155,6 +159,8 @@ end
 
 Compute RBF-FD weights for all nodes in `basis`. Returns a `Dict` mapping each node
 index to its `(weights, info)` tuple.
+
+See [`rbf_fd_weights`](@ref) for more details.
 """
 function rbf_fd_weights_all_nodes(diff_op_or_pde, basis::RBFFDBasis,
                                   local_basis::AbstractRBFFDLocalBasis = basis.local_basis)
