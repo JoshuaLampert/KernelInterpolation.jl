@@ -198,6 +198,12 @@ end
     for node in nodeset_inner
         @test isapprox(pde(itp_std, node), f(node, pde), atol = 1e-10)
     end
+
+    # Least-squares RBF-FD: basis built on a strict subset of merge(ni, nb).
+    basis_ls = RBFFDBasis(nodeset_inner, kernel, KNearestNeighbors(3))
+    disc_ls = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, basis_ls)
+    itp_ls = @test_nowarn solve_stationary(disc_ls)
+    @test nodeset(itp_ls) == merge(nodeset_inner, nodeset_boundary)
 end
 
 @testitem "RBF-FD: basis indexing API" setup=[Setup, AdditionalImports] begin

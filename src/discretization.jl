@@ -194,7 +194,8 @@ function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, Rea
          zeros(RealT, q)]
     c = solve_linear_system(system_matrix, b, linsolve)
 
-    return Interpolation(basis, centers(basis), c, system_matrix, ps, xx)
+    return Interpolation(basis, merge(nodeset_inner, nodeset_boundary), c, system_matrix,
+                         ps, xx)
 end
 
 """

@@ -1237,6 +1237,14 @@ end
         @test isapprox(b_val, b_test_val, atol = 1e-12)
     end
 
+    # Least-squares collocation: centers ⊊ merge(nodeset_inner, nodeset_boundary).
+    centers_ls = nodeset_inner  # 4 centers < 8 = |ni| + |nb|
+    pde = PoissonEquation(f1)
+    sd_ls_col = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, centers_ls,
+                                      kernel)
+    itp_ls_col = @test_nowarn solve_stationary(sd_ls_col)
+    @test nodeset(itp_ls_col) == merge(nodeset_inner, nodeset_boundary)
+
     # Solve stationary PDE using LinearSolve's GMRES
     sd_ls = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, kernel)
     itp_ls = @test_nowarn solve_stationary(sd_ls; linsolve = KrylovJL_GMRES())
