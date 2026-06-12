@@ -159,7 +159,7 @@ end
     # At an arbitrary point (not a node) the operator uses the stencil of the nearest node,
     # consistent with the local cardinal expansion of the interpolant.
     x = [0.42, 0.6]
-    j = nearest_node_index(x, nodeset(itp))
+    j = nearest_node_index(x, centers(itp))
     bas = KernelInterpolation.basis(itp)
     c = coefficients(itp)
     expected = sum(c[bas.stencil_indices[j][k]] * Laplacian()(bas.local_funcs[j][k], x)

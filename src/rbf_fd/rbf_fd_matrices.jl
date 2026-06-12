@@ -9,11 +9,11 @@ function _rbf_fd_sparse_matrix(entry, basis::RBFFDBasis, nodeset::NodeSet)
     rows = Int[]
     cols = Int[]
     vals = eltype(nodeset)[]
-    x = centers(basis)
+    X = centers(basis)
 
     for j in 1:n
         y_j = nodeset[j]
-        i = nearest_node_index(y_j, x)
+        i = nearest_node_index(y_j, X)
         for (k, global_idx) in enumerate(basis.stencil_indices[i])
             push!(rows, j)
             push!(cols, global_idx)

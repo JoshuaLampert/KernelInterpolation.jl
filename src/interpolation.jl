@@ -297,7 +297,7 @@ end
 
 # Default 1-arg evaluation: use the stencil of the nearest center
 function (itp::RBFFDInterpolation)(x)
-    return itp(x, nearest_node_index(x, centers(basis(itp))))
+    return itp(x, nearest_node_index(x, centers(itp)))
 end
 
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation, x)
@@ -342,7 +342,7 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::RBFFDInterpola
 end
 
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::RBFFDInterpolation, x)
-    return diff_op_or_pde(s, itp, x, nearest_node_index(x, centers(basis(itp))))
+    return diff_op_or_pde(s, itp, x, nearest_node_index(x, centers(itp)))
 end
 
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation, x)

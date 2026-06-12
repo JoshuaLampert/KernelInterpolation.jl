@@ -123,7 +123,7 @@ See [`rbf_fd_weights`](@ref) for more details.
 """
 function rbf_fd_weights_at_node(diff_op_or_pde, x_i::AbstractVector, basis::RBFFDBasis,
                                 local_basis::AbstractRBFFDLocalBasis = basis.local_basis)
-    i = nearest_node_index(x_i, basis.nodeset)
+    i = nearest_node_index(x_i, centers(basis))
     return rbf_fd_weights(diff_op_or_pde, i, basis, local_basis)
 end
 
@@ -140,5 +140,5 @@ See [`rbf_fd_weights`](@ref) for more details.
 function rbf_fd_weights_all_nodes(diff_op_or_pde, basis::RBFFDBasis,
                                   local_basis::AbstractRBFFDLocalBasis = basis.local_basis)
     return Dict(i => rbf_fd_weights(diff_op_or_pde, i, basis, local_basis)
-                for i in eachindex(basis.nodeset))
+                for i in eachindex(centers(basis)))
 end
