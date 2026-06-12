@@ -34,17 +34,17 @@ construction time and stored for reuse in weight computation, matrix assembly, a
 interpolant evaluation.
 
 The `local_funcs` field always stores Lagrange cardinal functions (one per stencil
-node). The `local_basis` selects the algorithm used to compute the RBF-FD weights when
-assembling operator matrices (see [`RBFFDStandardBasis`](@ref) and
-[`RBFFDLagrangeBasis`](@ref)); it is stored in the basis so that all weight and matrix
-routines can read it instead of receiving it as an extra argument.
+node). Matrix assembly ([`pde_matrix`](@ref), [`differentiation_matrix`](@ref)) always
+uses these cardinal functions. The `local_basis` field selects the algorithm used by
+[`rbf_fd_weights`](@ref) when weights are requested directly (see
+[`RBFFDStandardBasis`](@ref) and [`RBFFDLagrangeBasis`](@ref)).
 
 Use `basis[i, k]` to access the `k`-th local cardinal function on the stencil around
 center index `i`.
 """
 struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection, F,
-                  LocalBasis <: AbstractRBFFDLocalBasis}
-    nodeset::NodeSet{Dim, RealT}
+                  LocalBasis <: AbstractRBFFDLocalBasis} <: AbstractBasis
+    centers::NodeSet{Dim, RealT}
     kernel::Kernel
     stencil_selection::Stencil
     m::Int
@@ -52,7 +52,7 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection, F,
     stencil_indices::Vector{Vector{Int}}
     local_basis::LocalBasis
 
-    function RBFFDBasis(nodeset::NodeSet{Dim, RealT}, kernel::Kernel,
+    function RBFFDBasis(centers::NodeSet{Dim, RealT}, kernel::Kernel,
                         stencil_selection::Stencil;
                         m::Int = order(kernel),
                         local_basis::AbstractRBFFDLocalBasis = RBFFDLagrangeBasis()) where {
@@ -64,9 +64,9 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection, F,
                                                                                             AbstractStencilSelection
                                                                                             }
         m >= 0 || throw(ArgumentError("m must be >= 0, got $m"))
-        n = length(nodeset)
+        n = length(centers)
 
-        neigh1 = select_neighbors(1, nodeset, stencil_selection)
+        neigh1 = select_neighbors(1, centers, stencil_selection)
         funcs1 = _build_local_funcs(kernel, neigh1.nodes, m)
         F = eltype(funcs1)
 
@@ -76,12 +76,12 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection, F,
         local_funcs_vec[1] = funcs1
 
         for i in 2:n
-            neigh = select_neighbors(i, nodeset, stencil_selection)
+            neigh = select_neighbors(i, centers, stencil_selection)
             stencil_indices_vec[i] = neigh.indices
             local_funcs_vec[i] = _build_local_funcs(kernel, neigh.nodes, m)
         end
 
-        return new{Dim, RealT, Kernel, Stencil, F, typeof(local_basis)}(nodeset, kernel,
+        return new{Dim, RealT, Kernel, Stencil, F, typeof(local_basis)}(centers, kernel,
                                                                         stencil_selection,
                                                                         m,
                                                                         local_funcs_vec,
@@ -90,17 +90,13 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection, F,
     end
 end
 
-interpolation_kernel(basis::RBFFDBasis) = basis.kernel
-centers(basis::RBFFDBasis) = basis.nodeset
-dim(::RBFFDBasis{Dim}) where {Dim} = Dim
-Base.eltype(::RBFFDBasis{Dim, RealT}) where {Dim, RealT} = RealT
-Base.length(basis::RBFFDBasis) = length(basis.nodeset)
 order(basis::RBFFDBasis) = basis.m
 
 function _build_local_funcs(kernel::AbstractKernel, stencil_nodes::NodeSet, m::Int)
     return collect(LagrangeBasis(stencil_nodes, kernel; m))
 end
 
+# Note: Indexing with one index is not supported for `RBFFDBasis` and so `iterate` and `collect` also do not work.
 """
     getindex(basis::RBFFDBasis, i::Integer, k::Integer)
 
@@ -108,13 +104,13 @@ Return the `k`-th local stencil basis function associated with center index `i`.
 The returned object is callable.
 """
 function Base.getindex(basis::RBFFDBasis, i::Integer, k::Integer)
-    (1 <= i <= length(basis.nodeset)) || throw(BoundsError(basis, (i, k)))
+    (1 <= i <= length(centers(basis))) || throw(BoundsError(basis, (i, k)))
     (1 <= k <= length(basis.local_funcs[i])) || throw(BoundsError(basis, (i, k)))
     return basis.local_funcs[i][k]
 end
 
 function Base.show(io::IO, basis::RBFFDBasis)
     print(io,
-          "RBFFDBasis with $(length(basis.nodeset)) nodes, kernel $(basis.kernel), stencil $(basis.stencil_selection)")
+          "RBFFDBasis with $(length(centers(basis))) nodes, kernel $(basis.kernel), stencil $(basis.stencil_selection)")
     return nothing
 end

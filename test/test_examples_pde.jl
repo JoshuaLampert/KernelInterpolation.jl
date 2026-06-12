@@ -11,7 +11,7 @@ end
                           pde_test=true)
 end
 
-@testitem "poisson_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+@testitem "poisson_2d_basic.jl with polynomial augmentation" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "poisson_2d_basic.jl"),
                           kernel=PolyharmonicSplineKernel{2}(3),
                           l2=0.21521434341247836, linf=0.038429436830987575,
@@ -87,9 +87,10 @@ end
                           pde_test=true)
 end
 
+# (almost) same values as for the `RBFFDLagrangeBasis`
 @testitem "rbf_fd_poisson_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
                           local_basis=RBFFDStandardBasis(),
-                          l2=0.31009752227695275, linf=0.03589356269153325,
+                          l2=0.31009752227745246, linf=0.03589356269155414,
                           pde_test=true)
 end

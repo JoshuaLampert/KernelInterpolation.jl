@@ -249,45 +249,39 @@ end
     pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, [centers,] kernel)
     pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
 
-Compute the matrix of a partial differential equation (or differential operator) with a given kernel. The matrix is defined as
+Assemble the PDE + boundary matrix
 ```math
-    A_\mathcal{L} = \begin{pmatrix}\tilde A_\mathcal{L}\\\tilde A\end{pmatrix},
+    \begin{pmatrix}\tilde A_\mathcal{L}\\\tilde A\end{pmatrix},
 ```
-where ``\tilde A_\mathcal{L}`` is the matrix of the differential operator (defined by the `equations`) for the inner nodes ``x_i``:
+where ``\tilde A_\mathcal{L} = ``[`pde_matrix`](@ref) evaluates the differential operator
+at the inner nodes and ``\tilde A = ``[`kernel_matrix`](@ref) evaluates the basis at the
+boundary nodes. With a kernel and optional `centers` (defaulting to
+`merge(nodeset_inner, nodeset_boundary)`) the entries are
 ```math
-    (\tilde A_\mathcal{L})_{ij} = \mathcal{L}K(x_i, \xi_j),
+    (\tilde A_\mathcal{L})_{ij} = \mathcal{L}K(x_i, \xi_j), \quad
+    \tilde A_{ij} = K(x_i^b, \xi_j),
 ```
-and ``\tilde A`` is the kernel matrix for the boundary nodes:
-```math
-    \tilde A_{ij} = K(x_i, \xi_j),
-```
-where ``\mathcal{L}`` is the differential operator (defined by the `equations`), ``K`` the `kernel`, ``x_i`` are the nodes
-in `nodeset_boundary` and ``\xi_j`` are the `centers`. By default, `centers` is set to `merge(nodeset_inner, nodeset_boundary)`.
-If a `basis` is given, the matrices are defined as
-```math
-    (\tilde A_\mathcal{L})_{ij} = \mathcal{L}b_j(x_i),
-```and ``\tilde A`` is the kernel matrix for the boundary nodes:
-```math
-    \tilde A_{ij} = b_j(x_i),
-```
-where ``\mathcal{L}`` is the differential operator (defined by the `equations`), ``b_j`` the basis functions in the `basis`, and ``x_i`` are the nodes in `nodeset_boundary`.
+where ``x_i`` are inner nodes, ``x_i^b`` boundary nodes, and ``\xi_j`` centers. With a
+`basis` the same structure holds with ``b_j`` replacing ``K(\cdot, \xi_j)``.
+
+This method is used for all basis types, including [`RBFFDBasis`](@ref), where
+[`pde_matrix`](@ref) and [`kernel_matrix`](@ref) use nearest-center stencil lookup. When
+`|centers(basis)| < |nodeset_inner| + |nodeset_boundary|`, the resulting system is
+overdetermined and [`solve_stationary`](@ref) solves it in the least-squares sense.
 
 See also [`pde_matrix`](@ref) and [`kernel_matrix`](@ref).
 """
 function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, centers,
                              kernel)
-    pd_matrix = pde_matrix(diff_op_or_pde, nodeset_inner, centers, kernel)
-    b_matrix = kernel_matrix(centers, nodeset_boundary, kernel)
-    return [pd_matrix
-            b_matrix]
+    return pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
+                               StandardBasis(centers, kernel))
 end
 
 function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary,
                              basis::AbstractBasis)
-    pd_matrix = pde_matrix(diff_op_or_pde, nodeset_inner, basis)
-    b_matrix = kernel_matrix(basis, nodeset_boundary)
-    return [pd_matrix
-            b_matrix]
+    A_L = pde_matrix(diff_op_or_pde, nodeset_inner, basis)
+    A_b = kernel_matrix(basis, nodeset_boundary)
+    return [A_L; A_b]
 end
 
 function pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, kernel)

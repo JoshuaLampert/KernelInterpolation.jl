@@ -85,15 +85,15 @@ end
 
 function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis,
                          ::RBFFDLagrangeBasis)
-    x_i = basis.nodeset[i]
+    x_i = centers(basis)[i]
     return _rbf_fd_cardinal_weights(diff_op_or_pde, x_i, basis.local_funcs[i])
 end
 
 function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis,
                          ::RBFFDStandardBasis)
-    x_i = basis.nodeset[i]
+    x_i = centers(basis)[i]
     indices = basis.stencil_indices[i]
-    neighbor_nodes = NodeSet(basis.nodeset.nodes[indices])
+    neighbor_nodes = NodeSet(centers(basis)[indices])
     A = kernel_matrix(neighbor_nodes, basis.kernel)
     rhs_vec = _collect_operator_rhs(diff_op_or_pde, basis.kernel, x_i, neighbor_nodes)
 

@@ -17,12 +17,13 @@ struct Collocation <: AbstractSpatialMethod end
 
 Local radial basis function finite difference strategy.
 
-The algorithm used to compute local stencil weights is controlled by the `local_basis`
-keyword argument of [`SpatialDiscretization`](@ref):
-- `RBFFDLagrangeBasis()` (default): apply the operator to precomputed cardinal functions, `w_k = 𝓛ℓ_k(x_i)`.
+Matrix assembly always uses the precomputed cardinal (Lagrange) functions. The `local_basis`
+keyword of [`SpatialDiscretization`](@ref) (or the `local_basis` field of [`RBFFDBasis`](@ref))
+controls the algorithm used by [`rbf_fd_weights`](@ref) when weights are requested directly:
+- `RBFFDLagrangeBasis()` (default): `w_k = 𝓛ℓ_k(x_i)`.
 - `RBFFDStandardBasis()`: solve the local kernel system `A w = rhs`, `rhs_k = 𝓛K(x_i, x_k)`.
 
-Both algorithms produce the same weights up to numerical precision.
+Both give the same weights up to numerical precision.
 """
 struct RBFFD <: AbstractSpatialMethod end
 
@@ -193,8 +194,7 @@ function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, Rea
          zeros(RealT, q)]
     c = solve_linear_system(system_matrix, b, linsolve)
 
-    nodeset = merge(nodeset_inner, nodeset_boundary)
-    return Interpolation(basis, nodeset, c, system_matrix, ps, xx)
+    return Interpolation(basis, centers(basis), c, system_matrix, ps, xx)
 end
 
 """

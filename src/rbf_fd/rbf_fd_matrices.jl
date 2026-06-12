@@ -33,102 +33,42 @@ function kernel_matrix(basis::RBFFDBasis, nodeset::NodeSet = centers(basis))
     end
 end
 
-# Sparse differentiation matrix: row `j` maps the nodal values to `𝓛u` evaluated at
-# `nodeset[j]` using the nearest stencil's local cardinal functions. This always uses the
-# cardinal route (the only one well defined at arbitrary points); the `basis.local_basis`
-# weight algorithm only affects the collocation assembly in [`pde_matrix`](@ref). See the
-# generic [`differentiation_matrix`](@ref) for the meaning shared with the other bases.
-function differentiation_matrix(diff_op_or_pde, basis::RBFFDBasis,
-                                nodeset::NodeSet = centers(basis))
+@doc raw"""
+    pde_matrix(diff_op_or_pde, nodeset, basis::RBFFDBasis)
+
+Assemble the sparse RBF-FD operator matrix. Each row `j` corresponds to one node in
+`nodeset` and contains the local stencil weights ``\mathcal{L}\ell_k(y_j)`` of the
+differential operator (or PDE) `diff_op_or_pde`, evaluated at `y_j` using the cardinal
+functions of the nearest center in `basis`. The result is an `|nodeset| × |basis|` sparse
+matrix, so `nodeset` may be any set of evaluation points and need not equal the centers of
+`basis`. When `|nodeset| > |basis|`, the system assembled by [`pde_boundary_matrix`](@ref)
+is overdetermined and solved in the least-squares sense.
+
+See also [`differentiation_matrix`](@ref), [`pde_boundary_matrix`](@ref).
+"""
+function pde_matrix(diff_op_or_pde, nodeset::NodeSet, basis::RBFFDBasis)
     return _rbf_fd_sparse_matrix(basis, nodeset) do f, y
         value = diff_op_or_pde(f, y)
         value isa Number ||
-            throw(ArgumentError("differentiation_matrix for an RBFFDBasis expects scalar-valued operators"))
+            throw(ArgumentError("RBF-FD PDE assembly expects scalar operator values"))
         return value
     end
 end
 
-@doc raw"""
-    pde_matrix(diff_op_or_pde, nodeset_inner, basis::RBFFDBasis)
-
-Assemble the sparse RBF-FD operator matrix for the inner nodes. Each row corresponds to
-one inner node and contains the local stencil weights ``\mathcal{L}\ell_k(x_i)`` of the
-differential operator (or PDE) `diff_op_or_pde`. The weights are computed via
-[`rbf_fd_weights`](@ref) using the weight algorithm stored in `basis`
-(`basis.local_basis`). The inner nodes are assumed to be the first `length(nodeset_inner)`
-centers of `basis`.
-
-See also [`pde_boundary_matrix`](@ref).
-"""
-function pde_matrix(diff_op_or_pde, nodeset_inner::NodeSet, basis::RBFFDBasis)
-    n_inner = length(nodeset_inner)
-    n_total = length(basis)
-    rows = Int[]
-    cols = Int[]
-    vals = eltype(basis.nodeset)[]
-
-    for i in eachindex(nodeset_inner)
-        weights = rbf_fd_weights(diff_op_or_pde, i, basis)
-        weights isa AbstractVector ||
-            throw(ArgumentError("RBF-FD PDE assembly expects scalar operator values"))
-        for (j, global_idx) in enumerate(basis.stencil_indices[i])
-            push!(rows, i)
-            push!(cols, global_idx)
-            push!(vals, weights[j])
-        end
-    end
-
-    return sparse(rows, cols, vals, n_inner, n_total)
+# For `RBFFDBasis` the cardinal functions are always used, so
+# `pde_matrix` and `differentiation_matrix` coincide. See the generic
+# [`differentiation_matrix`](@ref) for the meaning shared with the other bases.
+function differentiation_matrix(diff_op_or_pde, basis::RBFFDBasis,
+                                nodeset::NodeSet = centers(basis))
+    return pde_matrix(diff_op_or_pde, nodeset, basis)
 end
 
-# Boundary selection matrix for Dirichlet conditions. The unknowns are the nodal values
-# ordered as `merge(nodeset_inner, nodeset_boundary)`, so the boundary block is the exact
-# identity selecting the boundary unknowns.
-function _rbf_fd_boundary_selection(nodeset_inner::NodeSet, nodeset_boundary::NodeSet)
-    n_inner = length(nodeset_inner)
-    n_boundary = length(nodeset_boundary)
-    n_total = n_inner + n_boundary
-
-    rows = collect(1:n_boundary)
-    cols = collect((n_inner + 1):n_total)
-    vals = fill(one(eltype(nodeset_inner)), n_boundary)
-
-    return sparse(rows, cols, vals, n_boundary, n_total)
-end
-
-@doc raw"""
-    pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis::RBFFDBasis)
-
-Assemble the full sparse RBF-FD PDE + boundary matrix
-```math
-    A = \begin{pmatrix}L\\B\end{pmatrix},
-```
-where ``L`` is the RBF-FD operator matrix on the inner nodes ([`pde_matrix`](@ref)) and
-``B`` enforces the Dirichlet constraints by selecting the boundary nodal values. The
-unknowns are ordered as `merge(nodeset_inner, nodeset_boundary)`.
-
-See also [`pde_matrix`](@ref) and [`operator_matrix`](@ref).
-"""
-function pde_boundary_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
-                             nodeset_boundary::NodeSet, basis::RBFFDBasis)
-    L = pde_matrix(diff_op_or_pde, nodeset_inner, basis)
-    B = _rbf_fd_boundary_selection(nodeset_inner, nodeset_boundary)
-    return [L
-            B]
-end
-
-# RBF-FD handles polynomial augmentation locally via the stencils, so no global polynomial
-# blocks are added. This method only exists so callers can pass `ps` uniformly; it must be
-# empty.
-function pde_boundary_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
-                             nodeset_boundary::NodeSet, basis::RBFFDBasis, ps)
-    @assert isempty(ps) "RBF-FD augments polynomials per stencil; pass an empty `ps`."
-    return pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
-end
-
-# For an `RBFFDBasis` the local stencil weights already are the operator matrix in
-# nodal-value space, so the system operator matrix is just the PDE + boundary matrix (no
-# division by a kernel matrix as in the collocation case).
+# `pde_boundary_matrix` for `RBFFDBasis` falls through to the generic `AbstractBasis` method
+# in `kernel_matrices.jl`: `[pde_matrix(op, ni, basis); kernel_matrix(basis, nb)]`.
+#
+# `operator_matrix` is specialized to avoid the spurious `A_L / A` division in the generic
+# `AbstractBasis` path (which would also incorrectly try to add global polynomial rows via
+# `order(basis) > 0`, whereas RBF-FD polynomial augmentation is local per stencil).
 function operator_matrix(diff_op_or_pde, nodeset_inner::NodeSet,
                          nodeset_boundary::NodeSet, basis::RBFFDBasis)
     return pde_boundary_matrix(diff_op_or_pde, nodeset_inner, nodeset_boundary, basis)
