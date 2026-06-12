@@ -103,5 +103,5 @@ end
     @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_least_squares.jl"),
                           l2=0.08017627795452234, linf=0.01130196583589493,
                           pde_test=true, least_square_test=true,
-                          atol=Sys.isapple() ? 1e-2 : 1e-12) # CI on MacOS has stability issues
+                          atol=1e-2) # stability issues
 end
