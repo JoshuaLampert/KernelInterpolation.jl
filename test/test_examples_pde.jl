@@ -98,3 +98,9 @@ end
                           l2=0.31009752227745246, linf=0.03589356269155414,
                           pde_test=true)
 end
+
+@testitem "rbf_fd_poisson_2d_least_squares.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_least_squares.jl"),
+                          l2=0.08017627795452234, linf=0.01130196583589493,
+                          pde_test=true, least_square_test=true)
+end

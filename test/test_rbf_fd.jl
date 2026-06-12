@@ -326,3 +326,66 @@ end
         end
     end
 end
+
+@testitem "RBF-FD: least-squares differentiation_matrix" setup=[
+    Setup,
+    AdditionalImports
+] begin
+    # 1D: more evaluation nodes Y than basis centers X → overdetermined, rectangular matrix.
+    X = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
+    Y = NodeSet(LinRange(0.0, 1.0, 15))
+    kernel = GaussKernel{1}(shape_parameter = 1.0)
+    stencil = KNearestNeighbors(3)
+
+    basis = RBFFDBasis(X, kernel, stencil; m = 0)
+    D = differentiation_matrix(PartialDerivative(1), basis, Y)
+
+    # Size is (|Y|, |X|): rectangular and overdetermined.
+    @test size(D) == (length(Y), length(X))
+
+    # Each row j uses the stencil of the nearest center in X to Y[j].
+    for j in eachindex(Y)
+        y_j = Y[j]
+        i = nearest_node_index(y_j, X)
+        neigh = select_neighbors(X[i], X, stencil)
+        local_basis_j = LagrangeBasis(neigh.nodes, kernel; m = 0)
+        nz_cols = findall(!iszero, D[j, :])
+        @test Set(nz_cols) == Set(neigh.indices)
+        for (k, global_idx) in enumerate(neigh.indices)
+            @test D[j, global_idx] ≈ PartialDerivative(1)(local_basis_j[k], y_j)
+        end
+    end
+
+    # With m=2 ({1, x} in 1D): D * p.(X) = p'.(Y) exactly for polynomials of degree ≤ 1.
+    basis_m2 = RBFFDBasis(X, kernel, stencil; m = 2)
+    D_m2 = differentiation_matrix(PartialDerivative(1), basis_m2, Y)
+    @test size(D_m2) == (length(Y), length(X))
+    x_vals = first.(X)
+    @test isapprox(D_m2 * ones(length(X)), zeros(length(Y)), atol = 1e-12)
+    @test isapprox(D_m2 * x_vals, ones(length(Y)), atol = 1e-12)
+
+    # With m=3 ({1, x, x²} in 1D): Laplacian * p.(X) = p''.(Y) for degree ≤ 2.
+    basis_m3 = RBFFDBasis(X, kernel, stencil; m = 3)
+    Lap = differentiation_matrix(Laplacian(), basis_m3, Y)
+    @test size(Lap) == (length(Y), length(X))
+    @test isapprox(Lap * x_vals, zeros(length(Y)), atol = 1e-11)
+    @test isapprox(Lap * x_vals .^ 2, 2 * ones(length(Y)), atol = 1e-11)
+
+    # 2D: same rectangular structure and exactness on linear functions with m=2.
+    nodes_2d = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    eval_2d = homogeneous_hypercube(6, (0.0, 0.0), (1.0, 1.0))
+    kernel_2d = PolyharmonicSplineKernel{2}(3)
+    basis_2d = RBFFDBasis(nodes_2d, kernel_2d, KNearestNeighbors(6))
+    D1_2d = differentiation_matrix(PartialDerivative(1), basis_2d, eval_2d)
+    D2_2d = differentiation_matrix(PartialDerivative(2), basis_2d, eval_2d)
+
+    @test size(D1_2d) == (length(eval_2d), length(nodes_2d))
+
+    x1_at_X = first.(nodes_2d)
+    x2_at_X = last.(nodes_2d)
+    @test isapprox(D1_2d * ones(length(nodes_2d)), zeros(length(eval_2d)), atol = 1e-12)
+    @test isapprox(D1_2d * x1_at_X, ones(length(eval_2d)), atol = 1e-12)
+    @test isapprox(D1_2d * x2_at_X, zeros(length(eval_2d)), atol = 1e-12)
+    @test isapprox(D2_2d * x1_at_X, zeros(length(eval_2d)), atol = 1e-12)
+    @test isapprox(D2_2d * x2_at_X, ones(length(eval_2d)), atol = 1e-12)
+end
