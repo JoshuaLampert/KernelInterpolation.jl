@@ -105,3 +105,9 @@ end
                           pde_test=true, least_square_test=true,
                           atol=1e-2) # stability issues
 end
+
+@testitem "rbf_fd_advection_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_advection_2d_basic.jl"),
+                          l2=0.24636308857403452, linf=0.050945760748381974,
+                          pde_test=true)
+end
