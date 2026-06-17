@@ -80,6 +80,7 @@ jobs:
           parallel: true
           file: ./lcov.info
           format: lcov
+          debug: true
 
   finish:
     needs: test
