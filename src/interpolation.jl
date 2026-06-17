@@ -290,14 +290,14 @@ function (itp::RBFFDInterpolation)(x, j::Integer)
     return s
 end
 
-function (itp::RBFFDInterpolation)(x::Real, j::Integer)
+function (itp::RBFFDInterpolation)(x::RealT, j::Integer) where {RealT <: Real}
     @assert dim(itp) == 1
     return itp([x], j)
 end
 
 # Default 1-arg evaluation: use the stencil of the nearest center
-function (itp::RBFFDInterpolation)(x)
-    return itp(x, nearest_node_index(x, centers(itp)))
+function (itp::RBFFDInterpolation)(x::RealT) where {RealT <: Real}
+    return itp(x, nearest_node_index([x], centers(itp)))
 end
 
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation, x)

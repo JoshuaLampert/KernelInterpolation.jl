@@ -55,6 +55,9 @@ end
 
     itp = solve_stationary(disc)
     @test itp isa Interpolation
+    x = 0.999
+    j = KernelInterpolation.nearest_node_index([x], centers(itp))
+    @test itp(x) == itp(x, j)
 end
 
 @testitem "RBF-FD: semidiscretization setup" setup=[Setup, AdditionalImports] begin
@@ -214,6 +217,8 @@ end
     stencil = KNearestNeighbors(3)
 
     basis = RBFFDBasis(nodeset, kernel, stencil; m = 0)
+    @test_nowarn display(basis)
+    @test order(basis) == 0
     neigh = select_neighbors(3, nodeset, stencil)
 
     # local_funcs always holds Lagrange cardinal functions

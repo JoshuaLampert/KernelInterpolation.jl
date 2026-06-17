@@ -11,7 +11,6 @@ abstract type AbstractRBFFDLocalBasis end
 Compute local RBF-FD weights by solving the local kernel (or kernel+polynomial) system.
 """
 struct RBFFDStandardBasis <: AbstractRBFFDLocalBasis end
-Base.show(io::IO, ::RBFFDStandardBasis) = print(io, "RBFFDStandardBasis")
 
 """
     RBFFDLagrangeBasis()
@@ -20,7 +19,6 @@ Compute local RBF-FD weights from local cardinal (Lagrange) basis functions
 on each stencil, i.e., `w_j = 𝓛 ℓ_j(x_i)`.
 """
 struct RBFFDLagrangeBasis <: AbstractRBFFDLocalBasis end
-Base.show(io::IO, ::RBFFDLagrangeBasis) = print(io, "RBFFDLagrangeBasis")
 
 """
     RBFFDBasis(nodeset, kernel, stencil_selection;
