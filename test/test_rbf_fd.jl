@@ -3,10 +3,12 @@
     kernel = GaussKernel{1}(shape_parameter = 1.0)
 
     knn = KNearestNeighbors(3)
+    @test_nowarn display(knn)
     neigh = select_neighbors(3, nodeset, knn)
     @test length(neigh.indices) == 3
 
     rad = RadiusSearch(0.3)
+    @test_nowarn display(rad)
     neigh_rad = select_neighbors(3, nodeset, rad)
     @test length(neigh_rad.indices) ≥ 2
 
@@ -212,13 +214,13 @@ end
     stencil = KNearestNeighbors(3)
 
     basis = RBFFDBasis(nodeset, kernel, stencil; m = 0)
-    neigh = select_neighbors(nodeset[3], nodeset, stencil)
+    neigh = select_neighbors(3, nodeset, stencil)
 
     # local_funcs always holds Lagrange cardinal functions
     b = basis[3, 2]
     @test b(neigh.nodes[2])≈1.0 atol=1.0e-10
-    @test abs(b(neigh.nodes[1])) ≤ 1.0e-8
-    @test abs(b(neigh.nodes[3])) ≤ 1.0e-8
+    @test abs(b(neigh.nodes[1])) ≤ 1.0e-12
+    @test abs(b(neigh.nodes[3])) ≤ 1.0e-12
 
     @test_throws BoundsError basis[0, 1]
     @test_throws BoundsError basis[3, 0]
@@ -240,7 +242,7 @@ end
     for j in eachindex(Y)
         y_j = Y[j]
         i = nearest_node_index(y_j, X)
-        neigh = select_neighbors(X[i], X, stencil)
+        neigh = select_neighbors(i, X, stencil)
         local_basis = LagrangeBasis(neigh.nodes, kernel; m = 0)
         stored_cols = nz_cols[nz_rows .== j]
         @test Set(stored_cols) == Set(neigh.indices)
@@ -264,7 +266,7 @@ end
     for j in eachindex(Y)
         y_j = Y[j]
         i = nearest_node_index(y_j, X)
-        neigh = select_neighbors(X[i], X, stencil)
+        neigh = select_neighbors(i, X, stencil)
         local_basis = LagrangeBasis(neigh.nodes, kernel; m = 0)
         nz_cols = findall(!iszero, L[j, :])
         @test Set(nz_cols) == Set(neigh.indices)
@@ -280,7 +282,7 @@ end
     for j in eachindex(Y)
         y_j = Y[j]
         i = nearest_node_index(y_j, X)
-        neigh = select_neighbors(X[i], X, stencil)
+        neigh = select_neighbors(i, X, stencil)
         local_basis_j = LagrangeBasis(neigh.nodes, kernel; m = 0)
         for (k, global_idx) in enumerate(neigh.indices)
             @test D1_1d[j, global_idx] ≈ PartialDerivative(1)(local_basis_j[k], y_j)
@@ -347,7 +349,7 @@ end
     for j in eachindex(Y)
         y_j = Y[j]
         i = nearest_node_index(y_j, X)
-        neigh = select_neighbors(X[i], X, stencil)
+        neigh = select_neighbors(i, X, stencil)
         local_basis_j = LagrangeBasis(neigh.nodes, kernel; m = 0)
         nz_cols = findall(!iszero, D[j, :])
         @test Set(nz_cols) == Set(neigh.indices)

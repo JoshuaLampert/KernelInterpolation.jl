@@ -85,28 +85,3 @@ function select_neighbors(i::Int, nodeset::NodeSet, stencil::RadiusSearch)
     neighbor_nodes = NodeSet(nodeset.nodes[neighbor_indices])
     return (indices = neighbor_indices, nodes = neighbor_nodes)
 end
-
-function select_neighbors(x_i::AbstractVector, nodeset::NodeSet,
-                          stencil::KNearestNeighbors)
-    distances = [norm(x_i .- nodeset[j]) for j in eachindex(nodeset)]
-    k = stencil.k
-    k ≤ length(nodeset) ||
-        throw(ArgumentError("k=$(k) exceeds nodeset size $(length(nodeset))"))
-    neighbor_indices = sortperm(distances)[1:k]
-    neighbor_nodes = NodeSet(nodeset.nodes[neighbor_indices])
-    return (indices = neighbor_indices, nodes = neighbor_nodes)
-end
-
-function select_neighbors(x_i::AbstractVector, nodeset::NodeSet,
-                          stencil::RadiusSearch)
-    neighbor_indices = Int[]
-    for j in eachindex(nodeset)
-        if norm(x_i .- nodeset[j]) <= stencil.radius
-            push!(neighbor_indices, j)
-        end
-    end
-    isempty(neighbor_indices) &&
-        throw(ArgumentError("No neighbors found within radius $(stencil.radius)"))
-    neighbor_nodes = NodeSet(nodeset.nodes[neighbor_indices])
-    return (indices = neighbor_indices, nodes = neighbor_nodes)
-end
