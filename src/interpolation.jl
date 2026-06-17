@@ -296,8 +296,14 @@ function (itp::RBFFDInterpolation)(x::RealT, j::Integer) where {RealT <: Real}
 end
 
 # Default 1-arg evaluation: use the stencil of the nearest center
+function (itp::RBFFDInterpolation)(x)
+    return itp(x, nearest_node_index(x, centers(itp)))
+end
+
+# To fix a method ambiguity
 function (itp::RBFFDInterpolation)(x::RealT) where {RealT <: Real}
-    return itp(x, nearest_node_index([x], centers(itp)))
+    @assert dim(itp) == 1
+    return itp([x])
 end
 
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation, x)
