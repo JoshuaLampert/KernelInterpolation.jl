@@ -99,6 +99,13 @@ end
                           pde_test=true)
 end
 
+@testitem "rbf_fd_poisson_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
+                          stencil_selection=RadiusSearch(0.3),
+                          l2=0.2631144635952774, linf=0.03741207775337395,
+                          pde_test=true)
+end
+
 @testitem "rbf_fd_poisson_2d_least_squares.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_least_squares.jl"),
                           l2=0.08017627795452234, linf=0.01130196583589493,
