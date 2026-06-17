@@ -92,14 +92,22 @@ end
 end
 
 # (almost) same values as for the `RBFFDLagrangeBasis`
-@testitem "rbf_fd_poisson_2d_basic.jl with RBFFDStandardBasis" setup=[Setup, AdditionalImports, PDEExamples] begin
+@testitem "rbf_fd_poisson_2d_basic.jl with RBFFDStandardBasis" setup=[
+    Setup,
+    AdditionalImports,
+    PDEExamples
+] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
                           local_basis=RBFFDStandardBasis(),
                           l2=0.31009752227745246, linf=0.03589356269155414,
                           pde_test=true)
 end
 
-@testitem "rbf_fd_poisson_2d_basic.jl with RadiusSearch" setup=[Setup, AdditionalImports, PDEExamples] begin
+@testitem "rbf_fd_poisson_2d_basic.jl with RadiusSearch" setup=[
+    Setup,
+    AdditionalImports,
+    PDEExamples
+] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
                           stencil_selection=RadiusSearch(0.3),
                           l2=0.2631144635952774, linf=0.03741207775337395,
