@@ -191,6 +191,8 @@ in `nodeset1` and ``\xi_j`` are the nodes in `nodeset2`. If a `basis` is given, 
     (\tilde A_\mathcal{L})_{ij} = \mathcal{L}b_j(x_i),
 ```
 where ``b_j`` are the basis functions in the `basis` and ``x_i`` are the nodes in `nodeset`.
+
+See also [`differentiation_matrix`](@ref), [`pde_boundary_matrix`](@ref).
 """
 function pde_matrix(diff_op_or_pde, nodeset1, nodeset2, kernel)
     n = length(nodeset1)

@@ -29,7 +29,7 @@ const LagrangeInterpolation = Interpolation{<:LagrangeBasis}
 @doc raw"""
     RBFFDInterpolation
 
-Type alias for `[Interpolation](@ref){<:RBFFDBasis}`.
+Type alias for [`Interpolation{<:RBFFDBasis}`](@ref).
 
 The coefficient vector `c` holds **nodal values** ``u(x_i)`` for all nodes
 ``x_1,\ldots,x_N`` (inner nodes first, then boundary nodes), ordered consistently
@@ -41,7 +41,7 @@ Evaluation at a point `x` uses the local stencil ``S(j)`` of the nearest center
 u_h(x) = \sum_{k \in S(j)} c_k \, w_k(x;\, S(j)),
 ```
 where ``w_k(x)`` are the local cardinal weights mapping the nodal values to the value of
-the local interpolant at `x` (i.e. `[local_weights](@ref)(basis, j, x, Identity())`). This formula
+the local interpolant at `x` (i.e. [`local_weights(@ref)(basis, j, x, Identity())`]). This formula
 holds regardless of the weight computation algorithm: for [`RBFFDLagrangeBasis`](@ref) the
 ``w_k(x) = \ell_k(x)`` are the precomputed cardinal functions, while for
 [`RBFFDStandardBasis`](@ref) they are obtained by solving the cached local system with the
@@ -465,7 +465,7 @@ end
     MultiscaleInterpolation
 
 Container for a multiscale interpolation composed of several single-scale
-`Interpolation` objects. Evaluation is the sum of the evaluations of the
+[`Interpolation`](@ref) objects. Evaluation is the sum of the evaluations of the
 individual scales.
 
 See also [`multiscale_interpolate`](@ref).
