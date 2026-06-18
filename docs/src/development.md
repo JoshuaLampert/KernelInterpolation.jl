@@ -51,3 +51,25 @@ The resulting `.html` files can then be found in `docs/build/` and you can look 
 For pull requests from the main repository (i.e. not from a fork), the documentation is automatically built and can
 be previewed under `https://joshualampert.github.io/KernelInterpolation.jl/previews/PRXXX/` where `XXX` is the number
 of the pull request.
+
+## Automated source code formatting
+
+To format the code, KernelInterpolation.jl uses the [SciML style](https://juliaeditorsupport.github.io/JuliaFormatter.jl/stable/sciml_style/) of [JuliaFormatter.jl](https://github.com/JuliaEditorSupport/JuliaFormatter.jl).
+For more details you can have a look at the current [.JuliaFormatter.toml](https://github.com/JoshuaLampert/KernelInterpolation.jl/blob/main/.JuliaFormatter.toml)
+file that holds the configuration options we use for JuliaFormatter.jl.
+
+Note that we expect all contributions to KernelInterpolation.jl to be formatted with JuliaFormatter.jl before being
+merged to the main branch. We ensure this by running an automated check on all PRs that verify that running JuliaFormatter.jl
+again will not change the source code.
+
+We currently use v1.0.62 of JuliaFormatter.jl, which can be installed by running
+
+```sh
+julia -e 'using Pkg; Pkg.add(PackageSpec(name = "JuliaFormatter", version="1.0.62")); Pkg.pin("JuliaFormatter")'
+```
+
+You can then recursively format the core Julia files in the KernelInterpolation.jl repo by executing
+
+```sh
+julia -e 'using JuliaFormatter; format(".")'
+```
