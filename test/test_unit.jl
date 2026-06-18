@@ -1426,6 +1426,22 @@ end
     L_kernel = operator_matrix(pde, nodeset_inner, nodeset_boundary, kernel)
     L_basis = operator_matrix(pde, nodeset_inner, nodeset_boundary, standard_basis)
     @test L_kernel ≈ L_basis
+
+    # Polynomial-augmented operator matrix (`m > 0`) reproduces the operator exactly on
+    # polynomials of degree < m: the inner rows apply the PDE operator (here -Δ) and the
+    # boundary rows act as the identity. With `m = 3` (degrees 0..2), the kernel +
+    # polynomial interpolant is exact for `u = x₁² + x₂²`, whose `-Δu = -4`.
+    poly_u(x) = x[1]^2 + x[2]^2
+    all_nodes = merge(nodeset_inner, nodeset_boundary)
+    u_vals = poly_u.(all_nodes)
+    L_poly = operator_matrix(pde, nodeset_inner, nodeset_boundary, standard_basis; m = 3)
+    @test size(L_poly) == (8, 8)
+    n_inner = length(nodeset_inner)
+    Lu = L_poly * u_vals
+    @test isapprox(Lu[1:n_inner], fill(-4.0, n_inner), atol = 1e-10)
+    @test isapprox(Lu[(n_inner + 1):end], poly_u.(nodeset_boundary), atol = 1e-12)
+    # The kernel convenience form agrees with the basis form.
+    @test operator_matrix(pde, nodeset_inner, nodeset_boundary, kernel; m = 3) ≈ L_poly
 end
 
 @testitem "differentiation_matrix" setup=[Setup, AdditionalImports] begin
