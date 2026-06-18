@@ -917,6 +917,9 @@ end
 end
 
 @testitem "Differential operators" setup=[Setup, AdditionalImports] begin
+    id = @test_nowarn Identity()
+    @test_nowarn println(id)
+    @test_nowarn display(id)
     l = @test_nowarn Laplacian()
     @test_nowarn println(l)
     @test_nowarn display(l)
@@ -972,6 +975,7 @@ end
     el_l = EllipticOperator(x -> I, zero, x -> 0) # Laplacian with general elliptic operator
 
     x1 = [0.4, 0.6]
+    @test isapprox(id(kernel, x1), kernel(x1))
     @test isapprox(l(kernel, x1), AnalyticalLaplacian()(kernel, x1))
     @test isapprox(g(kernel, x1), [-0.17561908618411226, -0.2634286292761684])
     @test isapprox(d1(kernel, x1), -0.17561908618411226)
