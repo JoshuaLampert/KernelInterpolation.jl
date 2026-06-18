@@ -82,8 +82,7 @@ export interpolation_kernel, nodeset, centers, coefficients, kernel_coefficients
        interpolate, solve_stationary, kernel_inner_product, kernel_norm,
        kernel_matrix, operator_matrix, differentiation_matrix, pde_boundary_matrix,
        nearest_node_index
-export rbf_fd_weights, rbf_fd_weights_at_node, rbf_fd_weights_all_nodes,
-       select_neighbors
+export select_neighbors, rbf_fd_weights
 export Interpolation, TemporalInterpolation
 export MultiscaleInterpolation, multiscale_interpolate
 export AliveCallback, SaveSolutionCallback, SummaryCallback
