@@ -1,24 +1,38 @@
 abstract type AbstractDifferentialOperator end
 
-function (D::AbstractDifferentialOperator)(kernel::RadialSymmetricKernel, x, y)
-    @assert length(x) == length(y) == dim(kernel)
-    return save_call(D, kernel, x .- y)
-end
-
 function (D::AbstractDifferentialOperator)(kernel::RadialSymmetricKernel)
     return x -> D(kernel, x)
 end
 
-# Workaround to avoid evaluating the derivative at zeros to allow automatic differentiation,
-# see https://github.com/JuliaDiff/ForwardDiff.jl/issues/303
-# the same issue appears with Zygote.jl
-function save_call(D::AbstractDifferentialOperator, kernel::RadialSymmetricKernel, x)
-    if all(iszero, x)
-        x[1] = eps(typeof(x[1]))
-    end
-    # x .+= eps(typeof(x[1]))
-    return D(kernel, x)
+# Convert a kernel or polynomial to a plain Julia function, so that operators/equations
+# can be defined once for `Function` and applied to either.
+callable(kernel::RadialSymmetricKernel) = x -> Phi(kernel, x)
+function callable(p::AbstractPolynomialLike)
+    xx = variables(p)
+    return y -> p(xx => y)
 end
+
+"""
+    Identity()
+
+The identity operator, i.e. the differential operator of order zero. Applied to a function
+it returns its value, and like the other operators it can be called with a
+[`RadialSymmetricKernel`](@ref) and points `x` and `y` to evaluate the `kernel` at `x - y`,
+or with an [`Interpolation`](@ref) object and a point `x` to evaluate the interpolation at
+`x`. This lets plain evaluation reuse the same interface as the differential operators (for
+example in the RBF-FD weight computation, see [`local_weights`](@ref)).
+"""
+struct Identity <: AbstractDifferentialOperator end
+
+function Base.show(io::IO, ::Identity)
+    print(io, "Id")
+    return nothing
+end
+
+(::Identity)(f::Function, x) = f(x)
+# Evaluate the kernel directly (no derivative, so no `save_call` zero-guard is needed). This
+# is more specific than the generic `(op)(kernel, x, y)` in `equations.jl`, hence unambiguous.
+(::Identity)(kernel::RadialSymmetricKernel, x, y) = kernel(x, y)
 
 """
     PartialDerivative(i)
@@ -27,8 +41,7 @@ Partial derivative operator with respect to the `i`-th component.
 The operator can be called with a [`RadialSymmetricKernel`](@ref) and points
 `x` and `y` to evaluate the derivative of the `kernel` at `x - y`.
 It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
-the first partial derivative of the interpolation at `x` in the `i`-th direction. Note that this
-is only supported for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
+the first partial derivative of the interpolation at `x` in the `i`-th direction.
 """
 struct PartialDerivative <: AbstractDifferentialOperator
     i::Int
@@ -39,8 +52,8 @@ function Base.show(io::IO, operator::PartialDerivative)
     return nothing
 end
 
-function (operator::PartialDerivative)(kernel::RadialSymmetricKernel, x)
-    return ForwardDiff.gradient(x -> Phi(kernel, x), x)[operator.i]
+function (operator::PartialDerivative)(f::Function, x)
+    return ForwardDiff.gradient(f, x)[operator.i]
 end
 
 """
@@ -49,8 +62,7 @@ end
 The gradient operator. It can be called with a [`RadialSymmetricKernel`](@ref) and points
 `x` and `y` to evaluate the gradient of the `kernel` at `x - y`.
 It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
-the gradient of the interpolation at `x`. Note that this is only supported
-for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
+the gradient of the interpolation at `x`.
 """
 struct Gradient <: AbstractDifferentialOperator
 end
@@ -60,8 +72,8 @@ function Base.show(io::IO, ::Gradient)
     return nothing
 end
 
-function (::Gradient)(kernel::RadialSymmetricKernel, x)
-    return ForwardDiff.gradient(x -> Phi(kernel, x), x)
+function (::Gradient)(f::Function, x)
+    return ForwardDiff.gradient(f, x)
 end
 
 """
@@ -70,8 +82,7 @@ end
 The Laplacian operator. It can be called with a [`RadialSymmetricKernel`](@ref) and points
 `x` and `y` to evaluate the Laplacian of the `kernel` at `x - y`.
 It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
-the Laplacian of the interpolation at `x`. Note that this is only supported
-for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
+the Laplacian of the interpolation at `x`.
 """
 struct Laplacian <: AbstractDifferentialOperator
 end
@@ -81,9 +92,8 @@ function Base.show(io::IO, ::Laplacian)
     return nothing
 end
 
-function (::Laplacian)(kernel::RadialSymmetricKernel, x)
-    H = ForwardDiff.hessian(x -> Phi(kernel, x), x)
-    return tr(H)
+function (::Laplacian)(f::Function, x)
+    return tr(ForwardDiff.hessian(f, x))
 end
 
 @doc raw"""
@@ -100,8 +110,7 @@ respectively. The matrix `A` should be symmetric and positive definite for any i
 The operator can be called with a [`RadialSymmetricKernel`](@ref) and points `x` and `y` to
 evaluate the operator of the `kernel` at `x - y`.
 It can also be called with an [`Interpolation`](@ref) object and a point `x` to evaluate
-the elliptic operator of the interpolation at `x`. Note that this is only supported
-for the kernel part of the interpolation, i.e. the polynomial part, if existent, is ignored.
+the elliptic operator of the interpolation at `x`.
 """
 struct EllipticOperator{AType, BType, CType} <:
        AbstractDifferentialOperator where {AType, BType, CType}
@@ -115,15 +124,14 @@ function Base.show(io::IO, ::EllipticOperator)
     return nothing
 end
 
-function (operator::EllipticOperator)(kernel::RadialSymmetricKernel, x)
+function (operator::EllipticOperator)(f::Function, x)
     @unpack A, b, c = operator
     AA = A(x)
     bb = b(x)
     cc = c(x)
-    H = ForwardDiff.hessian(x -> Phi(kernel, x), x)
-    gr = ForwardDiff.gradient(x -> Phi(kernel, x), x)
-
-    return sum(-AA[i, j] * H[i, j] for i in 1:dim(kernel), j in 1:dim(kernel)) +
-           sum(bb[i] * gr[i] for i in 1:dim(kernel)) +
-           cc * Phi(kernel, x)
+    H = ForwardDiff.hessian(f, x)
+    gr = ForwardDiff.gradient(f, x)
+    return sum(-AA[i, j] * H[i, j] for i in eachindex(gr), j in eachindex(gr)) +
+           sum(bb[i] * gr[i] for i in eachindex(gr)) +
+           cc * f(x)
 end

@@ -76,7 +76,7 @@ Base.getindex(basis::StandardBasis, i) = x -> basis.kernel(x, centers(basis)[i])
     LagrangeBasis(centers, kernel, m = order(kernel))
 
 The Lagrange (or cardinal) basis with respect to a kernel and a [`NodeSet`](@ref) of `centers`. This basis
-already includes polynomial augmentation of degree `m` defaulting to `order(kernel)`. The basis functions are given such that
+already includes polynomial augmentation of order `m` defaulting to `order(kernel)`. The basis functions are given such that
 
 ```math
     b_j(x_i) = \delta_{ij},
@@ -86,13 +86,10 @@ which means that the [`kernel_matrix`](@ref) of this basis is the identity matri
 with the same `centers` of the basis and the same `kernel`, but with different right-hand sides or nodesets are performed.
 Since the basis already includes polynomials no additional polynomial augmentation is needed for interpolation with this basis.
 """
-struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation, Monomials, PolyVars} <:
-       AbstractBasis
+struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation} <: AbstractBasis
     centers::NodeSet{Dim, RealT}
     kernel::Kernel
     basis_functions::Vector{I}
-    ps::Monomials
-    xx::PolyVars
     function LagrangeBasis(centers::NodeSet{Dim, RealT},
                            kernel::Kernel;
                            m::Integer = order(kernel)) where {Dim, RealT,
@@ -113,11 +110,11 @@ struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation, Monomials, 
             values[i] = one(RealT)
             basis_functions[i] = interpolate(std_basis, values; m = m)
         end
-        # All basis functions have same polynomials
-        ps = first(basis_functions).ps
-        xx = first(basis_functions).xx
-        return new{dim(centers), eltype(centers), typeof(kernel), eltype(basis_functions),
-                   typeof(ps), typeof(xx)}(centers, kernel, basis_functions, ps, xx)
+        # The polynomials are baked into the cardinal functions (each is an `Interpolation`
+        # carrying its own polynomial basis), so no separate basis-level polynomials are
+        # stored; cf. `polynomial_basis(basis_functions[i])`.
+        return new{dim(centers), eltype(centers), typeof(kernel),
+                   eltype(basis_functions)}(centers, kernel, basis_functions)
     end
 end
 

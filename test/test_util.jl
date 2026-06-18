@@ -31,7 +31,7 @@ macro test_include_example(example, args...)
             push!(kwargs, Pair(arg.args...))
         end
     end
-    quote
+    return quote
         println("═"^100)
         println($example)
 

@@ -28,7 +28,7 @@ makedocs(;
              "Guide" => [
                  "Sets of nodes" => "nodesets.md",
                  "Interpolation" => "interpolation.md",
-                 "Solving PDEs by collocation" => "pdes.md"],
+                 "Solving PDEs by collocation or RBF-FD" => "pdes.md"],
              "Tutorials" => [
                  "1D interpolation and differentiation" => "tutorial_differentiating_interpolation.md",
                  "Dealing with noisy data" => "tutorial_noisy_data.md"],

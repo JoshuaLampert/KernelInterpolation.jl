@@ -24,6 +24,31 @@ struct Interpolation{Basis, Dim, RealT, A, Monomials, PolyVars} <:
     xx::PolyVars
 end
 
+const LagrangeInterpolation = Interpolation{<:LagrangeBasis}
+
+@doc raw"""
+    RBFFDInterpolation
+
+Type alias for `Interpolation{<:RBFFDBasis}`.
+
+The coefficient vector `c` holds **nodal values** ``u(x_i)`` for all nodes
+``x_1,\ldots,x_N`` (inner nodes first, then boundary nodes), ordered consistently
+with `merge(nodeset_inner, nodeset_boundary)`.
+
+Evaluation at a point `x` uses the local stencil ``S(j)`` of the nearest center
+``x_j``:
+```math
+u_h(x) = \sum_{k \in S(j)} c_k \, w_k(x;\, S(j)),
+```
+where ``w_k(x)`` are the local cardinal weights mapping the nodal values to the value of
+the local interpolant at `x` (i.e. `local_weights(basis, j, x, Identity())`). This formula
+holds regardless of the weight computation algorithm: for `RBFFDLagrangeBasis` the
+``w_k(x) = \ell_k(x)`` are the precomputed cardinal functions, while for
+`RBFFDStandardBasis` they are obtained by solving the cached local system with the
+evaluation right-hand side. Both give the same ``w_k`` mathematically.
+"""
+const RBFFDInterpolation = Interpolation{<:RBFFDBasis}
+
 function Base.show(io::IO, itp::Interpolation)
     return print(io,
                  "Interpolation with $(length(nodeset(itp))) nodes, kernel $(interpolation_kernel(itp)) and polynomial of order $(order(itp)).")
@@ -250,6 +275,35 @@ function (itp::Interpolation)(x::RealT) where {RealT <: Real}
     return itp([x])
 end
 
+# RBF-FD evaluation: use the local stencil at center j
+function (itp::RBFFDInterpolation)(x, j::Integer)
+    bas = basis(itp)
+    c = coefficients(itp)
+    indices = bas.stencil_indices[j]
+    w = local_weights(bas, j, x, Identity())
+    s = zero(eltype(c))
+    for k in eachindex(indices)
+        s += c[indices[k]] * w[k]
+    end
+    return s
+end
+
+function (itp::RBFFDInterpolation)(x::RealT, j::Integer) where {RealT <: Real}
+    @assert dim(itp) == 1
+    return itp([x], j)
+end
+
+# Default 1-arg evaluation: use the stencil of the nearest center
+function (itp::RBFFDInterpolation)(x)
+    return itp(x, nearest_node_index(x, centers(itp)))
+end
+
+# To fix a method ambiguity
+function (itp::RBFFDInterpolation)(x::RealT) where {RealT <: Real}
+    @assert dim(itp) == 1
+    return itp([x])
+end
+
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation, x)
     kernel = interpolation_kernel(itp)
     xis = centers(itp)
@@ -257,12 +311,16 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation,
     for j in eachindex(c)
         s += c[j] * diff_op_or_pde(kernel, x, xis[j])
     end
+
+    d = polynomial_coefficients(itp)
+    ps = polynomial_basis(itp)
+    for k in eachindex(d)
+        s += d[k] * diff_op_or_pde(ps[k], x)
+    end
     return s
 end
 
-function (diff_op_or_pde::DifferentialOperatorOrEquation)(s,
-                                                          itp::Interpolation{<:LagrangeBasis},
-                                                          x)
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::LagrangeInterpolation, x)
     c = kernel_coefficients(itp)
     bas = basis(itp)
     for j in eachindex(c)
@@ -271,20 +329,49 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(s,
     return s
 end
 
-function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation, x)
-    return diff_op_or_pde(zero(eltype(x)), itp, x)
+# RBF-FD: the coefficients are nodal values and the local interpolant on the stencil of the
+# nearest center represents the solution (see the evaluation above). Applying the operator
+# therefore reduces to the local weights `local_weights(basis, j, x, op)` for that operator,
+# dotted with the stencil's nodal values, not to a global kernel expansion.
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::RBFFDInterpolation, x, j)
+    bas = basis(itp)
+    c = coefficients(itp)
+    indices = bas.stencil_indices[j]
+    w = local_weights(bas, j, x, diff_op_or_pde)
+    if w isa AbstractVector
+        for k in eachindex(indices)
+            s += c[indices[k]] * w[k]
+        end
+    else
+        for k in eachindex(indices)
+            s = s .+ c[indices[k]] .* @view(w[k, :])
+        end
+    end
+    return s
 end
 
-function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation)
-    return x -> diff_op_or_pde(itp, x)
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::RBFFDInterpolation, x)
+    return diff_op_or_pde(s, itp, x, nearest_node_index(x, centers(itp)))
+end
+
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation, x)
+    return diff_op_or_pde(zero(eltype(x)), itp, x)
 end
 
 function (g::Gradient)(itp::Interpolation, x)
     return g(zero(x), itp, x)
 end
 
-function (g::Gradient)(itp::Interpolation{<:LagrangeBasis}, x)
-    return g(zero(x), itp, x)
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::RBFFDInterpolation, x, j)
+    return diff_op_or_pde(zero(eltype(x)), itp, x, j)
+end
+
+function (g::Gradient)(itp::RBFFDInterpolation, x, j)
+    return g(zero(x), itp, x, j)
+end
+
+function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation)
+    return x -> diff_op_or_pde(itp, x)
 end
 
 # TODO: Does this also make sense for conditionally positive definite kernels?

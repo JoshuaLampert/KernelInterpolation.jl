@@ -13,7 +13,7 @@ module KernelInterpolation
 
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
 using ForwardDiff: ForwardDiff
-using LinearAlgebra: Symmetric, I, norm, tr, dot, diagind
+using LinearAlgebra: Diagonal, Symmetric, I, norm, tr, dot, diagind, factorize
 using Printf: @sprintf
 using Random: Random
 using ReadVTK: VTKFile, get_points, get_point_data, get_data
@@ -22,11 +22,12 @@ using SciMLBase: SciMLBase, ODEFunction, ODEProblem, ODESolution, DiscreteCallba
 using SimpleUnPack: @unpack
 using SpecialFunctions: besselk, loggamma
 using StaticArrays: StaticArrays, MVector, SVector
+using SparseArrays: sparse
 using Reexport: @reexport
 using TimerOutputs: TimerOutputs, print_timer, reset_timer!
 @reexport using TrixiBase: trixi_include
 using TrixiBase: @trixi_timeit, timer
-using TypedPolynomials: Variable, monomials, degree
+using TypedPolynomials: Variable, monomials, degree, AbstractPolynomialLike, variables
 using WriteVTK: WriteVTK, vtk_grid, paraview_collection, MeshCell, VTKCellTypes,
                 CollectionFile
 
@@ -47,6 +48,7 @@ include("basis.jl")
 include("regularization.jl")
 include("differential_operators.jl")
 include("equations.jl")
+include("rbf_fd/rbf_fd.jl")
 include("kernel_matrices.jl")
 include("interpolation.jl")
 include("discretization.jl")
@@ -62,8 +64,12 @@ export GaussKernel, MultiquadricKernel, InverseMultiquadricKernel,
        Matern52Kernel, Matern72Kernel, RieszKernel,
        TransformationKernel, ProductKernel, SumKernel
 export StandardBasis, LagrangeBasis
-export phi, Phi, order
-export PartialDerivative, Gradient, Laplacian, EllipticOperator
+export AbstractSpatialMethod, Collocation, RBFFD
+export AbstractStencilSelection, KNearestNeighbors, RadiusSearch
+export AbstractRBFFDLocalBasis, RBFFDStandardBasis, RBFFDLagrangeBasis
+export RBFFDBasis
+export phi, Phi, order, local_order
+export Identity, PartialDerivative, Gradient, Laplacian, EllipticOperator
 export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation,
        AdvectionDiffusionEquation
 export SpatialDiscretization, Semidiscretization, semidiscretize
@@ -71,10 +77,12 @@ export NoRegularization, L2Regularization
 export NodeSet, empty_nodeset, separation_distance, dim, eachdim,
        distance_matrix, random_hypercube, random_hypercube_boundary, homogeneous_hypercube,
        homogeneous_hypercube_boundary, random_hypersphere, random_hypersphere_boundary
-export interpolation_kernel, nodeset, coefficients, kernel_coefficients,
+export interpolation_kernel, nodeset, centers, coefficients, kernel_coefficients,
        polynomial_coefficients, polynomial_basis, basis, polyvars, system_matrix,
        interpolate, solve_stationary, kernel_inner_product, kernel_norm,
-       kernel_matrix, operator_matrix
+       kernel_matrix, operator_matrix, differentiation_matrix, pde_boundary_matrix,
+       nearest_node_index
+export select_neighbors, rbf_fd_weights
 export Interpolation, TemporalInterpolation
 export MultiscaleInterpolation, multiscale_interpolate
 export AliveCallback, SaveSolutionCallback, SummaryCallback

@@ -11,6 +11,17 @@ end
                           pde_test=true)
 end
 
+@testitem "poisson_2d_basic.jl with polynomial augmentation" setup=[
+    Setup,
+    AdditionalImports,
+    PDEExamples
+] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "poisson_2d_basic.jl"),
+                          kernel=PolyharmonicSplineKernel{2}(3),
+                          l2=0.21521434341247836, linf=0.038429436830987575,
+                          pde_test=true)
+end
+
 @testitem "poisson_2d_lagrange_basis.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "poisson_2d_lagrange_basis.jl"),
                           l2=0.05189287444793586, linf=0.00962327274766674,
@@ -72,4 +83,46 @@ end
                           l2=1.5864821617681693, linf=0.5647099100416488,
                           pde_test=true, tspan=(0.0, 0.1),
                           atol=1e-7) # stability issues
+end
+
+@testitem "rbf_fd_poisson_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
+                          l2=0.31009752227732473, linf=0.035893562691565364,
+                          pde_test=true)
+end
+
+# (almost) same values as for the `RBFFDLagrangeBasis`
+@testitem "rbf_fd_poisson_2d_basic.jl with RBFFDStandardBasis" setup=[
+    Setup,
+    AdditionalImports,
+    PDEExamples
+] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
+                          local_basis=RBFFDStandardBasis(),
+                          l2=0.31009752227678944, linf=0.03589356269158671,
+                          pde_test=true)
+end
+
+@testitem "rbf_fd_poisson_2d_basic.jl with RadiusSearch" setup=[
+    Setup,
+    AdditionalImports,
+    PDEExamples
+] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
+                          stencil_selection=RadiusSearch(0.3),
+                          l2=0.2631144635952774, linf=0.03741207775337395,
+                          pde_test=true)
+end
+
+@testitem "rbf_fd_poisson_2d_least_squares.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_least_squares.jl"),
+                          l2=0.08017627795452234, linf=0.011301965835894934,
+                          pde_test=true, least_square_test=true,
+                          atol=1e-2) # stability issues
+end
+
+@testitem "rbf_fd_advection_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
+    @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_advection_2d_basic.jl"),
+                          l2=0.24636308857403452, linf=0.050945760748381974,
+                          pde_test=true)
 end

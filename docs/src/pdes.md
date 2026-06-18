@@ -244,6 +244,62 @@ KernelInterpolation.jl provides [some callbacks](@ref api-callbacks) that are ca
 the time integration process. These can be used to monitor the solution or to save it to a file. To date, these are [`AliveCallback`](@ref),
 [`SaveSolutionCallback`](@ref), and [`SummaryCallback`](@ref).
 
+## RBF-FD Discretization
+
+The global collocation approach described above uses all $N$ nodes as basis functions, leading to a dense system matrix.
+Radial basis function finite differences (RBF-FD) is an alternative local approach that assembles sparse operators from
+local stencils. Instead of involving all nodes, RBF-FD selects a small neighborhood around each node and computes
+differential operator weights locally. This yields a sparse system matrix, which is more efficient for large-scale problems.
+
+In KernelInterpolation.jl, RBF-FD is selected by passing `RBFFD()` as the discretization method to
+[`SpatialDiscretization`](@ref). The stencil is controlled by the `stencil_selection` keyword argument, e.g.
+`KNearestNeighbors(n)` to use the $n$ nearest neighbors of each node. For example, to solve the Poisson equation on a
+unit square with RBF-FD:
+
+```julia
+using KernelInterpolation
+
+pde = PoissonEquation((x, equations) -> 1.0)
+nodeset_inner = homogeneous_hypercube(12, (0.1, 0.1), (0.9, 0.9))
+nodeset_boundary = homogeneous_hypercube_boundary(4; dim = 2)
+g(x) = 0.0
+kernel = PolyharmonicSplineKernel{2}(3)
+
+sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(), kernel;
+                           stencil_selection = KNearestNeighbors(25),
+                           m = order(kernel))
+itp = solve_stationary(sd)
+```
+
+The `local_basis` keyword of [`SpatialDiscretization`](@ref) controls how local stencil weights are
+computed:
+
+- `RBFFDLagrangeBasis()` (default): builds local cardinal (Lagrange) functions $\ell_j$ on each stencil
+  and uses weights $w_j = \mathcal{L}\ell_j(x_i)$.
+- `RBFFDStandardBasis()`: solves the local kernel/polynomial RBF-FD system directly for the weights.
+
+Both algorithms produce the same weights up to numerical precision. To use the standard-basis algorithm:
+
+```julia
+sd_std = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(), kernel;
+                               stencil_selection = KNearestNeighbors(25),
+                               m = order(kernel),
+                               local_basis = RBFFDStandardBasis())
+```
+
+For time-dependent equations, the same [`Semidiscretization`](@ref) and [`semidiscretize`](@ref) workflow applies:
+
+```julia
+pde_t = HeatEquation(0.1, (t, x, equations) -> 0.0)
+u0(_, x, _) = sin(pi * x[1])
+g_t(t, x) = 0.0
+
+sd_t = SpatialDiscretization(pde_t, nodeset_inner, g_t, nodeset_boundary, RBFFD(), kernel;
+                              stencil_selection = KNearestNeighbors(25))
+semi = Semidiscretization(sd_t, u0)
+ode = semidiscretize(semi, (0.0, 0.2))
+```
+
 ## References
 
 [^Fasshauer2015]:

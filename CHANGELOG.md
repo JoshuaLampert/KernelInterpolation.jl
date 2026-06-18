@@ -9,6 +9,11 @@ for human readability.
 
 #### Added
 
+- Added support for RBF-FD ([#182]).
+- Added `differentiation_matrix` to assemble the matrix of a differential operator (sparse for
+  `RBFFDBasis`, dense for kernel collocation), and added polynomial augmentation to the collocation
+  PDE assembly (`solve_stationary`, `operator_matrix`, `pde_boundary_matrix`) so that conditionally
+  positive definite kernels are augmented automatically ([#182]).
 - Add multiscale interpolation functionality with the function `multiscale_interpolate` and the type `MultiscaleInterpolation` ([#180]).
 - Allow applying differential operators to an `Interpolation` to get a callable object that evaluates the operator at any point ([#179]).
 - Added support for methods from `LinearSolve.jl` in `solve_stationary` ([#178]).

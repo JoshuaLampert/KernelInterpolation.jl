@@ -14,6 +14,7 @@ implements methods for multivariate interpolation in arbitrary dimension based o
 with a focus on radial basis functions. It can be used for classical interpolation of scattered data, as well as for generalized
 (Hermite-Birkhoff) interpolation by using a meshfree collocation approach. This can be used to solve partial differential equations both
 stationary ones and time-dependent ones by using some time integration method from [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl).
+Additionally, local radial basis function finite differences (RBF-FD) are supported for sparse PDE discretization.
 
 ## Installation
 

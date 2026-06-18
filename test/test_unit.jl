@@ -202,6 +202,22 @@ end
                                      0.0 1.0
                                      1.0 1.0])
     @test NodeSet(nodeset1) == nodeset1
+    # Equality is based on coordinates (not identity) and `hash` is consistent with `==`,
+    # so `NodeSet`s work as `Set`/`Dict` keys.
+    nodeset1_copy = NodeSet([0.0 0.0
+                             1.0 0.0
+                             0.0 1.0
+                             1.0 1.0])
+    nodeset1_other = NodeSet([0.0 0.0
+                              1.0 0.0
+                              0.0 1.0
+                              1.0 2.0])
+    @test nodeset1 == nodeset1_copy
+    @test hash(nodeset1) == hash(nodeset1_copy)
+    @test nodeset1 != nodeset1_other
+    @test hash(nodeset1) != hash(nodeset1_other)
+    @test length(Set([nodeset1, nodeset1_copy, nodeset1_other])) == 2
+    @test Dict(nodeset1 => 1)[nodeset1_copy] == 1
     @test_nowarn println(nodeset1)
     @test_nowarn display(nodeset1)
     @test eltype(nodeset1) == Float64
@@ -651,15 +667,18 @@ end
     # Test for Theorem 11.1 in Wendland's book
     stdbasis = StandardBasis(nodeset, kernel)
     R(x) = stdbasis(x)
+    # The polynomials are baked into the cardinal functions; obtain them from one.
+    ps = polynomial_basis(basis[1])
+    xx = polyvars(basis[1])
     function S(x)
-        v = zeros(length(basis.ps))
+        v = zeros(length(ps))
         for i in eachindex(v)
-            v[i] = basis.ps[i](basis.xx => x)
+            v[i] = ps[i](xx => x)
         end
         return v
     end
     b(x) = [R(x); S(x)]
-    K = KernelInterpolation.interpolation_matrix(stdbasis, basis.ps)
+    K = KernelInterpolation.interpolation_matrix(stdbasis, ps)
     x = rand(dim(nodeset))
     uv = K \ b(x)
     u = basis(x)
@@ -914,6 +933,9 @@ end
 end
 
 @testitem "Differential operators" setup=[Setup, AdditionalImports] begin
+    id = @test_nowarn Identity()
+    @test_nowarn println(id)
+    @test_nowarn display(id)
     l = @test_nowarn Laplacian()
     @test_nowarn println(l)
     @test_nowarn display(l)
@@ -960,7 +982,7 @@ end
     struct AnalyticalLaplacian <: KernelInterpolation.AbstractDifferentialOperator
     end
 
-    function (::AnalyticalLaplacian)(kernel::KernelInterpolation.AbstractKernel{Dim},
+    function (::AnalyticalLaplacian)(kernel::KernelInterpolation.RadialSymmetricKernel{Dim},
                                      x) where {Dim}
         r = norm(x)
         return (Dim - 1) * phi_deriv_over_r(kernel, r, 1) + phi_deriv(kernel, r, 2)
@@ -969,6 +991,7 @@ end
     el_l = EllipticOperator(x -> I, zero, x -> 0) # Laplacian with general elliptic operator
 
     x1 = [0.4, 0.6]
+    @test isapprox(id(kernel, x1), kernel(x1))
     @test isapprox(l(kernel, x1), AnalyticalLaplacian()(kernel, x1))
     @test isapprox(g(kernel, x1), [-0.17561908618411226, -0.2634286292761684])
     @test isapprox(d1(kernel, x1), -0.17561908618411226)
@@ -993,6 +1016,35 @@ end
     x3 = rand(4)
     @test isapprox(l(kernel, x3, x3), AnalyticalLaplacian()(kernel, x3, x3))
     @test isapprox(el_l(kernel, x3, x3), -AnalyticalLaplacian()(kernel, x3, x3))
+
+    # Operators on polynomials: p(x) = x₁² + 2x₁x₂ + 3x₂² at x = (1, 2)
+    # ∂/∂x₁ p = 2x₁ + 2x₂  →  6 at (1,2)
+    # ∂/∂x₂ p = 2x₁ + 6x₂  →  14 at (1,2)
+    # ∇p = [6, 14] at (1,2)
+    # Δp = 2 + 6 = 8
+    xx2 = polyvars(Val(2))
+    ps2 = KernelInterpolation.monomials(xx2, 0:2)
+    # ps2 = [1, x₂, x₁, x₂², x₁x₂, x₁²]  (graded reverse lex order)
+    p = ps2[6] + 2 * ps2[5] + 3 * ps2[4]  # x₁² + 2x₁x₂ + 3x₂²
+    xp = [1.0, 2.0]
+    @test isapprox(d1(p, xp), 6.0)
+    @test isapprox(d2(p, xp), 14.0)
+    @test isapprox(g(p, xp), [6.0, 14.0])
+    @test isapprox(l(p, xp), 8.0)
+
+    # EllipticOperator on polynomial: use constant coefficients A=I, b=0, c=0 → should equal -Laplacian
+    el_l_p = EllipticOperator(x -> I, zero, x -> 0)
+    @test isapprox(el_l_p(p, xp), -l(p, xp))
+
+    # 1D: p(x) = x₁³, ∂/∂x₁ p = 3x₁²  →  3 at x=1, Δp = 6x₁  →  6 at x=1
+    xx1 = polyvars(Val(1))
+    ps1 = KernelInterpolation.monomials(xx1, 0:3)
+    # ps1 = [1, x₁, x₁², x₁³]
+    p1 = ps1[4]  # x₁³
+    xp1 = [1.0]
+    @test isapprox(PartialDerivative(1)(p1, xp1), 3.0)
+    @test isapprox(Laplacian()(p1, xp1), 6.0)
+    @test isapprox(Gradient()(p1, xp1), [3.0])
 end
 
 @testitem "PDEs" setup=[Setup, AdditionalImports] begin
@@ -1068,6 +1120,36 @@ end
     el_advection_diffusion = EllipticEquation(x -> [2 0; 0 2], x -> [2, 0.5], x -> 0.0,
                                               f1)
     @test el_advection_diffusion(kernel, x, y) == advection_diffusion(kernel, x, y)
+
+    # Evaluating PDEs on a kernel at one point and on a polynomial
+    # Use GaussKernel and a fixed point for reproducibility
+    kernel2 = GaussKernel{2}(shape_parameter = 0.5)
+    x1 = [0.4, 0.6]
+    poisson2 = PoissonEquation(f1)
+    advection2 = AdvectionEquation([2.0, 0.5], f2)
+    heat2 = HeatEquation(2.0, f2)
+    advection_diffusion2 = AdvectionDiffusionEquation(2.0, [2.0, 0.5], f2)
+
+    # Kernel 3-arg: each PDE is defined by its relation to the base operators
+    @test isapprox(poisson2(kernel2, x1, x1), -Laplacian()(kernel2, x1, x1))
+    @test isapprox(heat2(kernel2, x1, x1), -2.0 * Laplacian()(kernel2, x1, x1))
+    @test isapprox(advection2(kernel2, x1, x1),
+                   dot([2.0, 0.5], Gradient()(kernel2, x1, x1)))
+    @test isapprox(advection_diffusion2(kernel2, x1, x1),
+                   advection2(kernel2, x1, x1) + heat2(kernel2, x1, x1))
+
+    # Polynomial: p = x₁² + 2x₁x₂ + 3x₂² at xp = (1, 2)
+    # Δp = 8,  ∇p = [6, 14]
+    xx2 = polyvars(Val(2))
+    ps2 = KernelInterpolation.monomials(xx2, 0:2)
+    # ps2 = [1, x₂, x₁, x₂², x₁x₂, x₁²]  (graded reverse lex order)
+    p2 = ps2[6] + 2 * ps2[5] + 3 * ps2[4]  # x₁² + 2x₁x₂ + 3x₂²
+    xp = [1.0, 2.0]
+    @test isapprox(poisson2(p2, xp), -8.0)                         # -Δp = -8
+    @test isapprox(heat2(p2, xp), -2.0 * 8.0)                      # -κΔp = -16
+    @test isapprox(advection2(p2, xp), dot([2.0, 0.5], [6.0, 14.0]))  # a⋅∇p = 19
+    @test isapprox(advection_diffusion2(p2, xp),
+                   advection2(p2, xp) + heat2(p2, xp))              # sum of both
 end
 
 @testitem "Discretization" setup=[Setup, AdditionalImports] begin
@@ -1091,6 +1173,26 @@ end
     @test_nowarn display(sd)
     @test dim(sd) == 2
     @test eltype(sd) == Float64
+
+    # Passing `Collocation()` explicitly selects the same method/basis as the implicit
+    # convenience constructors, both with explicit `centers` and with just a `kernel`.
+    x = [0.1, 0.08]
+    centers = merge(nodeset_inner, nodeset_boundary)
+    sd_col_centers = @test_nowarn SpatialDiscretization(pde, nodeset_inner, g1,
+                                                        nodeset_boundary, Collocation(),
+                                                        centers, kernel)
+    sd_centers = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, centers,
+                                       kernel)
+    @test sd_col_centers.method isa Collocation
+    @test typeof(sd_col_centers.basis) == typeof(sd_centers.basis)
+    @test isapprox(solve_stationary(sd_col_centers)(x), solve_stationary(sd_centers)(x))
+
+    sd_col_kernel = @test_nowarn SpatialDiscretization(pde, nodeset_inner, g1,
+                                                       nodeset_boundary, Collocation(),
+                                                       kernel)
+    @test sd_col_kernel.method isa Collocation
+    @test typeof(sd_col_kernel.basis) == typeof(sd.basis)
+    @test isapprox(solve_stationary(sd_col_kernel)(x), solve_stationary(sd)(x))
 
     # SemiDiscretization
     u2(t, x) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2] + t
@@ -1177,6 +1279,14 @@ end
     for (b_val, b_test_val) in zip(b, b_lagrange_test)
         @test isapprox(b_val, b_test_val, atol = 1e-12)
     end
+
+    # Least-squares collocation: centers ⊊ merge(nodeset_inner, nodeset_boundary).
+    centers_ls = nodeset_inner  # 4 centers < 8 = |ni| + |nb|
+    pde = PoissonEquation(f1)
+    sd_ls_col = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, centers_ls,
+                                      kernel)
+    itp_ls_col = @test_nowarn solve_stationary(sd_ls_col)
+    @test nodeset(itp_ls_col) == merge(nodeset_inner, nodeset_boundary)
 
     # Solve stationary PDE using LinearSolve's GMRES
     sd_ls = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, kernel)
@@ -1352,6 +1462,188 @@ end
     L_kernel = operator_matrix(pde, nodeset_inner, nodeset_boundary, kernel)
     L_basis = operator_matrix(pde, nodeset_inner, nodeset_boundary, standard_basis)
     @test L_kernel ≈ L_basis
+
+    # Polynomial-augmented operator matrix (`m > 0`) reproduces the operator exactly on
+    # polynomials of degree < m: the inner rows apply the PDE operator (here -Δ) and the
+    # boundary rows act as the identity. With `m = 3` (degrees 0..2), the kernel +
+    # polynomial interpolant is exact for `u = x₁² + x₂²`, whose `-Δu = -4`.
+    #
+    # The nodes must be unisolvent for degree-2 polynomials, otherwise the polynomial
+    # block of the augmented system `[K P; Pᵀ 0]` is rank-deficient and the system is
+    # singular. The 8 nodes used above are *not* unisolvent for degree 2 (they all lie
+    # on the conic (x-y)(x+y-1) = 0), so a 4×4 grid (4 inner + 12 boundary), which is
+    # unisolvent, is used here instead.
+    grid = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    is_inner = [0.0 < x[1] < 1.0 && 0.0 < x[2] < 1.0 for x in grid]
+    ni_poly = NodeSet([x for (x, b) in zip(grid, is_inner) if b])
+    nb_poly = NodeSet([x for (x, b) in zip(grid, is_inner) if !b])
+    sb_poly = StandardBasis(merge(ni_poly, nb_poly), kernel)
+    poly_u(x) = x[1]^2 + x[2]^2
+    u_vals = poly_u.(merge(ni_poly, nb_poly))
+    L_poly = operator_matrix(pde, ni_poly, nb_poly, sb_poly; m = 3)
+    @test size(L_poly) == (16, 16)
+    n_inner = length(ni_poly)
+    Lu = L_poly * u_vals
+    @test isapprox(Lu[1:n_inner], fill(-4.0, n_inner), atol = 1e-10)
+    @test isapprox(Lu[(n_inner + 1):end], poly_u.(nb_poly), atol = 1e-11)
+    # The kernel convenience form agrees with the basis form.
+    @test operator_matrix(pde, ni_poly, nb_poly, kernel; m = 3) ≈ L_poly
+end
+
+@testitem "differentiation_matrix" setup=[Setup, AdditionalImports] begin
+    nodes = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    kernel = Matern52Kernel{2}(shape_parameter = 0.7)
+    f(x) = sinpi(x[1]) * cospi(x[2])
+    values = f.(nodes)
+    itp = interpolate(nodes, values, kernel)
+    standard_basis = StandardBasis(nodes, kernel)
+
+    # `differentiation_matrix` maps the nodal values to `𝓛s` evaluated at the centers, i.e.
+    # the operator applied to the interpolant.
+    D = differentiation_matrix(Laplacian(), standard_basis)
+    @test size(D) == (length(nodes), length(nodes))
+    Du = D * values
+    for (i, x) in enumerate(nodes)
+        @test isapprox(Du[i], Laplacian()(itp, x), atol = 1e-10)
+    end
+
+    # The kernel convenience form agrees with the basis form, and evaluation at an
+    # arbitrary set of points works as well.
+    @test differentiation_matrix(Laplacian(), nodes, kernel) ≈ D
+    other = NodeSet([0.1 0.2; 0.42 0.6; 0.7 0.9])
+    D_other = differentiation_matrix(Laplacian(), standard_basis, other)
+    @test size(D_other) == (length(other), length(nodes))
+    for (i, x) in enumerate(other)
+        @test isapprox((D_other * values)[i], Laplacian()(itp, x), atol = 1e-10)
+    end
+
+    # Relation to `operator_matrix`: the inner block of the BVP system operator equals the
+    # differentiation matrix restricted to the inner nodes.
+    ni = NodeSet([0.25 0.25; 0.75 0.25; 0.25 0.75; 0.75 0.75])
+    nb = NodeSet([0.0 0.0; 1.0 0.0; 0.0 1.0; 1.0 1.0])
+    pde = PoissonEquation((x, eq) -> -4.0)
+    basis = StandardBasis(merge(ni, nb), kernel)
+    Op = operator_matrix(pde, ni, nb, basis)
+    Diff = differentiation_matrix(pde, basis, ni)
+    @test Matrix(Op[1:length(ni), :]) ≈ Matrix(Diff)
+
+    # PartialDerivative exactness on polynomials: with m=3 ({1, x₁, x₂} in 2D),
+    # ∂₁x₁ = 1, ∂₁x₂ = 0, ∂₂x₁ = 0, ∂₂x₂ = 1.
+    nodes_pd = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    kernel_pd = GaussKernel{2}(shape_parameter = 1.0)
+    sb_pd = StandardBasis(nodes_pd, kernel_pd)
+    N_pd = length(nodes_pd)
+    x1_vals = first.(nodes_pd)
+    x2_vals = last.(nodes_pd)
+    D1_pd = differentiation_matrix(PartialDerivative(1), sb_pd; m = 3)
+    D2_pd = differentiation_matrix(PartialDerivative(2), sb_pd; m = 3)
+    @test isapprox(D1_pd * x1_vals, ones(N_pd), atol = 1e-11)
+    @test isapprox(D1_pd * x2_vals, zeros(N_pd), atol = 1e-11)
+    @test isapprox(D2_pd * x1_vals, zeros(N_pd), atol = 1e-11)
+    @test isapprox(D2_pd * x2_vals, ones(N_pd), atol = 1e-11)
+
+    # PartialDerivative exactness on a kernel translate: D * nodal_values_of_K(·, cⱼ)
+    # equals the exact partial derivative at the evaluation nodes (D = A_L * A⁻¹).
+    c_j = nodes_pd[3]
+    u_ker = [kernel_pd(x, c_j) for x in nodes_pd]
+    D1_ker = differentiation_matrix(PartialDerivative(1), sb_pd)
+    D2_ker = differentiation_matrix(PartialDerivative(2), sb_pd)
+    @test isapprox(D1_ker * u_ker,
+                   [PartialDerivative(1)(kernel_pd, x, c_j) for x in nodes_pd],
+                   atol = 1e-13)
+    @test isapprox(D2_ker * u_ker,
+                   [PartialDerivative(2)(kernel_pd, x, c_j) for x in nodes_pd],
+                   atol = 1e-13)
+end
+
+@testitem "differentiation_matrix least-squares" setup=[Setup, AdditionalImports] begin
+    # Fewer centers than evaluation nodes: D is (|nodeset|, |centers|) and maps
+    # nodal values at the centers to operator values at the evaluation nodes.
+    centers = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    nodeset = homogeneous_hypercube(6, (0.0, 0.0), (1.0, 1.0))
+    kernel = GaussKernel{2}(shape_parameter = 1.0)
+    basis = StandardBasis(centers, kernel)
+
+    D = differentiation_matrix(Laplacian(), basis, nodeset)
+
+    # Size is (|nodeset|, |centers|): rectangular and overdetermined.
+    @test size(D) == (length(nodeset), length(centers))
+
+    # D * u_at_centers ≈ Δu(nodeset) for any function u in the kernel span.
+    # Use a kernel translate: u(x) = K(x, c_j), for which Δu is known exactly.
+    c_j = centers[3]
+    u_ker = [kernel(x, c_j) for x in centers]
+    @test isapprox(D * u_ker,
+                   [Laplacian()(kernel, x, c_j) for x in nodeset],
+                   atol = 1e-11)
+
+    # Polynomial exactness with m=3 ({1, x₁, x₂} in 2D):
+    # D * p.(centers) = Lp.(nodeset) for polynomials of degree ≤ 1.
+    x1_at_centers = first.(centers)
+    x2_at_centers = last.(centers)
+    D1 = differentiation_matrix(PartialDerivative(1), basis, nodeset; m = 3)
+    D2 = differentiation_matrix(PartialDerivative(2), basis, nodeset; m = 3)
+    @test size(D1) == (length(nodeset), length(centers))
+    @test isapprox(D1 * ones(length(centers)), zeros(length(nodeset)), atol = 1e-10)
+    @test isapprox(D1 * x1_at_centers, ones(length(nodeset)), atol = 1e-11)
+    @test isapprox(D1 * x2_at_centers, zeros(length(nodeset)), atol = 1e-11)
+    @test isapprox(D2 * ones(length(centers)), zeros(length(nodeset)), atol = 1e-10)
+    @test isapprox(D2 * x1_at_centers, zeros(length(nodeset)), atol = 1e-11)
+    @test isapprox(D2 * x2_at_centers, ones(length(nodeset)), atol = 1e-11)
+
+    # Kernel convenience form agrees with the basis form.
+    @test differentiation_matrix(Laplacian(), centers, kernel, nodeset) ≈ D
+end
+
+@testitem "polynomial augmentation (collocation)" setup=[Setup, AdditionalImports] begin
+    nodes = homogeneous_hypercube(5, (0.0, 0.0), (1.0, 1.0))
+    N = length(nodes)
+    kernel = GaussKernel{2}(shape_parameter = 2.0)
+    sb = StandardBasis(nodes, kernel)
+
+    # Without polynomials the Laplacian does not annihilate constants; with `m >= 1` it does
+    # (the polynomial-augmented space reproduces constants exactly).
+    @test maximum(abs.(differentiation_matrix(Laplacian(), sb; m = 0) * ones(N))) > 1e-2
+    @test isapprox(maximum(abs.(differentiation_matrix(Laplacian(), sb; m = 1) * ones(N))),
+                   0.0, atol = 1e-10)
+    # Δ(x₁² + x₂²) = 4 is reproduced exactly with degree-2 polynomials (`m = 3`).
+    quad(x) = x[1]^2 + x[2]^2
+    D3 = differentiation_matrix(Laplacian(), sb; m = 3)
+    @test all(isapprox.(D3 * quad.(nodes), 4.0, atol = 1e-11))
+
+    # `solve_stationary` augments conditionally positive definite kernels and reproduces a
+    # linear solution exactly (it lies in the linear polynomial space of the spline).
+    ni = NodeSet([0.25 0.25; 0.5 0.25; 0.75 0.25; 0.25 0.5; 0.5 0.5; 0.75 0.5; 0.25 0.75;
+                  0.5 0.75; 0.75 0.75])
+    nb = NodeSet([0.0 0.0; 0.5 0.0; 1.0 0.0; 0.0 0.5; 1.0 0.5; 0.0 1.0; 0.5 1.0; 1.0 1.0])
+    ulin(x) = 2.0 * x[1] + 3.0 * x[2] + 1.0 # Δu = 0
+    pde = PoissonEquation((x, eq) -> 0.0)
+    phs = PolyharmonicSplineKernel{2}(3) # order 2 -> linear polynomials augmented
+    sd = SpatialDiscretization(pde, ni, ulin, nb, phs)
+    itp = solve_stationary(sd)
+    @test length(coefficients(itp)) == length(ni) + length(nb) + 3 # 3 linear monomials in 2D
+    @test length(polynomial_coefficients(itp)) == 3
+    for x in (rand(2) for _ in 1:100)
+        @test isapprox(itp(x), ulin(x), atol = 1e-14)
+    end
+
+    # An order-0 kernel adds no polynomials, i.e. the unaugmented behavior is unchanged.
+    sd0 = SpatialDiscretization(pde, ni, ulin, nb,
+                                WendlandKernel{2}(3, shape_parameter = 0.4))
+    itp0 = solve_stationary(sd0)
+    @test length(coefficients(itp0)) == length(ni) + length(nb)
+    @test isempty(polynomial_coefficients(itp0))
+
+    # Least-squares collocation (`centers` ≠ `merge(inner, boundary)`) with a conditionally
+    # positive definite kernel still augments polynomials and reproduces the linear solution.
+    centers = NodeSet([0.0 0.0; 1.0 0.0; 0.0 1.0; 1.0 1.0; 0.5 0.5; 0.25 0.75; 0.75 0.25])
+    sd_ls = SpatialDiscretization(pde, ni, ulin, nb, centers, phs)
+    itp_ls = solve_stationary(sd_ls)
+    @test length(coefficients(itp_ls)) == length(centers) + 3
+    @test length(polynomial_coefficients(itp_ls)) == 3
+    for x in (rand(2) for _ in 1:100)
+        @test isapprox(itp_ls(x), ulin(x), atol = 1e-14)
+    end
 end
 
 @testitem "Callbacks" setup=[Setup, AdditionalImports] begin

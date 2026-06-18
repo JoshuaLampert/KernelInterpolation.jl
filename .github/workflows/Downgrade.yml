@@ -48,7 +48,7 @@ jobs:
       - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-downgrade-compat@v2
         with:
-          skip: LinearAlgebra,Printf,Test,Random
+          skip: LinearAlgebra,SparseArrays,Printf,Test,Random
           projects: ., test
           mode: forcedeps
       - name: Run tests
