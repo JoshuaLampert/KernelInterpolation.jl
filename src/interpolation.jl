@@ -41,7 +41,7 @@ Evaluation at a point `x` uses the local stencil ``S(j)`` of the nearest center
 u_h(x) = \sum_{k \in S(j)} c_k \, w_k(x;\, S(j)),
 ```
 where ``w_k(x)`` are the local cardinal weights mapping the nodal values to the value of
-the local interpolant at `x` (i.e. [`local_weights(@ref)(basis, j, x, Identity())`]). This formula
+the local interpolant at `x` (i.e. [`local_weights(basis, j, x, Identity())`](@ref)). This formula
 holds regardless of the weight computation algorithm: for [`RBFFDLagrangeBasis`](@ref) the
 ``w_k(x) = \ell_k(x)`` are the precomputed cardinal functions, while for
 [`RBFFDStandardBasis`](@ref) they are obtained by solving the cached local system with the
