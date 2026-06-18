@@ -5,7 +5,7 @@ using Plots
 # (inner + boundary), so the linear system is overdetermined and solved in the
 # least-squares sense. This is particularly effective with the Gauss kernel, which
 # becomes ill-conditioned in the standard (square) RBF-FD system for large stencils.
-# With a coarser center grid (overdetermination ratio ≈ 3), the global overdetermination
+# With a coarser center grid (overdetermination ratio ≈ 3.3), the global overdetermination
 # stabilizes the solve and allows using a large stencil for better local accuracy.
 
 # Right-hand side of Poisson equation.

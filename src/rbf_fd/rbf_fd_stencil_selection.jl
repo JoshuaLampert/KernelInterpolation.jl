@@ -53,13 +53,13 @@ within a given Euclidean distance `radius` to form the local FD stencil. This al
 stencil sizes but adapts to local point density.
 
 # Arguments
-- `radius::Float64`: Search radius for neighbor selection
+- `radius::Real`: Search radius for neighbor selection
 """
-struct RadiusSearch <: AbstractStencilSelection
-    radius::Float64
-    function RadiusSearch(radius::Float64)
-        radius > 0.0 || throw(ArgumentError("radius must be > 0, got $radius"))
-        return new(radius)
+struct RadiusSearch{RealT <: Real} <: AbstractStencilSelection
+    radius::RealT
+    function RadiusSearch(radius::Real)
+        radius > 0 || throw(ArgumentError("radius must be > 0, got $radius"))
+        return new{typeof(radius)}(radius)
     end
 end
 

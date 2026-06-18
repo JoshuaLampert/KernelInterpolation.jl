@@ -102,8 +102,9 @@ function update_separation_distance!(nodeset::NodeSet)
     end
 end
 dim(::NodeSet{Dim, RealT}) where {Dim, RealT} = Dim
-# Equality based on node coordinates (not object identity)
+# Equality based on node coordinates (not object identity); keep `hash` consistent with `==`.
 Base.:(==)(a::NodeSet, b::NodeSet) = a.nodes == b.nodes
+Base.hash(nodeset::NodeSet, h::UInt) = hash(nodeset.nodes, hash(:NodeSet, h))
 
 # Functions to treat NodeSet as array
 Base.eltype(::NodeSet{Dim, RealT}) where {Dim, RealT} = RealT

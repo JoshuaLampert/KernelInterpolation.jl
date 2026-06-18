@@ -202,6 +202,22 @@ end
                                      0.0 1.0
                                      1.0 1.0])
     @test NodeSet(nodeset1) == nodeset1
+    # Equality is based on coordinates (not identity) and `hash` is consistent with `==`,
+    # so `NodeSet`s work as `Set`/`Dict` keys.
+    nodeset1_copy = NodeSet([0.0 0.0
+                             1.0 0.0
+                             0.0 1.0
+                             1.0 1.0])
+    nodeset1_other = NodeSet([0.0 0.0
+                              1.0 0.0
+                              0.0 1.0
+                              1.0 2.0])
+    @test nodeset1 == nodeset1_copy
+    @test hash(nodeset1) == hash(nodeset1_copy)
+    @test nodeset1 != nodeset1_other
+    @test hash(nodeset1) != hash(nodeset1_other)
+    @test length(Set([nodeset1, nodeset1_copy, nodeset1_other])) == 2
+    @test Dict(nodeset1 => 1)[nodeset1_copy] == 1
     @test_nowarn println(nodeset1)
     @test_nowarn display(nodeset1)
     @test eltype(nodeset1) == Float64
