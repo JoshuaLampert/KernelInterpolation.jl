@@ -83,31 +83,3 @@ See also [`local_weights`](@ref).
 function rbf_fd_weights(diff_op_or_pde, i::Integer, basis::RBFFDBasis)
     return local_weights(basis, i, centers(basis)[i], diff_op_or_pde)
 end
-
-"""
-    rbf_fd_weights_at_node(diff_op_or_pde, x_i, basis::RBFFDBasis)
-
-Compute RBF-FD weights at an arbitrary point `x_i` using the stencil of the nearest
-node in `basis`.
-
-See [`rbf_fd_weights`](@ref) for more details.
-"""
-function rbf_fd_weights_at_node(diff_op_or_pde, x_i::AbstractVector, basis::RBFFDBasis)
-    i = nearest_node_index(x_i, centers(basis))
-    return rbf_fd_weights(diff_op_or_pde, i, basis)
-end
-
-# ==================== Batch Weight Computation ====================
-
-"""
-    rbf_fd_weights_all_nodes(diff_op_or_pde, basis::RBFFDBasis)
-
-Compute RBF-FD weights for all nodes in `basis`. Returns a `Dict` mapping each node
-index to its weight vector (or matrix for vector operators).
-
-See [`rbf_fd_weights`](@ref) for more details.
-"""
-function rbf_fd_weights_all_nodes(diff_op_or_pde, basis::RBFFDBasis)
-    return Dict(i => rbf_fd_weights(diff_op_or_pde, i, basis)
-                for i in eachindex(centers(basis)))
-end
