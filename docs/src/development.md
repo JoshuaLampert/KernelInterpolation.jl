@@ -34,7 +34,7 @@ if already inside the the `run` directory or `julia --project=run` if in the mai
 
 ## Contributing
 
-KernelInterpolation.jl is an open-source project and we are very happy to accept contributions from the community. You can contribute by openinga an issue or a pull request (PR).
+KernelInterpolation.jl is an open-source project, and we are very happy to accept contributions from the community. You can contribute by opening an issue or a pull request (PR).
 If you want to contribute code by opening a pull request, please make sure that your code follows the conventions of the codebase,
 is well-documented, and meaningful tests are added. On each pull request, we run automated checks that verify that all tests pass,
 the code is covered by tests, the documentation builds correctly, and that the code is properly formatted (see below).
