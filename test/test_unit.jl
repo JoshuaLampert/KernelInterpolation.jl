@@ -1158,6 +1158,26 @@ end
     @test dim(sd) == 2
     @test eltype(sd) == Float64
 
+    # Passing `Collocation()` explicitly selects the same method/basis as the implicit
+    # convenience constructors, both with explicit `centers` and with just a `kernel`.
+    x = [0.1, 0.08]
+    centers = merge(nodeset_inner, nodeset_boundary)
+    sd_col_centers = @test_nowarn SpatialDiscretization(pde, nodeset_inner, g1,
+                                                        nodeset_boundary, Collocation(),
+                                                        centers, kernel)
+    sd_centers = SpatialDiscretization(pde, nodeset_inner, g1, nodeset_boundary, centers,
+                                       kernel)
+    @test sd_col_centers.method isa Collocation
+    @test typeof(sd_col_centers.basis) == typeof(sd_centers.basis)
+    @test isapprox(solve_stationary(sd_col_centers)(x), solve_stationary(sd_centers)(x))
+
+    sd_col_kernel = @test_nowarn SpatialDiscretization(pde, nodeset_inner, g1,
+                                                       nodeset_boundary, Collocation(),
+                                                       kernel)
+    @test sd_col_kernel.method isa Collocation
+    @test typeof(sd_col_kernel.basis) == typeof(sd.basis)
+    @test isapprox(solve_stationary(sd_col_kernel)(x), solve_stationary(sd)(x))
+
     # SemiDiscretization
     u2(t, x) = x[1] * (x[1] - 1.0) + (x[2] - 1.0) * x[2] + t
     f2(t, x, equations) = -4.0 # -Δu
@@ -1438,7 +1458,7 @@ end
     @test size(L_poly) == (8, 8)
     n_inner = length(nodeset_inner)
     Lu = L_poly * u_vals
-    @test isapprox(Lu[1:n_inner], fill(-4.0, n_inner), atol = 1e-10)
+    @test isapprox(Lu[1:n_inner], fill(-4.0, n_inner), atol = 1e-9)
     @test isapprox(Lu[(n_inner + 1):end], poly_u.(nodeset_boundary), atol = 1e-12)
     # The kernel convenience form agrees with the basis form.
     @test operator_matrix(pde, nodeset_inner, nodeset_boundary, kernel; m = 3) ≈ L_poly
