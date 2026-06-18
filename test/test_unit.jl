@@ -1451,17 +1451,27 @@ end
     # polynomials of degree < m: the inner rows apply the PDE operator (here -Δ) and the
     # boundary rows act as the identity. With `m = 3` (degrees 0..2), the kernel +
     # polynomial interpolant is exact for `u = x₁² + x₂²`, whose `-Δu = -4`.
+    #
+    # The nodes must be unisolvent for degree-2 polynomials, otherwise the polynomial
+    # block of the augmented system `[K P; Pᵀ 0]` is rank-deficient and the system is
+    # singular. The 8 nodes used above are *not* unisolvent for degree 2 (they all lie
+    # on the conic (x-y)(x+y-1) = 0), so a 4×4 grid (4 inner + 12 boundary), which is
+    # unisolvent, is used here instead.
+    grid = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    is_inner = [0.0 < x[1] < 1.0 && 0.0 < x[2] < 1.0 for x in grid]
+    ni_poly = NodeSet([x for (x, b) in zip(grid, is_inner) if b])
+    nb_poly = NodeSet([x for (x, b) in zip(grid, is_inner) if !b])
+    sb_poly = StandardBasis(merge(ni_poly, nb_poly), kernel)
     poly_u(x) = x[1]^2 + x[2]^2
-    all_nodes = merge(nodeset_inner, nodeset_boundary)
-    u_vals = poly_u.(all_nodes)
-    L_poly = operator_matrix(pde, nodeset_inner, nodeset_boundary, standard_basis; m = 3)
-    @test size(L_poly) == (8, 8)
-    n_inner = length(nodeset_inner)
+    u_vals = poly_u.(merge(ni_poly, nb_poly))
+    L_poly = operator_matrix(pde, ni_poly, nb_poly, sb_poly; m = 3)
+    @test size(L_poly) == (16, 16)
+    n_inner = length(ni_poly)
     Lu = L_poly * u_vals
-    @test isapprox(Lu[1:n_inner], fill(-4.0, n_inner), atol = 1e-9)
-    @test isapprox(Lu[(n_inner + 1):end], poly_u.(nodeset_boundary), atol = 1e-12)
+    @test isapprox(Lu[1:n_inner], fill(-4.0, n_inner), atol = 1e-11)
+    @test isapprox(Lu[(n_inner + 1):end], poly_u.(nb_poly), atol = 1e-11)
     # The kernel convenience form agrees with the basis form.
-    @test operator_matrix(pde, nodeset_inner, nodeset_boundary, kernel; m = 3) ≈ L_poly
+    @test operator_matrix(pde, ni_poly, nb_poly, kernel; m = 3) ≈ L_poly
 end
 
 @testitem "differentiation_matrix" setup=[Setup, AdditionalImports] begin
