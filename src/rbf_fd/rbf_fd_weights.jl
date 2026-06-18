@@ -1,5 +1,3 @@
-# ==================== Local Weight Computation ====================
-
 # Build a weight vector (scalar operator output) or matrix (vector operator output, one
 # column per component) by stacking the per-row values produced by `f`. `f(j)` must return
 # either a `Number` or an `AbstractVector`, consistently across `j`.

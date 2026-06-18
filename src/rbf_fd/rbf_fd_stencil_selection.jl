@@ -26,28 +26,6 @@ end
 Base.show(io::IO, ss::KNearestNeighbors) = print(io, "KNearestNeighbors(k=$(ss.k))")
 
 """
-    RadiusSearch(radius)
-
-Stencil selection strategy using fixed radius search. Each interior point uses all neighbors
-within a given Euclidean distance `radius` to form the local FD stencil. This allows variable
-stencil sizes but adapts to local point density.
-
-# Arguments
-- `radius::Float64`: Search radius for neighbor selection
-"""
-struct RadiusSearch <: AbstractStencilSelection
-    radius::Float64
-    function RadiusSearch(radius::Float64)
-        radius > 0.0 || throw(ArgumentError("radius must be > 0, got $radius"))
-        return new(radius)
-    end
-end
-
-Base.show(io::IO, ss::RadiusSearch) = print(io, "RadiusSearch(r=$(ss.radius))")
-
-# ==================== Neighbor Selection ====================
-
-"""
     select_neighbors(i, nodeset, stencil_selection)
 
 Selects neighbors of `nodeset[i]` from `nodeset` using `stencil_selection`.
@@ -66,6 +44,26 @@ function select_neighbors(i::Int, nodeset::NodeSet, stencil::KNearestNeighbors)
     neighbor_nodes = NodeSet(nodeset.nodes[neighbor_indices])
     return (indices = neighbor_indices, nodes = neighbor_nodes)
 end
+
+"""
+    RadiusSearch(radius)
+
+Stencil selection strategy using fixed radius search. Each interior point uses all neighbors
+within a given Euclidean distance `radius` to form the local FD stencil. This allows variable
+stencil sizes but adapts to local point density.
+
+# Arguments
+- `radius::Float64`: Search radius for neighbor selection
+"""
+struct RadiusSearch <: AbstractStencilSelection
+    radius::Float64
+    function RadiusSearch(radius::Float64)
+        radius > 0.0 || throw(ArgumentError("radius must be > 0, got $radius"))
+        return new(radius)
+    end
+end
+
+Base.show(io::IO, ss::RadiusSearch) = print(io, "RadiusSearch(r=$(ss.radius))")
 
 function select_neighbors(i::Int, nodeset::NodeSet, stencil::RadiusSearch)
     radius = stencil.radius

@@ -227,30 +227,40 @@ function Semidiscretization(spatial_discretization::SpatialDiscretization{Dim, R
     nodeset = merge(nodeset_inner, nodeset_boundary)
     pdeb_matrix = pde_boundary_matrix(equations, nodeset_inner, nodeset_boundary, basis)
 
-    if method isa RBFFD
-        n_inner = length(nodeset_inner)
-        n_total = length(nodeset)
-        mass_diag = zeros(RealT, n_total)
-        mass_diag[1:n_inner] .= one(RealT)
-        m_matrix = sparse(Diagonal(mass_diag))
-        cache = (; kernel_matrix = I, mass_matrix = m_matrix,
-                 pde_boundary_matrix = pdeb_matrix)
-    else
-        @assert length(basis)==length(nodeset) "The basis must have the same number of functions as the number of inner and boundary nodes."
-        basis_matrix_inner = kernel_matrix(basis, nodeset_inner)
-        basis_matrix_boundary = kernel_matrix(basis, nodeset_boundary)
-        # whole basis matrix is not needed for rhs, but for initial condition
-        basis_matrix = [basis_matrix_inner
-                        basis_matrix_boundary]
-        m_matrix = [basis_matrix_inner
-                    zeros(eltype(basis_matrix_inner), size(basis_matrix_boundary)...)]
-        cache = (; kernel_matrix = basis_matrix, mass_matrix = m_matrix,
-                 pde_boundary_matrix = pdeb_matrix)
-    end
+    cache = create_cache(method, nodeset_inner, nodeset_boundary, nodeset,
+                         basis,
+                         pdeb_matrix, RealT)
 
     return Semidiscretization{typeof(initial_condition), typeof(cache)}(spatial_discretization,
                                                                         initial_condition,
                                                                         cache)
+end
+
+# Build the method-specific cache (kernel/mass matrices) for the semidiscretization.
+# Dispatch on the spatial method so new methods can be supported by adding a method here.
+function create_cache(::RBFFD, nodeset_inner, nodeset_boundary, nodeset, basis,
+                      pdeb_matrix, ::Type{RealT}) where {RealT}
+    n_inner = length(nodeset_inner)
+    n_total = length(nodeset)
+    mass_diag = zeros(RealT, n_total)
+    mass_diag[1:n_inner] .= one(RealT)
+    m_matrix = sparse(Diagonal(mass_diag))
+    return (; kernel_matrix = I, mass_matrix = m_matrix,
+            pde_boundary_matrix = pdeb_matrix)
+end
+
+function create_cache(::Collocation, nodeset_inner, nodeset_boundary, nodeset,
+                      basis, pdeb_matrix, ::Type{RealT}) where {RealT}
+    @assert length(basis)==length(nodeset) "The basis must have the same number of functions as the number of inner and boundary nodes."
+    basis_matrix_inner = kernel_matrix(basis, nodeset_inner)
+    basis_matrix_boundary = kernel_matrix(basis, nodeset_boundary)
+    # whole basis matrix is not needed for rhs, but for initial condition
+    basis_matrix = [basis_matrix_inner
+                    basis_matrix_boundary]
+    m_matrix = [basis_matrix_inner
+                zeros(eltype(basis_matrix_inner), size(basis_matrix_boundary)...)]
+    return (; kernel_matrix = basis_matrix, mass_matrix = m_matrix,
+            pde_boundary_matrix = pdeb_matrix)
 end
 
 function Semidiscretization(equations, nodeset_inner::NodeSet{Dim, RealT},
