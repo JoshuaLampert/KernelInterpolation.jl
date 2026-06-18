@@ -1,116 +1,87 @@
 # ==================== Local Weight Computation ====================
 
-function _collect_operator_rhs(diff_op_or_pde, kernel, x_i, neighbor_nodes)
-    first_value = diff_op_or_pde(kernel, x_i, neighbor_nodes[1])
+# Build a weight vector (scalar operator output) or matrix (vector operator output, one
+# column per component) by stacking the per-row values produced by `f`. `f(j)` must return
+# either a `Number` or an `AbstractVector`, consistently across `j`.
+function _stack_rows(f, n::Integer)
+    first_value = f(1)
     if first_value isa Number
-        rhs = Vector{typeof(first_value)}(undef, length(neighbor_nodes))
-        rhs[1] = first_value
-        for j in 2:length(neighbor_nodes)
-            rhs[j] = diff_op_or_pde(kernel, x_i, neighbor_nodes[j])
+        out = Vector{typeof(first_value)}(undef, n)
+        out[1] = first_value
+        for j in 2:n
+            out[j] = f(j)
         end
-        return rhs
+        return out
     elseif first_value isa AbstractVector
         d = length(first_value)
-        rhs = Matrix{eltype(first_value)}(undef, length(neighbor_nodes), d)
-        rhs[1, :] .= first_value
-        for j in 2:length(neighbor_nodes)
-            rhs[j, :] .= diff_op_or_pde(kernel, x_i, neighbor_nodes[j])
+        out = Matrix{eltype(first_value)}(undef, n, d)
+        out[1, :] .= first_value
+        for j in 2:n
+            out[j, :] .= f(j)
         end
-        return rhs
+        return out
     else
         throw(ArgumentError("Unsupported operator output type $(typeof(first_value)). Expected Number or AbstractVector."))
     end
 end
 
-function _polynomial_rhs(diff_op_or_pde, ps, x_i)
-    first_value = diff_op_or_pde(ps[1], x_i)
-    if first_value isa Number
-        rhs_p = Vector{typeof(first_value)}(undef, length(ps))
-        rhs_p[1] = first_value
-        for j in 2:length(ps)
-            rhs_p[j] = diff_op_or_pde(ps[j], x_i)
-        end
-        return rhs_p
-    elseif first_value isa AbstractVector
-        d = length(first_value)
-        rhs_p = Matrix{eltype(first_value)}(undef, length(ps), d)
-        rhs_p[1, :] .= first_value
-        for j in 2:length(ps)
-            rhs_p[j, :] .= diff_op_or_pde(ps[j], x_i)
-        end
-        return rhs_p
-    else
-        throw(ArgumentError("Unsupported polynomial operator output type $(typeof(first_value))."))
-    end
+"""
+    local_weights(basis::RBFFDBasis, i, point, op)
+
+Compute the local RBF-FD weights for stencil `i`, i.e. the coefficients that map the nodal
+values on that stencil to `op` applied to the local interpolant, evaluated at `point`. Use
+[`Identity`](@ref) for plain evaluation, or any differential operator/equation otherwise.
+
+Dispatches on `basis.local_basis`: for [`RBFFDLagrangeBasis`](@ref) the (operator applied
+to the) precomputed cardinal functions are evaluated at `point`; for
+[`RBFFDStandardBasis`](@ref) the cached local system is solved with the corresponding
+right-hand side.
+
+Returns a weight vector (scalar operator) or matrix with one column per component (vector
+operator).
+"""
+function local_weights(basis::RBFFDBasis, i::Integer, point::AbstractVector, op)
+    return _local_weights(basis, basis.local_basis, i, point, op)
 end
 
-function _rbf_fd_cardinal_weights(diff_op_or_pde, x_i::AbstractVector,
-                                  local_funcs::AbstractVector)
-    first_value = diff_op_or_pde(local_funcs[1], x_i)
-    if first_value isa Number
-        weights = Vector{typeof(first_value)}(undef, length(local_funcs))
-        weights[1] = first_value
-        for j in 2:length(local_funcs)
-            weights[j] = diff_op_or_pde(local_funcs[j], x_i)
-        end
-        return weights
-    elseif first_value isa AbstractVector
-        d = length(first_value)
-        weights = Matrix{eltype(first_value)}(undef, length(local_funcs), d)
-        weights[1, :] .= first_value
-        for j in 2:length(local_funcs)
-            weights[j, :] .= diff_op_or_pde(local_funcs[j], x_i)
-        end
-        return weights
+function _local_weights(basis::RBFFDBasis, ::RBFFDLagrangeBasis, i, point, op)
+    funcs = basis.cache[i]
+    return _stack_rows(k -> op(funcs[k], point), length(funcs))
+end
+
+function _local_weights(basis::RBFFDBasis, ::RBFFDStandardBasis, i, point, op)
+    indices = basis.stencil_indices[i]
+    X = centers(basis)
+    kernel = basis.kernel
+    ps = basis.ps
+    nk = length(indices)
+    q = length(ps)
+
+    rhs_kernel = _stack_rows(k -> op(kernel, point, X[indices[k]]), nk)
+    if q > 0
+        rhs_poly = _stack_rows(l -> op(ps[l], point), q)
+        rhs = vcat(rhs_kernel, rhs_poly)
     else
-        throw(ArgumentError("Unsupported operator output type $(typeof(first_value)) for cardinal RBF-FD weights."))
+        rhs = rhs_kernel
     end
+
+    sol = basis.cache[i] \ rhs
+    return sol isa AbstractVector ? sol[1:nk] : sol[1:nk, :]
 end
 
 @doc raw"""
-    rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis, local_basis = basis.local_basis)
+    rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis)
 
-Compute RBF-FD weights for node index `i` using precomputed stencil data from `basis`.
-Dispatches on the local basis type stored in `basis`.
-If `local_basis` is [`RBFFDLagrangeBasis`](@ref), weights are computed via the cardinal
-function approach. If `local_basis` is [`RBFFDStandardBasis`](@ref), the local
-kernel/polynomial system is solved directly.
+Compute RBF-FD weights for node index `i` using the precomputed stencil data from `basis`.
+The algorithm is selected by `basis.local_basis` (see [`RBFFDLagrangeBasis`](@ref) and
+[`RBFFDStandardBasis`](@ref)); both yield the same weights mathematically.
 
 Returns the weight vector (scalar operator) or matrix (vector operator).
+
+See also [`local_weights`](@ref).
 """
-function rbf_fd_weights(diff_op_or_pde, i::Integer, basis::RBFFDBasis,
-                        local_basis::AbstractRBFFDLocalBasis = basis.local_basis)
-    return _rbf_fd_weights(diff_op_or_pde, i, basis, local_basis)
-end
-
-function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis,
-                         ::RBFFDLagrangeBasis)
-    x_i = centers(basis)[i]
-    return _rbf_fd_cardinal_weights(diff_op_or_pde, x_i, basis.local_funcs[i])
-end
-
-function _rbf_fd_weights(diff_op_or_pde, i, basis::RBFFDBasis,
-                         ::RBFFDStandardBasis)
-    x_i = centers(basis)[i]
-    indices = basis.stencil_indices[i]
-    neighbor_nodes = NodeSet(centers(basis)[indices])
-    A = kernel_matrix(neighbor_nodes, basis.kernel)
-    rhs_vec = _collect_operator_rhs(diff_op_or_pde, basis.kernel, x_i, neighbor_nodes)
-
-    if basis.m > 0
-        xx = polyvars(dim(neighbor_nodes))
-        ps = monomials(xx, 0:(basis.m - 1))
-        q = length(ps)
-        P = polynomial_matrix(neighbor_nodes, ps)
-        A_aug = [A P
-                 P' zeros(eltype(A), q, q)]
-        rhs_poly = _polynomial_rhs(diff_op_or_pde, ps, x_i)
-        sol = A_aug \ [rhs_vec; rhs_poly]
-        return sol isa AbstractVector ? sol[1:length(neighbor_nodes)] :
-               sol[1:length(neighbor_nodes), :]
-    else
-        return A \ rhs_vec
-    end
+function rbf_fd_weights(diff_op_or_pde, i::Integer, basis::RBFFDBasis)
+    return local_weights(basis, i, centers(basis)[i], diff_op_or_pde)
 end
 
 """
@@ -121,10 +92,9 @@ node in `basis`.
 
 See [`rbf_fd_weights`](@ref) for more details.
 """
-function rbf_fd_weights_at_node(diff_op_or_pde, x_i::AbstractVector, basis::RBFFDBasis,
-                                local_basis::AbstractRBFFDLocalBasis = basis.local_basis)
+function rbf_fd_weights_at_node(diff_op_or_pde, x_i::AbstractVector, basis::RBFFDBasis)
     i = nearest_node_index(x_i, centers(basis))
-    return rbf_fd_weights(diff_op_or_pde, i, basis, local_basis)
+    return rbf_fd_weights(diff_op_or_pde, i, basis)
 end
 
 # ==================== Batch Weight Computation ====================
@@ -137,8 +107,7 @@ index to its weight vector (or matrix for vector operators).
 
 See [`rbf_fd_weights`](@ref) for more details.
 """
-function rbf_fd_weights_all_nodes(diff_op_or_pde, basis::RBFFDBasis,
-                                  local_basis::AbstractRBFFDLocalBasis = basis.local_basis)
-    return Dict(i => rbf_fd_weights(diff_op_or_pde, i, basis, local_basis)
+function rbf_fd_weights_all_nodes(diff_op_or_pde, basis::RBFFDBasis)
+    return Dict(i => rbf_fd_weights(diff_op_or_pde, i, basis)
                 for i in eachindex(centers(basis)))
 end

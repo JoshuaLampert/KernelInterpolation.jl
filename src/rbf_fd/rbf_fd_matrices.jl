@@ -1,9 +1,11 @@
 # Assemble a sparse RBF-FD matrix from local stencil contributions. For each target node
 # `y_j` in `nodeset`, the stencil of the nearest center is located and row `j` is filled
-# with `entry(ℓ_k, y_j)` for every local cardinal function `ℓ_k` on that stencil. This is
-# the common pattern behind the evaluation ([`kernel_matrix`](@ref)) and differentiation
-# ([`operator_matrix`](@ref)) matrices.
-function _rbf_fd_sparse_matrix(entry, basis::RBFFDBasis, nodeset::NodeSet)
+# with the local weights `local_weights(basis, i, y_j, op)` scattered into the columns given
+# by the stencil's global indices. `op = Identity()` gives the evaluation (resampling) matrix
+# ([`kernel_matrix`](@ref)); a differential operator/equation gives the differentiation
+# ([`operator_matrix`](@ref)) matrix. The local-basis policy stored in `basis` selects the
+# numerical route (see [`local_weights`](@ref)).
+function _rbf_fd_sparse_matrix(op, basis::RBFFDBasis, nodeset::NodeSet)
     n = length(nodeset)
     m = length(basis)
     rows = Int[]
@@ -14,10 +16,14 @@ function _rbf_fd_sparse_matrix(entry, basis::RBFFDBasis, nodeset::NodeSet)
     for j in 1:n
         y_j = nodeset[j]
         i = nearest_node_index(y_j, X)
-        for (k, global_idx) in enumerate(basis.stencil_indices[i])
+        w = local_weights(basis, i, y_j, op)
+        w isa AbstractVector ||
+            throw(ArgumentError("RBF-FD matrix assembly expects scalar operator values"))
+        indices = basis.stencil_indices[i]
+        for k in eachindex(indices)
             push!(rows, j)
-            push!(cols, global_idx)
-            push!(vals, entry(basis.local_funcs[i][k], y_j))
+            push!(cols, indices[k])
+            push!(vals, w[k])
         end
     end
 
@@ -25,38 +31,28 @@ function _rbf_fd_sparse_matrix(entry, basis::RBFFDBasis, nodeset::NodeSet)
 end
 
 # Evaluation (resampling) matrix: row `j` maps the nodal values to the interpolant value
-# at `nodeset[j]` using the nearest stencil's local cardinal functions. See the generic
-# [`kernel_matrix`](@ref) for the meaning shared with the other bases.
+# at `nodeset[j]` using the nearest stencil. See the generic [`kernel_matrix`](@ref) for the
+# meaning shared with the other bases.
 function kernel_matrix(basis::RBFFDBasis, nodeset::NodeSet = centers(basis))
-    return _rbf_fd_sparse_matrix(basis, nodeset) do f, y
-        return f(y)
-    end
+    return _rbf_fd_sparse_matrix(Identity(), basis, nodeset)
 end
 
 @doc raw"""
     pde_matrix(diff_op_or_pde, nodeset, basis::RBFFDBasis)
 
 Assemble the sparse RBF-FD operator matrix. Each row `j` corresponds to one node in
-`nodeset` and contains the local stencil weights ``\mathcal{L}\ell_k(y_j)`` of the
-differential operator (or PDE) `diff_op_or_pde`, evaluated at `y_j` using the cardinal
-functions of the nearest center in `basis`. The result is an `|nodeset| × |basis|` sparse
-matrix, so `nodeset` may be any set of evaluation points and need not equal the centers of
-`basis`. When `|nodeset| > |basis|`, the system assembled by [`pde_boundary_matrix`](@ref)
-is overdetermined and solved in the least-squares sense.
+`nodeset` and contains the local stencil weights of the differential operator (or PDE)
+`diff_op_or_pde`, evaluated at `nodeset[j]` using the nearest center's stencil in `basis`.
+The result is an `|nodeset| × |basis|` sparse matrix, so `nodeset` may be any set of
+evaluation points and need not equal the centers of `basis`.
 
 See also [`differentiation_matrix`](@ref), [`pde_boundary_matrix`](@ref).
 """
 function pde_matrix(diff_op_or_pde, nodeset::NodeSet, basis::RBFFDBasis)
-    return _rbf_fd_sparse_matrix(basis, nodeset) do f, y
-        value = diff_op_or_pde(f, y)
-        value isa Number ||
-            throw(ArgumentError("RBF-FD PDE assembly expects scalar operator values"))
-        return value
-    end
+    return _rbf_fd_sparse_matrix(diff_op_or_pde, basis, nodeset)
 end
 
-# For `RBFFDBasis` the cardinal functions are always used, so
-# `pde_matrix` and `differentiation_matrix` coincide. See the generic
+# For `RBFFDBasis` `pde_matrix` and `differentiation_matrix` coincide. See the generic
 # [`differentiation_matrix`](@ref) for the meaning shared with the other bases.
 function differentiation_matrix(diff_op_or_pde, basis::RBFFDBasis,
                                 nodeset::NodeSet = centers(basis))

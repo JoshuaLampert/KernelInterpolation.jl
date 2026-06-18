@@ -12,20 +12,32 @@
     neigh_rad = select_neighbors(3, nodeset, rad)
     @test length(neigh_rad.indices) ≥ 2
 
-    basis = RBFFDBasis(nodeset, kernel, knn)
-    weights = rbf_fd_weights(Laplacian(), 3, basis, RBFFDStandardBasis())
+    basis_std = RBFFDBasis(nodeset, kernel, knn; local_basis = RBFFDStandardBasis())
+    weights = rbf_fd_weights(Laplacian(), 3, basis_std)
     @test length(weights) == length(neigh.nodes)
     @test all(isfinite, weights)
 
+    basis_cardinal = RBFFDBasis(nodeset, kernel, knn; local_basis = RBFFDLagrangeBasis())
+    weights_cardinal = rbf_fd_weights(Laplacian(), 3, basis_cardinal)
+    @test length(weights_cardinal) == length(neigh.nodes)
+    @test all(isfinite, weights_cardinal)
+    # The standard and Lagrange routes yield the same weights mathematically
+    @test isapprox(weights, weights_cardinal)
+
     phs_kernel = PolyharmonicSplineKernel{1}(3)
-    basis_phs = RBFFDBasis(nodeset, phs_kernel, knn; m = order(phs_kernel))
-    weights_poly = rbf_fd_weights(Laplacian(), 3, basis_phs, RBFFDStandardBasis())
+    basis_std_phs = RBFFDBasis(nodeset, phs_kernel, knn;
+                               local_basis = RBFFDStandardBasis())
+    weights_poly = rbf_fd_weights(Laplacian(), 3, basis_std_phs)
     @test length(weights_poly) == length(neigh.nodes)
     @test all(isfinite, weights_poly)
 
-    weights_cardinal = rbf_fd_weights(Laplacian(), 3, basis, RBFFDLagrangeBasis())
-    @test length(weights_cardinal) == length(neigh.nodes)
-    @test all(isfinite, weights_cardinal)
+    basis_cardinal_phs = RBFFDBasis(nodeset, phs_kernel, knn;
+                                    local_basis = RBFFDLagrangeBasis())
+    weights_cardinal_poly = rbf_fd_weights(Laplacian(), 3, basis_cardinal_phs)
+    @test length(weights_cardinal_poly) == length(neigh.nodes)
+    @test all(isfinite, weights_cardinal_poly)
+    # The standard and Lagrange routes yield the same weights mathematically
+    @test isapprox(weights_poly, weights_cardinal_poly)
 end
 
 @testitem "RBF-FD: stationary discretization" setup=[Setup, AdditionalImports] begin
@@ -167,7 +179,7 @@ end
     j = nearest_node_index(x, centers(itp))
     bas = KernelInterpolation.basis(itp)
     c = coefficients(itp)
-    expected = sum(c[bas.stencil_indices[j][k]] * Laplacian()(bas.local_funcs[j][k], x)
+    expected = sum(c[bas.stencil_indices[j][k]] * Laplacian()(bas[j, k], x)
                    for k in eachindex(bas.stencil_indices[j]))
     @test isapprox(Laplacian()(itp, x), expected)
 
@@ -181,7 +193,7 @@ end
     @test grad_x isa AbstractVector
     @test length(grad_x) == 2
     @test isapprox(grad_x, Gradient()(itp, x))
-    grad_expected = sum(c[bas.stencil_indices[j][k]] * Gradient()(bas.local_funcs[j][k], x)
+    grad_expected = sum(c[bas.stencil_indices[j][k]] * Gradient()(bas[j, k], x)
                         for k in eachindex(bas.stencil_indices[j]))
     @test isapprox(grad_x, grad_expected)
     # At an inner node the matching stencil index (global index of the node) reproduces the
@@ -219,9 +231,10 @@ end
     basis = RBFFDBasis(nodeset, kernel, stencil; m = 0)
     @test_nowarn display(basis)
     @test order(basis) == 0
+    @test local_order(basis) == 0
     neigh = select_neighbors(3, nodeset, stencil)
 
-    # local_funcs always holds Lagrange cardinal functions
+    # For the default RBFFDLagrangeBasis, basis[i, k] is the k-th Lagrange cardinal function
     b = basis[3, 2]
     @test b(neigh.nodes[2])≈1.0 atol=1.0e-10
     @test abs(b(neigh.nodes[1])) ≤ 1.0e-12
@@ -230,6 +243,28 @@ end
     @test_throws BoundsError basis[0, 1]
     @test_throws BoundsError basis[3, 0]
     @test_throws BoundsError basis[3, 4]
+
+    # RBFFDStandardBasis: basis[i, k] is the k-th kernel translate, matching the global
+    # StandardBasis. Polynomials are not exposed through indexing, and order is 0 even with
+    # local polynomial augmentation m > 0.
+    basis_std = RBFFDBasis(nodeset, kernel, stencil; m = 2,
+                           local_basis = RBFFDStandardBasis())
+    @test order(basis_std) == 0
+    @test local_order(basis_std) == 2  # local polynomial augmentation order m
+    @test length(polynomial_basis(basis_std)) == 2  # {1, x} in 1D
+    bk = basis_std[3, 2]
+    @test bk([0.3]) ≈ kernel([0.3], neigh.nodes[2])
+    # Only the stencil-size kernel translates are indexable (no polynomial tail).
+    @test_throws BoundsError basis_std[3, length(neigh.indices) + 1]
+
+    # RBFFDLagrangeBasis with m > 0: the polynomials are baked into the cardinal functions
+    # (like the global LagrangeBasis), so there is no separate polynomial basis and
+    # local_order is 0 even though m = 2 was used to build the stencils.
+    basis_lag = RBFFDBasis(nodeset, kernel, stencil; m = 2,
+                           local_basis = RBFFDLagrangeBasis())
+    @test order(basis_lag) == 0
+    @test local_order(basis_lag) == 0
+    @test isempty(polynomial_basis(basis_lag))
 end
 
 @testitem "RBF-FD: kernel_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin

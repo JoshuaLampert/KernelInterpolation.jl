@@ -651,15 +651,18 @@ end
     # Test for Theorem 11.1 in Wendland's book
     stdbasis = StandardBasis(nodeset, kernel)
     R(x) = stdbasis(x)
+    # The polynomials are baked into the cardinal functions; obtain them from one.
+    ps = polynomial_basis(basis[1])
+    xx = polyvars(basis[1])
     function S(x)
-        v = zeros(length(basis.ps))
+        v = zeros(length(ps))
         for i in eachindex(v)
-            v[i] = basis.ps[i](basis.xx => x)
+            v[i] = ps[i](xx => x)
         end
         return v
     end
     b(x) = [R(x); S(x)]
-    K = KernelInterpolation.interpolation_matrix(stdbasis, basis.ps)
+    K = KernelInterpolation.interpolation_matrix(stdbasis, ps)
     x = rand(dim(nodeset))
     uv = K \ b(x)
     u = basis(x)

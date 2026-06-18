@@ -13,6 +13,28 @@ function callable(p::AbstractPolynomialLike)
 end
 
 """
+    Identity()
+
+The identity operator, i.e. the differential operator of order zero. Applied to a function
+it returns its value, and like the other operators it can be called with a
+[`RadialSymmetricKernel`](@ref) and points `x` and `y` to evaluate the `kernel` at `x - y`,
+or with an [`Interpolation`](@ref) object and a point `x` to evaluate the interpolation at
+`x`. This lets plain evaluation reuse the same interface as the differential operators (for
+example in the RBF-FD weight computation, see [`local_weights`](@ref)).
+"""
+struct Identity <: AbstractDifferentialOperator end
+
+function Base.show(io::IO, ::Identity)
+    print(io, "Id")
+    return nothing
+end
+
+(::Identity)(f::Function, x) = f(x)
+# Evaluate the kernel directly (no derivative, so no `save_call` zero-guard is needed). This
+# is more specific than the generic `(op)(kernel, x, y)` in `equations.jl`, hence unambiguous.
+(::Identity)(kernel::RadialSymmetricKernel, x, y) = kernel(x, y)
+
+"""
     PartialDerivative(i)
 
 Partial derivative operator with respect to the `i`-th component.

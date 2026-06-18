@@ -17,11 +17,13 @@ struct Collocation <: AbstractSpatialMethod end
 
 Local radial basis function finite difference strategy.
 
-Matrix assembly always uses the precomputed cardinal (Lagrange) functions. The `local_basis`
-keyword of [`SpatialDiscretization`](@ref) (or the `local_basis` field of [`RBFFDBasis`](@ref))
-controls the algorithm used by [`rbf_fd_weights`](@ref) when weights are requested directly:
-- `RBFFDLagrangeBasis()` (default): `w_k = 𝓛ℓ_k(x_i)`.
-- `RBFFDStandardBasis()`: solve the local kernel system `A w = rhs`, `rhs_k = 𝓛K(x_i, x_k)`.
+The `local_basis` keyword of [`SpatialDiscretization`](@ref) (or the `local_basis` field of
+[`RBFFDBasis`](@ref)) selects the algorithm used consistently for weight computation, matrix
+assembly, and interpolant evaluation:
+- `RBFFDLagrangeBasis()` (default): precompute the local cardinal functions and evaluate
+  `w_k = 𝓛ℓ_k(x_i)`.
+- `RBFFDStandardBasis()`: cache the factorization of each local kernel/polynomial system and
+  solve `M w = rhs`, `rhs_k = 𝓛K(x_i, x_k)` (plus polynomial rows).
 
 Both give the same weights up to numerical precision.
 """

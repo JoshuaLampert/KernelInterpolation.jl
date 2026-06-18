@@ -38,16 +38,14 @@ with `merge(nodeset_inner, nodeset_boundary)`.
 Evaluation at a point `x` uses the local stencil ``S(j)`` of the nearest center
 ``x_j``:
 ```math
-u_h(x) = \sum_{k \in S(j)} c_k \, \ell_k(x;\, S(j)),
+u_h(x) = \sum_{k \in S(j)} c_k \, w_k(x;\, S(j)),
 ```
-where ``\ell_k`` are Lagrange cardinal functions precomputed on ``S(j)``.  This
-formula holds regardless of the weight computation algorithm (`RBFFDLagrangeBasis`
-or `RBFFDStandardBasis`) because `local_funcs` always stores cardinal functions.
-
-For `RBFFDLagrangeBasis`, the nodal values are simultaneously the Lagrange
-expansion coefficients (cardinality: ``\ell_k(x_l) = \delta_{kl}``).  For
-`RBFFDStandardBasis`, the same nodal values serve as coefficients thanks to the
-uniformly precomputed cardinal basis.
+where ``w_k(x)`` are the local cardinal weights mapping the nodal values to the value of
+the local interpolant at `x` (i.e. `local_weights(basis, j, x, Identity())`). This formula
+holds regardless of the weight computation algorithm: for `RBFFDLagrangeBasis` the
+``w_k(x) = \ell_k(x)`` are the precomputed cardinal functions, while for
+`RBFFDStandardBasis` they are obtained by solving the cached local system with the
+evaluation right-hand side. Both give the same ``w_k`` mathematically.
 """
 const RBFFDInterpolation = Interpolation{<:RBFFDBasis}
 
@@ -282,10 +280,10 @@ function (itp::RBFFDInterpolation)(x, j::Integer)
     bas = basis(itp)
     c = coefficients(itp)
     indices = bas.stencil_indices[j]
-    funcs = bas.local_funcs[j]
+    w = local_weights(bas, j, x, Identity())
     s = zero(eltype(c))
     for k in eachindex(indices)
-        s += c[indices[k]] * funcs[k](x)
+        s += c[indices[k]] * w[k]
     end
     return s
 end
@@ -331,18 +329,23 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::LagrangeInterp
     return s
 end
 
-# RBF-FD: the coefficients are nodal values and the interpolant is represented by local
-# cardinal functions on the stencil of the nearest center (see the evaluation above).
-# Applying the operator must therefore act on those local cardinal functions, not on a
-# global kernel expansion.
-
+# RBF-FD: the coefficients are nodal values and the local interpolant on the stencil of the
+# nearest center represents the solution (see the evaluation above). Applying the operator
+# therefore reduces to the local weights `local_weights(basis, j, x, op)` for that operator,
+# dotted with the stencil's nodal values, not to a global kernel expansion.
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::RBFFDInterpolation, x, j)
     bas = basis(itp)
     c = coefficients(itp)
     indices = bas.stencil_indices[j]
-    funcs = bas.local_funcs[j]
-    for k in eachindex(indices)
-        s += c[indices[k]] * diff_op_or_pde(funcs[k], x)
+    w = local_weights(bas, j, x, diff_op_or_pde)
+    if w isa AbstractVector
+        for k in eachindex(indices)
+            s += c[indices[k]] * w[k]
+        end
+    else
+        for k in eachindex(indices)
+            s = s .+ c[indices[k]] .* @view(w[k, :])
+        end
     end
     return s
 end

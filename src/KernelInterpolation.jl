@@ -13,7 +13,7 @@ module KernelInterpolation
 
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
 using ForwardDiff: ForwardDiff
-using LinearAlgebra: Diagonal, Symmetric, I, norm, tr, dot, diagind
+using LinearAlgebra: Diagonal, Symmetric, I, norm, tr, dot, diagind, factorize
 using Printf: @sprintf
 using Random: Random
 using ReadVTK: VTKFile, get_points, get_point_data, get_data
@@ -68,8 +68,8 @@ export AbstractSpatialMethod, Collocation, RBFFD
 export AbstractStencilSelection, KNearestNeighbors, RadiusSearch
 export AbstractRBFFDLocalBasis, RBFFDStandardBasis, RBFFDLagrangeBasis
 export RBFFDBasis
-export phi, Phi, order
-export PartialDerivative, Gradient, Laplacian, EllipticOperator
+export phi, Phi, order, local_order
+export Identity, PartialDerivative, Gradient, Laplacian, EllipticOperator
 export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation,
        AdvectionDiffusionEquation
 export SpatialDiscretization, Semidiscretization, semidiscretize
