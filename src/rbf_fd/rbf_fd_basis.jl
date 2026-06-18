@@ -2,6 +2,8 @@
     AbstractRBFFDLocalBasis
 
 Abstract type selecting the local basis representation used to compute RBF-FD weights.
+
+See also [`RBFFDStandardBasis`](@ref) and [`RBFFDLagrangeBasis`](@ref).
 """
 abstract type AbstractRBFFDLocalBasis end
 
@@ -11,6 +13,8 @@ abstract type AbstractRBFFDLocalBasis end
 Compute local RBF-FD weights by solving the local kernel (or kernel+polynomial) system.
 The per-stencil augmented system matrix is factorized once at construction and reused for
 weight computation, matrix assembly, and interpolant evaluation.
+
+See also [`AbstractRBFFDLocalBasis`](@ref) and [`RBFFDBasis`](@ref).
 """
 struct RBFFDStandardBasis <: AbstractRBFFDLocalBasis end
 
@@ -21,6 +25,8 @@ Compute local RBF-FD weights from local cardinal (Lagrange) basis functions
 on each stencil, i.e., `w_j = 𝓛 ℓ_j(x_i)`. The cardinal functions are built once at
 construction and reused for weight computation, matrix assembly, and interpolant
 evaluation.
+
+See also [`AbstractRBFFDLocalBasis`](@ref) and [`RBFFDBasis`](@ref).
 """
 struct RBFFDLagrangeBasis <: AbstractRBFFDLocalBasis end
 
@@ -104,8 +110,9 @@ order(::RBFFDBasis) = 0
     local_order(basis::RBFFDBasis)
 
 Return the order `m` of the polynomial basis applied *separately* on each RBF-FD stencil,
-i.e., the polynomial degree plus 1 (`0` if no separate polynomials are used). This is
-distinct from [`order`](@ref), which is the (always zero) global augmentation.
+of an [`RBFFDBasis`](@ref), i.e., the polynomial degree plus 1 (`0` if no separate
+polynomials are used). This is distinct from [`order`](@ref), which is the (always zero)
+global augmentation.
 
 Like the global [`StandardBasis`](@ref)/[`LagrangeBasis`](@ref) distinction, this depends on
 the local-basis policy: for [`RBFFDStandardBasis`](@ref) the polynomials are an explicit part

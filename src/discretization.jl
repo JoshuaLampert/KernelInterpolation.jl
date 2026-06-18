@@ -9,6 +9,8 @@ abstract type AbstractSpatialMethod end
     Collocation()
 
 Global collocation strategy (Kansa method).
+
+See also [`AbstractSpatialMethod`](@ref) and [`RBFFD`](@ref).
 """
 struct Collocation <: AbstractSpatialMethod end
 
@@ -26,6 +28,8 @@ assembly, and interpolant evaluation:
   solve `M w = rhs`, `rhs_k = 𝓛K(x_i, x_k)` (plus polynomial rows).
 
 Both give the same weights up to numerical precision.
+
+See also [`AbstractSpatialMethod`](@ref) and [`Collocation`](@ref).
 """
 struct RBFFD <: AbstractSpatialMethod end
 
@@ -43,6 +47,9 @@ Spatial discretization of a partial differential equation with Dirichlet boundar
 The `nodeset_inner` are the nodes in the domain and `nodeset_boundary` are the nodes on the boundary. The `boundary_condition`
 is a function describing the Dirichlet boundary conditions. The `centers` are the centers of the kernel functions. By default,
 `centers` is set to `merge(nodeset_inner, nodeset_boundary)`. Otherwise, a least squares problem is solved.
+
+Uses `method` to select the spatial discretization strategy. If `method` is not given, it is selected based on the type of `basis`.
+If `basis` is an [`RBFFDBasis`](@ref), `method` is set to [`RBFFD`](@ref). Otherwise, `method` is set to [`Collocation`](@ref).
 
 See also [`Semidiscretization`](@ref), [`solve_stationary`](@ref).
 """
@@ -182,6 +189,8 @@ For kernel collocation, the kernel space is augmented with polynomials up to `or
 conditionally positive definite kernels are augmented automatically, while
 strictly positive definite kernels (`order == 0`) use no polynomials. RBF-FD discretizations handle
 polynomial augmentation locally via the stencils.
+
+See also [`SpatialDiscretization`](@ref).
 """
 function solve_stationary(spatial_discretization::SpatialDiscretization{Dim, RealT};
                           linsolve = nothing) where {Dim, RealT}
@@ -212,6 +221,10 @@ For convenience constructors with `centers` and `kernel`, a [`StandardBasis`](@r
 `centers` is set to `merge(nodeset_inner, nodeset_boundary)`.
 The number of basis functions must be equal to the number of inner and boundary nodes because OrdinaryDiffEq.jl
 does not support DAEs with rectangular mass matrices.
+
+If `method` in `spatial_discretization` is [`Collocation`](@ref), the semidiscretization is built by collocating the PDE at the inner nodes and the boundary conditions
+at the boundary nodes, leading to a system of ODEs for the coefficients of the kernel interpolant. If `method` is [`RBFFD`](@ref), the semidiscretization is built by
+applying the RBF-FD operator matrix to the vector of nodal values, leading to a system of ODEs for the nodal values themselves.
 
 See also [`SpatialDiscretization`](@ref), [`semidiscretize`](@ref).
 """
@@ -321,7 +334,7 @@ end
 """
     semidiscetize(semi::Semidiscretization, tspan)
 
-Wrap a [`Semidiscretization`](@ref) object into an `ODEProblem` object with time span `tspan`.
+Wrap a [`Semidiscretization`](@ref) object into an `ODEProblem` object from SciMLBase.jl with time span `tspan`.
 """
 function semidiscretize(semi::Semidiscretization, tspan)
     nodeset = merge(semi.spatial_discretization.nodeset_inner,

@@ -29,7 +29,7 @@ const LagrangeInterpolation = Interpolation{<:LagrangeBasis}
 @doc raw"""
     RBFFDInterpolation
 
-Type alias for `Interpolation{<:RBFFDBasis}`.
+Type alias for `[Interpolation](@ref){<:RBFFDBasis}`.
 
 The coefficient vector `c` holds **nodal values** ``u(x_i)`` for all nodes
 ``x_1,\ldots,x_N`` (inner nodes first, then boundary nodes), ordered consistently
@@ -41,10 +41,10 @@ Evaluation at a point `x` uses the local stencil ``S(j)`` of the nearest center
 u_h(x) = \sum_{k \in S(j)} c_k \, w_k(x;\, S(j)),
 ```
 where ``w_k(x)`` are the local cardinal weights mapping the nodal values to the value of
-the local interpolant at `x` (i.e. `local_weights(basis, j, x, Identity())`). This formula
-holds regardless of the weight computation algorithm: for `RBFFDLagrangeBasis` the
+the local interpolant at `x` (i.e. `[local_weights](@ref)(basis, j, x, Identity())`). This formula
+holds regardless of the weight computation algorithm: for [`RBFFDLagrangeBasis`](@ref) the
 ``w_k(x) = \ell_k(x)`` are the precomputed cardinal functions, while for
-`RBFFDStandardBasis` they are obtained by solving the cached local system with the
+[`RBFFDStandardBasis`](@ref) they are obtained by solving the cached local system with the
 evaluation right-hand side. Both give the same ``w_k`` mathematically.
 """
 const RBFFDInterpolation = Interpolation{<:RBFFDBasis}
@@ -57,42 +57,42 @@ end
 """
     dim(itp::Interpolation)
 
-Return the dimension of the input variables of the interpolation.
+Return the dimension of the input variables of the [`Interpolation`](@ref).
 """
 dim(::AbstractInterpolation{Basis, Dim}) where {Basis, Dim} = Dim
 
 """
     basis(itp)
 
-Return the basis from an interpolation object.
+Return the basis from an [`Interpolation`](@ref) object.
 """
 basis(itp::AbstractInterpolation) = itp.basis
 
 """
     interpolation_kernel(itp)
 
-Return the kernel from an interpolation object.
+Return the kernel from an [`Interpolation`](@ref) object.
 """
 interpolation_kernel(itp::AbstractInterpolation) = interpolation_kernel(basis(itp))
 
 """
     nodeset(itp)
 
-Return the node set from an interpolation object.
+Return the node set from an [`Interpolation`](@ref) object.
 """
 nodeset(itp::AbstractInterpolation) = itp.nodeset
 
 """
     centers(itp)
 
-Return the centers from the basis of an interpolation object.
+Return the centers from the basis of an [`Interpolation`](@ref) object.
 """
 centers(itp::AbstractInterpolation) = centers(basis(itp))
 
 """
     coefficients(itp::Interpolation)
 
-Obtain all the coefficients of the linear combination for the interpolant, i.e., both
+Obtain all the coefficients of the linear combination for the [`Interpolation`](@ref), i.e., both
 the coefficients for the kernel part and for the polynomial part.
 
 See also [`kernel_coefficients`](@ref) and [`polynomial_coefficients`](@ref).
@@ -103,7 +103,7 @@ coefficients(itp::Interpolation) = itp.c
     kernel_coefficients(itp::Interpolation)
 
 Obtain the coefficients of the kernel part of the linear combination for the
-interpolant.
+[`Interpolation`](@ref).
 
 See also [`coefficients`](@ref) and [`polynomial_coefficients`](@ref).
 """
@@ -113,7 +113,7 @@ See also [`coefficients`](@ref) and [`polynomial_coefficients`](@ref).
     polynomial_coefficients(itp::Interpolation)
 
 Obtain the coefficients of the polynomial part of the linear combination for the
-interpolant.
+[`Interpolation`](@ref).
 
 See also [`coefficients`](@ref) and [`kernel_coefficients`](@ref).
 """
@@ -122,7 +122,7 @@ See also [`coefficients`](@ref) and [`kernel_coefficients`](@ref).
 """
     polynomial_basis(itp::Interpolation)
 
-Return a vector of the polynomial basis functions used for the interpolation.
+Return a vector of the polynomial basis functions used for the [`Interpolation`](@ref).
 
 See also [`polyvars`](@ref).
 """
@@ -131,7 +131,7 @@ polynomial_basis(itp::Interpolation) = itp.ps
 """
     polyvars(itp::Interpolation)
 
-Return a vector of the polynomial variables.
+Return a vector of the polynomial variables for the [`Interpolation`](@ref).
 
 See also [`polynomial_basis`](@ref).
 """
@@ -140,7 +140,7 @@ polyvars(itp::Interpolation) = itp.xx
 """
     order(itp)
 
-Return the order ``m`` of the polynomial used for the interpolation, i.e.,
+Return the order ``m`` of the polynomial used for the [`Interpolation`](@ref), i.e.,
 the polynomial degree plus 1. If ``m = 0``, no polynomial is added.
 """
 order(itp::AbstractInterpolation) = order(basis(itp))
@@ -153,7 +153,7 @@ Return the system matrix, i.e., the matrix ``A`` in the linear system
 ```math
     Ac = f,
 ```
-where ``c`` are the coefficients of the kernel interpolant and ``f`` the vector
+where ``c`` are the coefficients of the [`Interpolation`](@ref) and ``f`` the vector
 of known values. The exact form of ``A`` differs depending on which method is used.
 """
 system_matrix(itp::Interpolation) = itp.system_matrix
@@ -378,7 +378,7 @@ end
 @doc raw"""
     kernel_inner_product(itp1, itp2)
 
-Inner product of the native space for two interpolants `itp1` and `itp2`
+Inner product of the native space for two [`Interpolation`](@ref) objects `itp1` and `itp2`
 with the same kernel. The inner product is defined as
 ```math
     \langle f, g\rangle_K = \sum_{i = 1}^N\sum_{j = 1}^Mc_i^fc_j^gK(x_i, \xi_j)
@@ -407,7 +407,7 @@ end
 @doc raw"""
     kernel_norm(itp)
 
-Norm of the native space defined by the kernel of the interpolant `itp`.
+Norm of the native space defined by the kernel of the [`Interpolation`](@ref) `itp`.
 The norm is defined as
 ```math
     \|f\|_K^2 = \sum_{i,j=1}^Nc_ic_jK(x_i, x_j)

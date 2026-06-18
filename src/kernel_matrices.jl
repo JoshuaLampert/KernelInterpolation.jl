@@ -137,7 +137,7 @@ For the [`StandardBasis`](@ref), the least squares matrix is defined as
     A = \begin{pmatrix}K & P_1\\P_2^T & 0\end{pmatrix},
 ```
 where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)
-for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref)` for the `centers`.
+for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref) for the `centers`.
 If a `nodeset` and `kernel` are given, the least squares matrix is computed for the [`StandardBasis`](@ref).
 Additionally, you can specify a `factorization_method` to use for the system matrix. By default, the system matrix is
 not factorized, but you can, e.g., also explicitly use the `qr` factorization.
