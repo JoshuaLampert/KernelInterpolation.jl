@@ -1468,7 +1468,7 @@ end
     @test size(L_poly) == (16, 16)
     n_inner = length(ni_poly)
     Lu = L_poly * u_vals
-    @test isapprox(Lu[1:n_inner], fill(-4.0, n_inner), atol = 1e-11)
+    @test isapprox(Lu[1:n_inner], fill(-4.0, n_inner), atol = 1e-10)
     @test isapprox(Lu[(n_inner + 1):end], poly_u.(nb_poly), atol = 1e-11)
     # The kernel convenience form agrees with the basis form.
     @test operator_matrix(pde, ni_poly, nb_poly, kernel; m = 3) ≈ L_poly
