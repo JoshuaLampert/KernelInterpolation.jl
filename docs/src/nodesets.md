@@ -59,11 +59,12 @@ D = distance_matrix(nodes, nodes_fine)
 Finally, the fill distance is approximated by
 
 ```@example nodesets
-h = maximum(minimum(D, dims = 1))
+h = fill_distance(nodes, nodes_fine)
 ```
 
 Note that this is only an estimate. The true fill distance is ``\sqrt{2}/2\approx 0.707`` (and reached by placing ``x\in\Omega`` at
-``(0.5, 0.5)^T``). The estimate can be improved by taking a finer evaluation grid.
+``(0.5, 0.5)^T``). The estimate can be improved by taking a finer evaluation grid. Internally, [`fill_distance`](@ref) uses
+[`distance_matrix`](@ref) to compute the nearest-node distance for each reference point and returns the maximum.
 
 Next to [`homogeneous_hypercube`](@ref), KernelInterpolation.jl provides additional convenience functions to create specific commonly
 used [`NodeSet`](@ref)s. These are [`homogeneous_hypercube_boundary`](@ref) to create equally spaced nodes at the boundary of a hypercube,

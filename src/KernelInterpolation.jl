@@ -74,7 +74,7 @@ export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation,
        AdvectionDiffusionEquation
 export SpatialDiscretization, Semidiscretization, semidiscretize
 export NoRegularization, L2Regularization
-export NodeSet, empty_nodeset, separation_distance, dim, eachdim,
+export NodeSet, empty_nodeset, separation_distance, fill_distance, dim, eachdim,
        distance_matrix, random_hypercube, random_hypercube_boundary, homogeneous_hypercube,
        homogeneous_hypercube_boundary, random_hypersphere, random_hypersphere_boundary
 export interpolation_kernel, nodeset, centers, coefficients, kernel_coefficients,

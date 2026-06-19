@@ -221,6 +221,27 @@ function distance_matrix(nodeset1::NodeSet, nodeset2::NodeSet)
     return D
 end
 
+@doc raw"""
+    fill_distance(nodeset, reference)
+
+Approximate the fill distance of a [`NodeSet`](@ref) ``X = \{x_1,\ldots, x_n\}`` with
+respect to a domain ``\Omega`` represented by a reference [`NodeSet`](@ref) ``\Xi``:
+```math
+    h_{X,\Omega} \approx \max_{\xi_i \in \Xi}\,\min_{x_j \in X} \|\xi_i - x_j\|.
+```
+The result is an approximation on the true fill distance
+```math
+    h_{X,\Omega} = \sup_{x \in \Omega}\,\min_{x_j \in X} \|x - x_j\|;
+```
+accuracy improves with the density of `reference`. 
+
+See also [`separation_distance`](@ref), [`distance_matrix`](@ref).
+"""
+function fill_distance(nodeset::NodeSet, reference::NodeSet)
+    D = distance_matrix(reference, nodeset)
+    return maximum(minimum(D, dims = 2))
+end
+
 @deprecate values_along_dim(nodeset::NodeSet, i::Int) nodeset[:, i]
 
 # Some convenience function to create some specific `NodeSet`s
