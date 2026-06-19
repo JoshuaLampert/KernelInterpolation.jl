@@ -251,10 +251,10 @@ Radial basis function finite differences (RBF-FD) is an alternative local approa
 local stencils. Instead of involving all nodes, RBF-FD selects a small neighborhood around each node and computes
 differential operator weights locally. This yields a sparse system matrix, which is more efficient for large-scale problems.
 
-In KernelInterpolation.jl, RBF-FD is selected by passing `RBFFD()` as the discretization method to
+In KernelInterpolation.jl, RBF-FD is selected by passing [`RBFFD()`](@ref) as the discretization method to
 [`SpatialDiscretization`](@ref). The stencil is controlled by the `stencil_selection` keyword argument, e.g.
-`KNearestNeighbors(n)` to use the $n$ nearest neighbors of each node. For example, to solve the Poisson equation on a
-unit square with RBF-FD:
+[`KNearestNeighbors(n)`](@ref) to use the $n$ nearest neighbors of each node or [`RadiusSearch(r)`](@ref) to
+use all nodes within a radius $r$. For example, to solve the Poisson equation on a unit square with RBF-FD:
 
 ```julia
 using KernelInterpolation
@@ -274,9 +274,9 @@ itp = solve_stationary(sd)
 The `local_basis` keyword of [`SpatialDiscretization`](@ref) controls how local stencil weights are
 computed:
 
-- `RBFFDLagrangeBasis()` (default): builds local cardinal (Lagrange) functions $\ell_j$ on each stencil
+- [`RBFFDLagrangeBasis()`](@ref) (default): builds local cardinal (Lagrange) functions $\ell_j$ on each stencil
   and uses weights $w_j = \mathcal{L}\ell_j(x_i)$.
-- `RBFFDStandardBasis()`: solves the local kernel/polynomial RBF-FD system directly for the weights.
+- [`RBFFDStandardBasis()`](@ref): solves the local kernel/polynomial RBF-FD system directly for the weights.
 
 Both algorithms produce the same weights up to numerical precision. To use the standard-basis algorithm:
 

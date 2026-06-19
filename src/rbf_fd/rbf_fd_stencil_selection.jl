@@ -12,8 +12,7 @@ abstract type AbstractStencilSelection end
 Stencil selection strategy using k-nearest neighbors. Each interior point uses its `k` nearest
 neighbors (by Euclidean distance) to form the local FD stencil. This ensures uniform sparsity.
 
-# Arguments
-- `k::Int`: Number of nearest neighbors to use
+See also [`AbstractStencilSelection`](@ref) and [`RadiusSearch`](@ref).
 """
 struct KNearestNeighbors <: AbstractStencilSelection
     k::Int
@@ -29,7 +28,7 @@ Base.show(io::IO, ss::KNearestNeighbors) = print(io, "KNearestNeighbors(k=$(ss.k
     select_neighbors(i, nodeset, stencil_selection)
 
 Selects neighbors of `nodeset[i]` from `nodeset` using `stencil_selection`.
-Returns a tuple of (neighbor_indices, neighbor_nodes).
+Returns a tuple of `(neighbor_indices, neighbor_nodes)`.
 """
 function select_neighbors(i::Int, nodeset::NodeSet, stencil::KNearestNeighbors)
     k = stencil.k
@@ -48,12 +47,11 @@ end
 """
     RadiusSearch(radius)
 
-Stencil selection strategy using fixed radius search. Each interior point uses all neighbors
-within a given Euclidean distance `radius` to form the local FD stencil. This allows variable
-stencil sizes but adapts to local point density.
+Stencil selection strategy using fixed radius search with search `radius`. Each interior point
+uses all neighbors within a given Euclidean distance `radius` to form the local FD stencil.
+This allows variable stencil sizes but adapts to local point density.
 
-# Arguments
-- `radius::Real`: Search radius for neighbor selection
+See also [`AbstractStencilSelection`](@ref) and [`KNearestNeighbors`](@ref).
 """
 struct RadiusSearch{RealT <: Real} <: AbstractStencilSelection
     radius::RealT

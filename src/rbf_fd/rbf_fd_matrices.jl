@@ -44,7 +44,7 @@ Assemble the sparse RBF-FD operator matrix. Each row `j` corresponds to one node
 `nodeset` and contains the local stencil weights of the differential operator (or PDE)
 `diff_op_or_pde`, evaluated at `nodeset[j]` using the nearest center's stencil in `basis`.
 The result is an `|nodeset| × |basis|` sparse matrix, so `nodeset` may be any set of
-evaluation points and need not equal the centers of `basis`.
+evaluation points and need not equal the centers of the [`RBFFDBasis`](@ref) `basis`.
 
 See also [`differentiation_matrix`](@ref), [`pde_boundary_matrix`](@ref).
 """

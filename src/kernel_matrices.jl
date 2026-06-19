@@ -137,7 +137,7 @@ For the [`StandardBasis`](@ref), the least squares matrix is defined as
     A = \begin{pmatrix}K & P_1\\P_2^T & 0\end{pmatrix},
 ```
 where ``K`` is the [`regularize!`](@ref)d [`kernel_matrix`](@ref), ``P_1`` the [`polynomial_matrix`](@ref)
-for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref)` for the `centers`.
+for the `nodeset` and ``P_2`` the [`polynomial_matrix`](@ref) for the `centers`.
 If a `nodeset` and `kernel` are given, the least squares matrix is computed for the [`StandardBasis`](@ref).
 Additionally, you can specify a `factorization_method` to use for the system matrix. By default, the system matrix is
 not factorized, but you can, e.g., also explicitly use the `qr` factorization.
@@ -191,6 +191,8 @@ in `nodeset1` and ``\xi_j`` are the nodes in `nodeset2`. If a `basis` is given, 
     (\tilde A_\mathcal{L})_{ij} = \mathcal{L}b_j(x_i),
 ```
 where ``b_j`` are the basis functions in the `basis` and ``x_i`` are the nodes in `nodeset`.
+
+See also [`differentiation_matrix`](@ref), [`pde_boundary_matrix`](@ref).
 """
 function pde_matrix(diff_op_or_pde, nodeset1, nodeset2, kernel)
     n = length(nodeset1)
