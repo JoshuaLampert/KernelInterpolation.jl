@@ -9,6 +9,7 @@ for human readability.
 
 #### Added
 
+- Added `fill_distance` function ([#187]).
 - Added support for RBF-FD ([#182]).
 - Added `differentiation_matrix` to assemble the matrix of a differential operator (sparse for
   `RBFFDBasis`, dense for kernel collocation), and added polynomial augmentation to the collocation
