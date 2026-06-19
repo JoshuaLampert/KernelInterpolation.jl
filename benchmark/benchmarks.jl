@@ -133,14 +133,20 @@ SUITE["RBF-FD basis standard 2D"] = @benchmarkable RBFFDBasis($nodeset, $kernel,
 # policies produce the same weights but differ in the numerical route, so we benchmark the
 # full solve with both: the default Lagrange cardinal functions and the standard basis
 # (solving each precomputed local kernel/polynomial system).
-sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(), kernel;
-                           stencil_selection, m = order(kernel),
-                           local_basis = RBFFDLagrangeBasis())
-SUITE["RBF-FD Poisson 2D with Lagrange basis"] = @benchmarkable solve_stationary($sd)
-sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(), kernel;
-                           stencil_selection, m = order(kernel),
-                           local_basis = RBFFDStandardBasis())
-SUITE["RBF-FD Poisson 2D standard basis"] = @benchmarkable solve_stationary($sd)
+sd_lagrange = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(),
+                                    kernel; stencil_selection, m = order(kernel),
+                                    local_basis = RBFFDLagrangeBasis())
+SUITE["RBF-FD Poisson 2D with Lagrange basis"] = @benchmarkable solve_stationary($sd_lagrange)
+sd_standard = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(),
+                                    kernel; stencil_selection, m = order(kernel),
+                                    local_basis = RBFFDStandardBasis())
+SUITE["RBF-FD Poisson 2D standard basis"] = @benchmarkable solve_stationary($sd_standard)
+
+itp_lagrange = solve_stationary(sd_lagrange)
+itp_standard = solve_stationary(sd_standard)
+x = [0.5, 0.5]
+SUITE["RBF-FD evaluation Lagrange basis 2D"] = @benchmarkable $itp_lagrange($x)
+SUITE["RBF-FD evaluation standard basis 2D"] = @benchmarkable $itp_standard($x)
 
 # Overdetermined (least-squares) RBF-FD: fewer centers than evaluation nodes.
 inner_centers = homogeneous_hypercube(10, (0.1, 0.1), (0.9, 0.9); dim = 2)
