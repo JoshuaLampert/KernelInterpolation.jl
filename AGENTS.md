@@ -16,7 +16,7 @@ Tests use [TestItemRunner](https://github.com/julia-actions/TestItemRunner). Eac
 with `setup=[...]` snippets (`Setup`, `AdditionalImports`, `PDEExamples`, ...) defined in `test/runtests.jl` and
 `test/test_util.jl`.
 
-Run individual test items via the persistent `mcp__julia__julia_eval` session (`env_path` = the package root,), not `julia --project=test`. Use `TestEnv.activate()` to build the same merged env
+Run individual test items via the persistent `mcp__julia__julia_eval` session (`env_path` = the package root), not `julia --project=test`. Use `TestEnv.activate()` to build the same merged env
 (package + test deps) that `Pkg.test` uses, then filter with TestItemRunner. The session stays warm, so later items
 skip recompilation:
 
