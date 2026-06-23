@@ -332,9 +332,30 @@ end
     # PartialDerivative(1) with polynomial augmentation m=2 ({1, x} in 1D) is exact on
     # linear functions: D * x_vals = ones, D * ones = zeros.
     basis_m2 = RBFFDBasis(X, kernel, stencil; m = 2)
-    D1_m2 = differentiation_matrix(PartialDerivative(1), basis_m2)
+    op = PartialDerivative(1)
+    D1_m2 = differentiation_matrix(op, basis_m2)
     @test isapprox(D1_m2 * ones(length(X)), zeros(length(X)), atol = 1e-14)
     @test isapprox(D1_m2 * first.(X), ones(length(X)), atol = 1e-13)
+
+    # Local exactness on RBF translates: with m = 2 ({1, x}) the reproduced local space is
+    # span{φ(⋅ - xₖ) : k ∈ stencil} ⊕ P₁ subject to the moment conditions Σ aₖ = 0, Σ aₖ xₖ = 0.
+    # A moment-consistent kernel combination centered on a stencil's own nodes is therefore
+    # differentiated exactly: (D f)ⱼ = (∂₁ f)(x_j). Here the evaluation nodes equal the centers,
+    # so row j uses the stencil of center j.
+    for j in eachindex(X)
+        neigh = sort(select_neighbors(j, X, stencil).indices)
+        c = neigh[(length(neigh) + 1) ÷ 2]
+        a = Dict(c - 1 => 1.0, c => -2.0, c + 1 => 1.0)  # 2nd difference: both moments vanish
+        f_vals = [sum(get(a, k, 0.0) * kernel(X[n], X[k]) for k in keys(a))
+                  for n in eachindex(X)]
+        exact = sum(get(a, k, 0.0) * op(kernel, X[j], X[k]) for k in keys(a))
+        @test isapprox((D1_m2 * f_vals)[j], exact, atol = 1e-13)
+    end
+    # A single bare translate violates Σ aₖ = 0, so it is *not* in the reproduced space and is
+    # not differentiated exactly on the asymmetric boundary stencil of center 1.
+    c = last(sort(select_neighbors(1, X, stencil).indices))
+    g_vals = [kernel(X[n], X[c]) for n in eachindex(X)]
+    @test !isapprox((D1_m2 * g_vals)[1], op(kernel, X[1], X[c]), atol = 1e-8)
 
     # 2D: PartialDerivative(1) and (2) are exact on linear functions with order(kernel_2d)=m=2
     # (monomials of degree ≤ 1 in 2D: {1, x₁, x₂}).
@@ -400,11 +421,31 @@ end
 
     # With m=2 ({1, x} in 1D): D * p.(X) = p'.(Y) exactly for polynomials of degree ≤ 1.
     basis_m2 = RBFFDBasis(X, kernel, stencil; m = 2)
-    D_m2 = differentiation_matrix(PartialDerivative(1), basis_m2, Y)
+    op = PartialDerivative(1)
+    D_m2 = differentiation_matrix(op, basis_m2, Y)
     @test size(D_m2) == (length(Y), length(X))
     x_vals = first.(X)
     @test isapprox(D_m2 * ones(length(X)), zeros(length(Y)), atol = 1e-12)
     @test isapprox(D_m2 * x_vals, ones(length(Y)), atol = 1e-12)
+
+    # Local exactness on RBF translates (oversampled/rectangular case): the row for the
+    # evaluation point Y[j] uses the stencil of the nearest center in X. A moment-consistent
+    # kernel combination on that stencil's nodes (Σ aₖ = 0, Σ aₖ xₖ = 0) is differentiated
+    # exactly at Y[j]: (D f)ⱼ = (∂₁ f)(Y[j]).
+    for j in eachindex(Y)
+        ic = nearest_node_index(Y[j], X)
+        neigh = sort(select_neighbors(ic, X, stencil).indices)
+        c = neigh[(length(neigh) + 1) ÷ 2]
+        a = Dict(c - 1 => 1.0, c => -2.0, c + 1 => 1.0)  # 2nd difference: both moments vanish
+        f_vals = [sum(get(a, k, 0.0) * kernel(X[n], X[k]) for k in keys(a))
+                  for n in eachindex(X)]
+        exact = sum(get(a, k, 0.0) * op(kernel, Y[j], X[k]) for k in keys(a))
+        @test isapprox((D_m2 * f_vals)[j], exact, atol = 1e-12)
+    end
+    # A single bare translate violates Σ aₖ = 0 and is not differentiated exactly.
+    c = last(sort(select_neighbors(nearest_node_index(Y[1], X), X, stencil).indices))
+    g_vals = [kernel(X[n], X[c]) for n in eachindex(X)]
+    @test !isapprox((D_m2 * g_vals)[1], op(kernel, Y[1], X[c]), atol = 1e-8)
 
     # With m=3 ({1, x, x²} in 1D): Laplacian * p.(X) = p''.(Y) for degree ≤ 2.
     basis_m3 = RBFFDBasis(X, kernel, stencil; m = 3)
