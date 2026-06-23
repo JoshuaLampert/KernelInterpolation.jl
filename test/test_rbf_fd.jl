@@ -267,6 +267,46 @@ end
     @test isempty(polynomial_basis(basis_lag))
 end
 
+@testitem "RBF-FD: RBFFDLagrangeBasis cardinality" setup=[Setup, AdditionalImports] begin
+    # The local basis of an `RBFFDBasis` with `RBFFDLagrangeBasis` is cardinal *per stencil*:
+    # the k-th local basis function on the stencil around center i satisfies the
+    # Kronecker-delta property ℓ_k(x_j) = δ_{kj} on the nodes x_j of that stencil, regardless
+    # of kernel, dimension, or local polynomial augmentation m (which is baked into ℓ_k).
+    function test_cardinality(basis, nodeset, stencil)
+        for i in eachindex(nodeset)
+            neigh = select_neighbors(i, nodeset, stencil)
+            for k in eachindex(neigh.indices)
+                ℓ_k = basis[i, k]
+                for (j, x_j) in enumerate(neigh.nodes)
+                    expected = (j == k) ? 1.0 : 0.0
+                    @test isapprox(ℓ_k(x_j), expected, atol = 1.0e-10)
+                end
+            end
+        end
+        return nothing
+    end
+
+    # 1D, Gauss kernel, no polynomial augmentation.
+    nodeset_1d = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
+    stencil_1d = KNearestNeighbors(3)
+    basis_gauss = RBFFDBasis(nodeset_1d, GaussKernel{1}(shape_parameter = 1.0), stencil_1d;
+                             m = 0, local_basis = RBFFDLagrangeBasis())
+    test_cardinality(basis_gauss, nodeset_1d, stencil_1d)
+
+    # 1D, polyharmonic spline with local polynomial augmentation m = 2 ({1, x}). The
+    # polynomials are baked into the cardinal functions, so cardinality still holds.
+    basis_phs = RBFFDBasis(nodeset_1d, PolyharmonicSplineKernel{1}(3), stencil_1d;
+                           m = 2, local_basis = RBFFDLagrangeBasis())
+    test_cardinality(basis_phs, nodeset_1d, stencil_1d)
+
+    # 2D, polyharmonic spline with the default polynomial augmentation.
+    nodeset_2d = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    stencil_2d = KNearestNeighbors(6)
+    basis_2d = RBFFDBasis(nodeset_2d, PolyharmonicSplineKernel{2}(3), stencil_2d;
+                          local_basis = RBFFDLagrangeBasis())
+    test_cardinality(basis_2d, nodeset_2d, stencil_2d)
+end
+
 @testitem "RBF-FD: kernel_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
     using SparseArrays: findnz
     X = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
