@@ -292,12 +292,14 @@ end
     basis_gauss = RBFFDBasis(nodeset_1d, GaussKernel{1}(shape_parameter = 1.0), stencil_1d;
                              m = 0, local_basis = RBFFDLagrangeBasis())
     test_cardinality(basis_gauss, nodeset_1d, stencil_1d)
+    @test kernel_matrix(basis_gauss) ≈ I
 
     # 1D, polyharmonic spline with local polynomial augmentation m = 2 ({1, x}). The
     # polynomials are baked into the cardinal functions, so cardinality still holds.
     basis_phs = RBFFDBasis(nodeset_1d, PolyharmonicSplineKernel{1}(3), stencil_1d;
                            m = 2, local_basis = RBFFDLagrangeBasis())
     test_cardinality(basis_phs, nodeset_1d, stencil_1d)
+    @test kernel_matrix(basis_phs) ≈ I
 
     # 2D, polyharmonic spline with the default polynomial augmentation.
     nodeset_2d = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
@@ -305,6 +307,7 @@ end
     basis_2d = RBFFDBasis(nodeset_2d, PolyharmonicSplineKernel{2}(3), stencil_2d;
                           local_basis = RBFFDLagrangeBasis())
     test_cardinality(basis_2d, nodeset_2d, stencil_2d)
+    @test kernel_matrix(basis_2d) ≈ I
 end
 
 @testitem "RBF-FD: kernel_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
