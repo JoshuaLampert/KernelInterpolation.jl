@@ -333,6 +333,57 @@ end
     end
 end
 
+@testitem "RBF-FD: kernel_matrix reproduces polynomials up to degree m-1" setup=[
+    Setup,
+    AdditionalImports
+] begin
+    # The oversampled interpolation (resampling) matrix C = kernel_matrix(basis, Y) maps the
+    # nodal values of a polynomial at the centers X to its values at the evaluation nodes Y,
+    # i.e. C * p.(X) = p.(Y), exactly for polynomials of degree ≤ m-1 (the local polynomial
+    # augmentation order). One degree higher this is in general no longer exact.
+
+    # 1D, oversampled (N > M), with m = 3 ({1, x, x²}).
+    X = NodeSet(LinRange(0.0, 1.0, 8))
+    Y = NodeSet(LinRange(0.0, 1.0, 21))
+    kernel = PolyharmonicSplineKernel{1}(3)
+    stencil = KNearestNeighbors(5)
+    m = 3
+    basis = RBFFDBasis(X, kernel, stencil; m = m)
+    C = kernel_matrix(basis, Y)
+    @test size(C) == (length(Y), length(X))
+
+    x_X = first.(X)
+    x_Y = first.(Y)
+    for deg in 0:(m - 1)
+        @test isapprox(C * (x_X .^ deg), x_Y .^ deg, atol = 1e-13)
+    end
+    # Degree m (= 3) is in general not reproduced exactly.
+    @test !isapprox(C * (x_X .^ m), x_Y .^ m, atol = 1e-8)
+
+    # 2D, oversampled, with m = 2 ({1, x₁, x₂}): exact on linear functions.
+    nodes_2d = homogeneous_hypercube(5, (0.0, 0.0), (1.0, 1.0))
+    eval_2d = homogeneous_hypercube(8, (0.0, 0.0), (1.0, 1.0))
+    kernel_2d = PolyharmonicSplineKernel{2}(3)
+    basis_2d = RBFFDBasis(nodes_2d, kernel_2d, KNearestNeighbors(6); m = 2)
+    C2 = kernel_matrix(basis_2d, eval_2d)
+    @test size(C2) == (length(eval_2d), length(nodes_2d))
+
+    one_X = ones(length(nodes_2d))
+    one_Y = ones(length(eval_2d))
+    x1_X = first.(nodes_2d)
+    x1_Y = first.(eval_2d)
+    x2_X = last.(nodes_2d)
+    x2_Y = last.(eval_2d)
+    @test isapprox(C2 * one_X, one_Y, atol = 1e-13)
+    @test isapprox(C2 * x1_X, x1_Y, atol = 1e-13)
+    @test isapprox(C2 * x2_X, x2_Y, atol = 1e-13)
+    # An arbitrary linear combination is reproduced as well.
+    @test isapprox(C2 * (2 .* x1_X .- 3 .* x2_X .+ 1), 2 .* x1_Y .- 3 .* x2_Y .+ 1,
+                   atol = 1e-13)
+    # A quadratic (degree 2 > m - 1 = 1) is in general not reproduced exactly.
+    @test !isapprox(C2 * (x1_X .^ 2), x1_Y .^ 2, atol = 1e-8)
+end
+
 @testitem "RBF-FD: differentiation_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
     X = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
     Y = NodeSet([0.1, 0.3, 0.6, 0.9, 1.0, 0.0])
