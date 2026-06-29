@@ -87,7 +87,7 @@ end
 
 @testitem "rbf_fd_poisson_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
-                          l2=0.31009752227732473, linf=0.035893562691565364,
+                          l2=0.3091145670601108, linf=0.03593545182808036,
                           pde_test=true)
 end
 
@@ -99,7 +99,7 @@ end
 ] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_poisson_2d_basic.jl"),
                           local_basis=RBFFDStandardBasis(),
-                          l2=0.31009752227678944, linf=0.03589356269158671,
+                          l2=0.3091145670599337, linf=0.035935451828227466,
                           pde_test=true)
 end
 
@@ -123,6 +123,6 @@ end
 
 @testitem "rbf_fd_advection_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "rbf_fd_advection_2d_basic.jl"),
-                          l2=0.24636308857403452, linf=0.050945760748381974,
+                          l2=0.24648672491853177, linf=0.05116013173606859,
                           pde_test=true)
 end

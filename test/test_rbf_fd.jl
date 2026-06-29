@@ -12,6 +12,36 @@
     neigh_rad = select_neighbors(3, nodeset, rad)
     @test length(neigh_rad.indices) ≥ 2
 
+    # Two-argument `select_neighbors` selects the stencils of *all* nodes at once (reusing a
+    # single search structure) and must agree with the per-node queries above.
+    all_knn = select_neighbors(nodeset, knn)
+    @test length(all_knn) == length(nodeset)
+    @test all(stencil -> length(stencil) == knn.k, all_knn)
+    # Every node is contained in its own stencil (it is the nearest neighbor of itself).
+    @test all(i -> i in all_knn[i], eachindex(nodeset))
+    # Batched and per-node results are identical (same order, since both use a `KDTree`).
+    @test all_knn[3] == neigh.indices
+    @test all(i -> all_knn[i] == select_neighbors(i, nodeset, knn).indices,
+              eachindex(nodeset))
+    # On the uniform grid the 3 nearest neighbors are known by hand.
+    @test Set(all_knn[1]) == Set([1, 2, 3])
+    @test Set(all_knn[3]) == Set([2, 3, 4])
+
+    all_rad = select_neighbors(nodeset, rad)
+    @test length(all_rad) == length(nodeset)
+    @test all(i -> i in all_rad[i], eachindex(nodeset))
+    @test Set(all_rad[3]) == Set(neigh_rad.indices)
+    # All selected neighbors lie within the search radius (spacing 0.25 < 0.3 < 0.5).
+    @test all(eachindex(nodeset)) do i
+        return all(j -> norm(nodeset[i] .- nodeset[j]) ≤ rad.radius, all_rad[i])
+    end
+    @test Set(all_rad[1]) == Set([1, 2])
+    @test Set(all_rad[3]) == Set([2, 3, 4])
+
+    # `k` larger than the number of nodes is an error.
+    @test_throws ArgumentError select_neighbors(nodeset,
+                                                KNearestNeighbors(length(nodeset) + 1))
+
     basis_std = RBFFDBasis(nodeset, kernel, knn; local_basis = RBFFDStandardBasis())
     weights = rbf_fd_weights(Laplacian(), 3, basis_std)
     @test length(weights) == length(neigh.nodes)

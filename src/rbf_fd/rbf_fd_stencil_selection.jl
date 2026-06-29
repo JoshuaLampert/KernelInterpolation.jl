@@ -25,20 +25,42 @@ end
 Base.show(io::IO, ss::KNearestNeighbors) = print(io, "KNearestNeighbors(k=$(ss.k))")
 
 """
+    select_neighbors(nodeset, stencil_selection)
+
+Select the stencils for *all* nodes of `nodeset` at once using `stencil_selection`. A single
+spatial search structure (a [`KDTree`](https://github.com/KristofferC/NearestNeighbors.jl))
+is built over the nodes and reused for every query, which makes the overall neighborhood
+search scale like `O(N log N)` instead of the `O(N^2)` of a per-node brute-force distance scan.
+Returns a `Vector` whose `i`-th entry holds the global neighbor indices of `nodeset[i]`.
+
+See also [`select_neighbors(i, nodeset, stencil_selection)`](@ref).
+"""
+function select_neighbors(nodeset::NodeSet, stencil::KNearestNeighbors)
+    k = stencil.k
+    n = length(nodeset)
+    k ≤ n || throw(ArgumentError("k=$(k) exceeds nodeset size $(n)"))
+    tree = KDTree(nodeset.nodes)
+    # `knn` returns the `k` nearest neighbors sorted by distance; the center node itself has
+    # distance 0 and is therefore always included in its own stencil.
+    indices, _ = knn(tree, nodeset.nodes, k, true)
+    return indices
+end
+
+"""
     select_neighbors(i, nodeset, stencil_selection)
 
 Selects neighbors of `nodeset[i]` from `nodeset` using `stencil_selection`.
-Returns a tuple of `(neighbor_indices, neighbor_nodes)`.
+Returns a tuple of `(indices, nodes)`. To select the stencils of all nodes at once
+(reusing a single search structure), use [`select_neighbors(nodeset, stencil_selection)`](@ref).
 """
 function select_neighbors(i::Int, nodeset::NodeSet, stencil::KNearestNeighbors)
     k = stencil.k
     n = length(nodeset)
     k ≤ n || throw(ArgumentError("k=$(k) exceeds nodeset size $(n)"))
-    x_i = nodeset[i]
-
-    # Compute Euclidean distances to all nodes and keep center point in stencil.
-    distances = [norm(x_i .- nodeset[j]) for j in 1:n]
-    neighbor_indices = sortperm(distances)[1:k]
+    tree = KDTree(nodeset.nodes)
+    # `knn` returns the `k` nearest neighbors sorted by distance; the center node itself has
+    # distance 0 and is therefore always included in its own stencil.
+    neighbor_indices, _ = knn(tree, nodeset[i], k, true)
 
     neighbor_nodes = NodeSet(nodeset.nodes[neighbor_indices])
     return (indices = neighbor_indices, nodes = neighbor_nodes)
@@ -65,19 +87,23 @@ Base.show(io::IO, ss::RadiusSearch) = print(io, "RadiusSearch(r=$(ss.radius))")
 
 function select_neighbors(i::Int, nodeset::NodeSet, stencil::RadiusSearch)
     radius = stencil.radius
-    x_i = nodeset[i]
-    neighbor_indices = Int[]
-
-    for j in eachindex(nodeset)
-        dist = norm(x_i .- nodeset[j])
-        if dist <= radius
-            push!(neighbor_indices, j)
-        end
-    end
+    tree = KDTree(nodeset.nodes)
+    neighbor_indices = inrange(tree, nodeset[i], radius)
 
     isempty(neighbor_indices) &&
         throw(ArgumentError("No neighbors found within radius $(radius) for point index $(i)"))
 
     neighbor_nodes = NodeSet(nodeset.nodes[neighbor_indices])
     return (indices = neighbor_indices, nodes = neighbor_nodes)
+end
+
+function select_neighbors(nodeset::NodeSet, stencil::RadiusSearch)
+    radius = stencil.radius
+    tree = KDTree(nodeset.nodes)
+    indices = inrange(tree, nodeset.nodes, radius)
+    for (i, ind) in enumerate(indices)
+        isempty(ind) &&
+            throw(ArgumentError("No neighbors found within radius $(radius) for point index $(i)"))
+    end
+    return indices
 end

@@ -24,6 +24,9 @@ for human readability.
 
 #### Changed
 
+- Speed up RBF-FD stencil selection (`KNearestNeighbors`, `RadiusSearch`) by using a `KDTree`
+  from NearestNeighbors.jl instead of a brute-force `O(N^2)` distance scan, reducing the overall
+  neighborhood search to roughly `O(N log N)` ([#189]).
 - Define slicing for `NodeSet`s and deprecate `values_along_dim` ([#139]).
 - Fix order of `PolyharmonicSplineKernel` to return an integer ([#127]).
 
