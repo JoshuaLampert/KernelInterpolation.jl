@@ -24,6 +24,7 @@ for human readability.
 
 #### Changed
 
+- Several performance improvements reducing allocations, using threaded loops, using `KDTree` for nearest-neighbor searches, and computing the separation distance lazily ([#191]).
 - Speed up `LagrangeBasis` construction (and hence also the RBF-FD `RBFFDLagrangeBasis` cache) by
   assembling and factorizing the augmented interpolation matrix once per node set and solving
   for all cardinal functions with a single multiple-right-hand-side solve, instead of
