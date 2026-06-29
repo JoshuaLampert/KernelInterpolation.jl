@@ -18,7 +18,8 @@ function kernel_matrix(basis::AbstractBasis, nodeset::NodeSet = centers(basis))
     n = length(nodeset)
     m = length(basis)
     A = Matrix{eltype(nodeset)}(undef, n, m)
-    for i in 1:n
+    # The rows are independent, so they are filled in parallel.
+    Threads.@threads for i in 1:n
         for j in 1:m
             A[i, j] = basis[j](nodeset[i])
         end
@@ -33,28 +34,6 @@ end
 
 function kernel_matrix(nodeset::NodeSet, kernel::AbstractKernel)
     return kernel_matrix(nodeset, nodeset, kernel)
-end
-
-"""
-    nearest_node_index(y, nodeset)
-
-Return the index of the node in `nodeset` that is closest to `y` in Euclidean norm.
-"""
-function nearest_node_index(y::AbstractVector, nodeset::NodeSet)
-    n = length(nodeset)
-    n > 0 || throw(ArgumentError("nodeset must be non-empty"))
-
-    best_idx = 1
-    best_dist = norm(y .- nodeset[1])
-    for i in 2:n
-        d = norm(y .- nodeset[i])
-        if d < best_dist
-            best_dist = d
-            best_idx = i
-        end
-    end
-
-    return best_idx
 end
 
 """
@@ -198,7 +177,8 @@ function pde_matrix(diff_op_or_pde, nodeset1, nodeset2, kernel)
     n = length(nodeset1)
     m = length(nodeset2)
     A = Matrix{eltype(nodeset1)}(undef, n, m)
-    for i in 1:n
+    # The rows are independent, so they are filled in parallel.
+    Threads.@threads for i in 1:n
         for j in 1:m
             A[i, j] = diff_op_or_pde(kernel, nodeset1[i], nodeset2[j])
         end
@@ -211,7 +191,8 @@ function pde_matrix(diff_op_or_pde, nodeset::NodeSet, basis::LagrangeBasis)
     m = length(basis)
     A = Matrix{eltype(nodeset)}(undef, n, m)
     basis_functions = collect(basis)
-    for i in eachindex(nodeset)
+    # The rows are independent, so they are filled in parallel.
+    Threads.@threads for i in 1:n
         x_i = nodeset[i]
         for j in eachindex(basis_functions)
             A[i, j] = diff_op_or_pde(basis_functions[j], x_i)

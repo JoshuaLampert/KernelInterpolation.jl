@@ -1,15 +1,17 @@
 using KernelInterpolation
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
-using LinearAlgebra: norm
 using Plots
 
 # source term of advection equation
 f(t, x, equations) = 0.0
 pde = AdvectionEquation((0.5, 0.5), f)
 
-# initial condition (also used as analytical solution)
+# initial condition (also used as analytical solution). Written component-wise (instead of
+# with `norm` and a vector literal) so it is allocation-free in the hot boundary-condition
+# evaluation `g`.
 function u(t, x, equations)
-    return exp(-20.0 * norm(x .- equations.advection_velocity .* t .- [0.3, 0.3])^2)
+    v = equations.advection_velocity
+    return exp(-20.0 * ((x[1] - v[1] * t - 0.3)^2 + (x[2] - v[2] * t - 0.3)^2))
 end
 
 n = 15
@@ -17,7 +19,11 @@ nodeset_inner = homogeneous_hypercube(n, 0.01, 1.0; dim = 2)
 # only provide boundary condition on the inflow boundaries (left and bottom)
 nodeset_boundary = NodeSet(union([[0.0, y] for y in LinRange(0.0, 1.0, n)],
                                  [[x, 0.0] for x in LinRange(0.0, 1.0, n)]))
-g(t, x) = u(t, x, pde)
+# Capture `pde` in the closure instead of referencing the non-const global, so the boundary
+# condition is type-stable and allocation-free when evaluated in the time-stepping loop.
+g = let pde = pde
+    (t, x) -> u(t, x, pde)
+end
 
 kernel = PolyharmonicSplineKernel{2}(3)
 local_basis = RBFFDLagrangeBasis()

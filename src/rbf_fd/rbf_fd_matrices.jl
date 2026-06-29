@@ -8,22 +8,40 @@
 function _rbf_fd_sparse_matrix(op, basis::RBFFDBasis, nodeset::NodeSet)
     n = length(nodeset)
     m = length(basis)
-    rows = Int[]
-    cols = Int[]
-    vals = eltype(nodeset)[]
     X = centers(basis)
+    stencils = basis.stencil_indices
 
-    for j in 1:n
-        y_j = nodeset[j]
-        i = nearest_node_index(y_j, X)
-        w = local_weights(basis, i, y_j, op)
+    # Each evaluation node uses the stencil of its nearest center, and the rows are mutually
+    # independent. When the evaluation nodes are the centers themselves, the nearest center is
+    # the node itself; otherwise locate the nearest center for all nodes with a single KDTree
+    # query (O(n log N) instead of a brute-force O(n * N) scan).
+    if nodeset === X
+        nearest = collect(1:n)
+    else
+        nearest, _ = nn(KDTree(X.nodes), nodeset.nodes)
+    end
+
+    # Preallocate the COO buffers: each row contributes as many nonzeros as its stencil has
+    # entries, and the prefix sums give every row a disjoint block to fill in parallel.
+    row_nnz = [length(stencils[nearest[j]]) for j in 1:n]
+    row_start = cumsum(row_nnz) .- row_nnz # 0-based start offset of each row's block
+    total = isempty(row_nnz) ? 0 : row_start[n] + row_nnz[n]
+    rows = Vector{Int}(undef, total)
+    cols = Vector{Int}(undef, total)
+    vals = Vector{eltype(nodeset)}(undef, total)
+
+    Threads.@threads for j in 1:n
+        i = nearest[j]
+        w = local_weights(basis, i, nodeset[j], op)
         w isa AbstractVector ||
             throw(ArgumentError("RBF-FD matrix assembly expects scalar operator values"))
-        indices = basis.stencil_indices[i]
+        indices = stencils[i]
+        base = row_start[j]
         for k in eachindex(indices)
-            push!(rows, j)
-            push!(cols, indices[k])
-            push!(vals, w[k])
+            p = base + k
+            rows[p] = j
+            cols[p] = indices[k]
+            vals[p] = w[k]
         end
     end
 

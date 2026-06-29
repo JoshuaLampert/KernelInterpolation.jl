@@ -320,15 +320,39 @@ function rhs!(dc, c, semi, t)
     @unpack pde_boundary_matrix = semi.cache
     @unpack equations, nodeset_inner, boundary_condition, nodeset_boundary = semi.spatial_discretization
     @trixi_timeit timer() "rhs!" begin
+        # Seed `dc` with the right-hand side b = (f; g) (source term at the inner nodes,
+        # boundary values at the boundary nodes). Writing into `dc` directly keeps `rhs!`
+        # allocation-free and works when a solver evaluates it with `ForwardDiff.Dual` numbers
+        # since `dc` already has the matching element type.
         @trixi_timeit timer() "rhs vector" begin
-            rhs_vector = [rhs(t, nodeset_inner, equations);
-                          boundary_condition.(Ref(t), nodeset_boundary)]
+            fill_rhs_vector!(dc, t, nodeset_inner, boundary_condition, nodeset_boundary,
+                             equations)
         end
-        # dc = -pde_boundary_matrix * c + rhs_vector
-        @trixi_timeit timer() "muladd" dc[:]=Base.muladd(pde_boundary_matrix, -c,
-                                                         rhs_vector)
+        # dc = -pde_boundary_matrix * c + dc, computed in place via a 5-argument `mul!`.
+        @trixi_timeit timer() "mul!" mul!(dc, pde_boundary_matrix, c, -1, true)
     end
     return nothing
+end
+
+# In-place assembly of the ODE right-hand side `b = (f; g)` (source term `f` at the inner
+# nodes, boundary values `g` at the boundary nodes) into `out`. This is the allocation-free
+# counterpart of `[rhs(t, nodeset_inner, equations); g.(...)]` used in the hot `rhs!`
+# time-stepping loop; `out` (the solver's `dc`) carries the appropriate element type.
+function fill_rhs_vector!(out, t, nodeset_inner, boundary_condition, nodeset_boundary,
+                          equations)
+    n_inner = length(nodeset_inner)
+    f = equations.f
+    if f isa AbstractVector
+        @views out[1:n_inner] .= f
+    else
+        for i in 1:n_inner
+            out[i] = f(t, nodeset_inner[i], equations)
+        end
+    end
+    for j in eachindex(nodeset_boundary)
+        out[n_inner + j] = boundary_condition(t, nodeset_boundary[j])
+    end
+    return out
 end
 
 """
