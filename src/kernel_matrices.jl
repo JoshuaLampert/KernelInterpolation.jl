@@ -37,28 +37,6 @@ function kernel_matrix(nodeset::NodeSet, kernel::AbstractKernel)
 end
 
 """
-    nearest_node_index(y, nodeset)
-
-Return the index of the node in `nodeset` that is closest to `y` in Euclidean norm.
-"""
-function nearest_node_index(y::AbstractVector, nodeset::NodeSet)
-    n = length(nodeset)
-    n > 0 || throw(ArgumentError("nodeset must be non-empty"))
-
-    best_idx = 1
-    best_dist = norm(y .- nodeset[1])
-    for i in 2:n
-        d = norm(y .- nodeset[i])
-        if d < best_dist
-            best_dist = d
-            best_idx = i
-        end
-    end
-
-    return best_idx
-end
-
-"""
     polynomial_matrix(nodeset, ps)
 
 Return the polynomial matrix for the nodeset and polynomials. The polynomial matrix is defined as

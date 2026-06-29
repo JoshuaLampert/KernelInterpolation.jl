@@ -75,6 +75,28 @@ function empty_nodeset(Dim, RealT = Float64)
     return NodeSet{Dim, RealT}(Vector{MVector{Dim, RealT}}[], convert(RealT, NaN))
 end
 
+"""
+    nearest_node_index(y, nodeset)
+
+Return the index of the node in `nodeset` that is closest to `y` in Euclidean norm.
+"""
+function nearest_node_index(y::AbstractVector, nodeset::NodeSet)
+    n = length(nodeset)
+    n > 0 || throw(ArgumentError("nodeset must be non-empty"))
+
+    best_idx = 1
+    best_dist = norm(y .- nodeset[1])
+    for i in 2:n
+        d = norm(y .- nodeset[i])
+        if d < best_dist
+            best_dist = d
+            best_idx = i
+        end
+    end
+
+    return best_idx
+end
+
 function separation_distance(nodes::Vector{MVector{Dim, RealT}}) where {Dim, RealT}
     length(nodes) < 2 && return convert(RealT, Inf)
     tree = KDTree(nodes)
@@ -85,6 +107,9 @@ function separation_distance(nodes::Vector{MVector{Dim, RealT}}) where {Dim, Rea
     return convert(RealT, 0.5 * minimum(d -> d[2], distances))
 end
 
+# The separation distance is computed lazily and cached in `nodeset.q`, with `NaN` marking a
+# stale/not-yet-computed value. It is (re)computed on first access after construction or a
+# mutation, and only when all nodes are assigned (to prevent `UndefRefError`).
 @doc raw"""
     separation_distance(nodeset::NodeSet)
 
@@ -93,9 +118,6 @@ Return the separation distance of a [`NodeSet`](@ref) ``X = \{x_1,\ldots, x_n\}`
     q_X = \frac{1}{2}\min_{x_i\neq x_j}\|x_i - x_j\|.
 ```
 """
-# The separation distance is computed lazily and cached in `nodeset.q`, with `NaN` marking a
-# stale/not-yet-computed value. It is (re)computed on first access after construction or a
-# mutation, and only when all nodes are assigned (to prevent `UndefRefError`).
 function separation_distance(nodeset::NodeSet)
     if isnan(nodeset.q) && all(i -> isassigned(nodeset, i), eachindex(nodeset))
         nodeset.q = separation_distance(nodeset.nodes)
@@ -241,7 +263,7 @@ The result is an approximation on the true fill distance
 ```math
     h_{X,\Omega} = \sup_{x \in \Omega}\,\min_{x_j \in X} \|x - x_j\|;
 ```
-accuracy improves with the density of `reference`. 
+accuracy improves with the density of `reference`.
 
 See also [`separation_distance`](@ref), [`distance_matrix`](@ref).
 """
