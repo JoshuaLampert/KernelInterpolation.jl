@@ -1,14 +1,14 @@
 using KernelInterpolation
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
-using LinearAlgebra: norm
 using Plots
 
 # right-hand-side of advection diffusion equation
 f(t, x, equations) = 0.0
 pde = AdvectionDiffusionEquation(0.01, (0.2, 0.7), f)
 
-# initial condition
-u(t, x, equations) = exp(-100.0 * norm(x - [0.4, 0.5])^2)
+# initial condition. Written component-wise (instead of with `norm` and a vector literal) so
+# it is allocation-free.
+u(t, x, equations) = exp(-100.0 * ((x[1] - 0.4)^2 + (x[2] - 0.5)^2))
 
 n = 15
 nodeset_inner = homogeneous_hypercube(n, (0.1, 0.1), (0.9, 1.9); dim = 2)

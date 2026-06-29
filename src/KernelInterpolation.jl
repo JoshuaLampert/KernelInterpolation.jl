@@ -13,7 +13,7 @@ module KernelInterpolation
 
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
 using ForwardDiff: ForwardDiff
-using LinearAlgebra: Diagonal, Symmetric, I, norm, tr, dot, diagind, factorize
+using LinearAlgebra: Diagonal, Symmetric, I, norm, tr, dot, diagind, factorize, mul!
 using NearestNeighbors: KDTree, knn, inrange
 using Printf: @sprintf
 using Random: Random

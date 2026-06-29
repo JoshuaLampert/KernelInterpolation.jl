@@ -1,15 +1,17 @@
 using KernelInterpolation
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
-using LinearAlgebra: norm
 using WriteVTK: WriteVTK, paraview_collection
 
 # source term of advection equation
 f(t, x, equations) = 0.0
 pde = AdvectionEquation((0.5, 0.5, 0.5), f)
 
-# initial condition
+# initial condition. Written component-wise (instead of with `norm` and a vector literal) so
+# it is allocation-free.
 function u(t, x, equations)
-    return exp(-20.0 * norm(x .- equations.advection_velocity .* t .- [0.3, 0.3, 0.3])^2)
+    v = equations.advection_velocity
+    return exp(-20.0 * ((x[1] - v[1] * t - 0.3)^2 + (x[2] - v[2] * t - 0.3)^2 +
+                (x[3] - v[3] * t - 0.3)^2))
 end
 
 n = 10
