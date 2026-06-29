@@ -18,7 +18,8 @@ function kernel_matrix(basis::AbstractBasis, nodeset::NodeSet = centers(basis))
     n = length(nodeset)
     m = length(basis)
     A = Matrix{eltype(nodeset)}(undef, n, m)
-    for i in 1:n
+    # The rows are independent, so they are filled in parallel.
+    Threads.@threads for i in 1:n
         for j in 1:m
             A[i, j] = basis[j](nodeset[i])
         end
@@ -198,7 +199,8 @@ function pde_matrix(diff_op_or_pde, nodeset1, nodeset2, kernel)
     n = length(nodeset1)
     m = length(nodeset2)
     A = Matrix{eltype(nodeset1)}(undef, n, m)
-    for i in 1:n
+    # The rows are independent, so they are filled in parallel.
+    Threads.@threads for i in 1:n
         for j in 1:m
             A[i, j] = diff_op_or_pde(kernel, nodeset1[i], nodeset2[j])
         end
@@ -211,7 +213,8 @@ function pde_matrix(diff_op_or_pde, nodeset::NodeSet, basis::LagrangeBasis)
     m = length(basis)
     A = Matrix{eltype(nodeset)}(undef, n, m)
     basis_functions = collect(basis)
-    for i in eachindex(nodeset)
+    # The rows are independent, so they are filled in parallel.
+    Threads.@threads for i in 1:n
         x_i = nodeset[i]
         for j in eachindex(basis_functions)
             A[i, j] = diff_op_or_pde(basis_functions[j], x_i)
