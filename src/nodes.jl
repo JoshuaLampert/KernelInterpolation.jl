@@ -10,7 +10,8 @@ end
 
 function Base.show(io::IO, nodeset::NodeSet)
     print(io, "NodeSet{", dim(nodeset), ", ", eltype(nodeset),
-          "} with separation distance q = ", nodeset.q, " and ", length(nodeset), " nodes")
+          "} with separation distance q = ", separation_distance(nodeset), " and ",
+          length(nodeset), " nodes")
     return nothing
 end
 
@@ -19,7 +20,8 @@ function Base.show(io::IO, ::MIME"text/plain", nodeset::NodeSet)
         show(io, nodeset)
     else
         println(io, "NodeSet{", dim(nodeset), ", ", eltype(nodeset), "} with ",
-                "separation distance q = ", nodeset.q, " and ", length(nodeset), " nodes:")
+                "separation distance q = ", separation_distance(nodeset), " and ",
+                length(nodeset), " nodes:")
         max_nodes = 20
         for i in 1:min(max_nodes, length(nodeset))
             if isassigned(nodeset, i)
@@ -36,9 +38,9 @@ end
 
 # Constructors
 function NodeSet(nodes::Vector{MVector{Dim, RealT}}) where {Dim, RealT}
-    q = separation_distance(nodes)
-    # Convert nodes to floats by design
-    return NodeSet{Dim, float(RealT)}(nodes, q)
+    # Convert nodes to floats by design. The separation distance `q` is computed lazily on
+    # first access (`NaN` marks it as not yet computed).
+    return NodeSet{Dim, float(RealT)}(nodes, convert(float(RealT), NaN))
 end
 function NodeSet(nodes::Vector{SVector{Dim, RealT}}) where {Dim, RealT}
     return NodeSet(MVector.(nodes))
@@ -70,19 +72,17 @@ NodeSet(nodeset::NodeSet) = nodeset
 Create an empty [`NodeSet`](@ref).
 """
 function empty_nodeset(Dim, RealT = Float64)
-    return NodeSet{Dim, RealT}(Vector{MVector{Dim, RealT}}[], Inf)
+    return NodeSet{Dim, RealT}(Vector{MVector{Dim, RealT}}[], convert(RealT, NaN))
 end
 
 function separation_distance(nodes::Vector{MVector{Dim, RealT}}) where {Dim, RealT}
-    r = Inf
-    for (i, x) in enumerate(nodes)
-        for (j, y) in enumerate(nodes)
-            if i != j && norm(x - y) < r
-                r = norm(x - y)
-            end
-        end
-    end
-    return 0.5 * r
+    length(nodes) < 2 && return convert(RealT, Inf)
+    tree = KDTree(nodes)
+    # k = 2: the nearest neighbor of each point is the point itself (distance 0); the second
+    # is the nearest distinct point, so the global minimum of those second distances is the
+    # minimal pairwise distance. This is `O(N log N)` instead of the brute-force `O(N^2)`.
+    _, distances = knn(tree, nodes, 2, true)
+    return convert(RealT, 0.5 * minimum(d -> d[2], distances))
 end
 
 @doc raw"""
@@ -93,13 +93,21 @@ Return the separation distance of a [`NodeSet`](@ref) ``X = \{x_1,\ldots, x_n\}`
     q_X = \frac{1}{2}\min_{x_i\neq x_j}\|x_i - x_j\|.
 ```
 """
-separation_distance(nodeset::NodeSet) = nodeset.q
-function update_separation_distance!(nodeset::NodeSet)
-    # Update separation distance only if all values are assigned to prevent `UndefRefError`
-    if all(map(i -> isassigned(nodeset, i), eachindex(nodeset)))
-        q = separation_distance(nodeset.nodes)
-        nodeset.q = q
+# The separation distance is computed lazily and cached in `nodeset.q`, with `NaN` marking a
+# stale/not-yet-computed value. It is (re)computed on first access after construction or a
+# mutation, and only when all nodes are assigned (to prevent `UndefRefError`).
+function separation_distance(nodeset::NodeSet)
+    if isnan(nodeset.q) && all(i -> isassigned(nodeset, i), eachindex(nodeset))
+        nodeset.q = separation_distance(nodeset.nodes)
     end
+    return nodeset.q
+end
+# Mark the cached separation distance as stale; it is recomputed lazily on the next
+# `separation_distance(nodeset)` access. This keeps mutations `O(1)` instead of recomputing
+# the (now `O(N log N)`) separation distance on every change.
+function update_separation_distance!(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT}
+    nodeset.q = convert(RealT, NaN)
+    return nodeset
 end
 dim(::NodeSet{Dim, RealT}) where {Dim, RealT} = Dim
 # Equality based on node coordinates (not object identity); keep `hash` consistent with `==`.
@@ -117,16 +125,16 @@ Base.eachindex(nodeset::NodeSet) = eachindex(nodeset.nodes)
 eachdim(nodeset::NodeSet) = Base.OneTo(dim(nodeset))
 Base.isassigned(nodeset::NodeSet, i::Int) = isassigned(nodeset.nodes, i)
 function Base.similar(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT}
-    return NodeSet{Dim, RealT}(similar(nodeset.nodes), Inf)
+    return NodeSet{Dim, RealT}(similar(nodeset.nodes), convert(RealT, NaN))
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, ::Type{T}) where {Dim, RealT, T}
-    return NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}), Inf)
+    return NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}), convert(T, NaN))
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, n::Int) where {Dim, RealT}
-    return NodeSet{Dim, RealT}(similar(nodeset.nodes, n), Inf)
+    return NodeSet{Dim, RealT}(similar(nodeset.nodes, n), convert(RealT, NaN))
 end
 function Base.similar(nodeset::NodeSet{Dim, RealT}, ::Type{T}, n::Int) where {Dim, RealT, T}
-    return NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}, n), Inf)
+    return NodeSet{Dim, T}(similar(nodeset.nodes, MVector{Dim, T}, n), convert(T, NaN))
 end
 Base.getindex(nodeset::NodeSet, i::Int) = nodeset.nodes[i]
 Base.getindex(nodeset::NodeSet, is::AbstractVector) = nodeset.nodes[is]
