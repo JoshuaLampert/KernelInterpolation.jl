@@ -126,17 +126,31 @@ local_order(basis::RBFFDBasis) = maximum(degree.(basis.ps), init = -1) + 1
 _local_polynomial_basis(::RBFFDStandardBasis, xx, m::Int) = monomials(xx, 0:(m - 1))
 _local_polynomial_basis(::RBFFDLagrangeBasis, xx, m::Int) = monomials(xx, 0:-1)
 
+# Apply `f` to each element of `xs` in order, threaded over elements. The per-stencil caches
+# below are built from independent local problems, so they are assembled in parallel.
+function _tmap(f, xs)
+    n = length(xs)
+    n == 0 && return [f(x) for x in xs]
+    first_result = f(xs[1])
+    results = Vector{typeof(first_result)}(undef, n)
+    results[1] = first_result
+    Threads.@threads for i in 2:n
+        results[i] = f(xs[i])
+    end
+    return results
+end
+
 # RBFFDLagrangeBasis: cache the Lagrange cardinal functions on each stencil.
 function _build_local_cache(::RBFFDLagrangeBasis, kernel::AbstractKernel,
                             neighbor_nodesets, ps, m::Int)
-    return [collect(LagrangeBasis(nodes, kernel; m)) for nodes in neighbor_nodesets]
+    return _tmap(nodes -> collect(LagrangeBasis(nodes, kernel; m)), neighbor_nodesets)
 end
 
 # RBFFDStandardBasis: cache the factorization of each stencil's augmented system matrix
 # `M = [A P; P' 0]`, reused for every right-hand side (weights and evaluation).
 function _build_local_cache(::RBFFDStandardBasis, kernel::AbstractKernel,
                             neighbor_nodesets, ps, m::Int)
-    return [_local_factorization(kernel, nodes, ps) for nodes in neighbor_nodesets]
+    return _tmap(nodes -> _local_factorization(kernel, nodes, ps), neighbor_nodesets)
 end
 
 function _local_factorization(kernel::AbstractKernel, neighbor_nodes::NodeSet, ps)
