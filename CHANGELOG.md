@@ -27,6 +27,10 @@ for human readability.
 - Speed up RBF-FD stencil selection (`KNearestNeighbors`, `RadiusSearch`) by using a `KDTree`
   from NearestNeighbors.jl instead of a brute-force `O(N^2)` distance scan, reducing the overall
   neighborhood search to roughly `O(N log N)` ([#189]).
+- Speed up `LagrangeBasis` construction (and hence also the RBF-FD `RBFFDLagrangeBasis` cache) by
+  assembling and factorizing the augmented interpolation matrix once per node set and solving
+  for all cardinal functions with a single multiple-right-hand-side solve, instead of
+  re-assembling and re-factorizing it for each cardinal function ([#190]).
 - Define slicing for `NodeSet`s and deprecate `values_along_dim` ([#139]).
 - Fix order of `PolyharmonicSplineKernel` to return an integer ([#127]).
 

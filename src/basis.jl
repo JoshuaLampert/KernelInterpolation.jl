@@ -98,23 +98,28 @@ struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation} <: Abstract
             throw(DimensionMismatch("The dimension of the kernel and the centers must be the same"))
         end
         K = length(centers)
-        values = Vector{RealT}(undef, K)
-        fill!(values, zero(RealT))
-        values[1] = one(RealT)
         std_basis = StandardBasis(centers, kernel)
-        b = interpolate(std_basis, values; m = m)
-        basis_functions = Vector{typeof(b)}(undef, K)
-        basis_functions[1] = b
-        for i in 2:K
-            values[i - 1] = zero(RealT)
-            values[i] = one(RealT)
-            basis_functions[i] = interpolate(std_basis, values; m = m)
-        end
-        # The polynomials are baked into the cardinal functions (each is an `Interpolation`
-        # carrying its own polynomial basis), so no separate basis-level polynomials are
-        # stored; cf. `polynomial_basis(basis_functions[i])`.
-        return new{dim(centers), eltype(centers), typeof(kernel),
-                   eltype(basis_functions)}(centers, kernel, basis_functions)
+        xx = polyvars(Val(Dim))
+        ps = monomials(xx, 0:(m - 1))
+        q = length(ps)
+        # All `K` cardinal functions share the same augmented interpolation matrix and differ
+        # only in their right-hand side (the `i`-th unit vector). Assemble and factorize that
+        # matrix once and solve for all cardinal functions simultaneously with a multiple
+        # right-hand side, instead of re-assembling and re-factorizing it for each one.
+        system_matrix = interpolation_matrix(std_basis, ps)
+        rhs = [Matrix{RealT}(I, K, K); zeros(RealT, q, K)]
+        coefficients = factorize(system_matrix) \ rhs
+        # Each cardinal function is an `Interpolation` sharing the same `system_matrix`. The
+        # polynomials are baked into the cardinal functions (each carries its own polynomial
+        # basis), so no separate basis-level polynomials are stored; cf.
+        # `polynomial_basis(basis_functions[i])`.
+        Itp = Interpolation{typeof(std_basis), Dim, RealT, typeof(system_matrix),
+                            typeof(ps), typeof(xx)}
+        basis_functions = [Itp(std_basis, centers, coefficients[:, i], system_matrix, ps,
+                               xx)
+                           for i in 1:K]
+        return new{Dim, RealT, Kernel, eltype(basis_functions)}(centers, kernel,
+                                                                basis_functions)
     end
 end
 
