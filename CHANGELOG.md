@@ -24,6 +24,10 @@ for human readability.
 
 #### Changed
 
+- Speed up `LagrangeBasis` construction (and hence also the RBF-FD `RBFFDLagrangeBasis` cache) by
+  assembling and factorizing the augmented interpolation matrix once per node set and solving
+  for all cardinal functions with a single multiple-right-hand-side solve, instead of
+  re-assembling and re-factorizing it for each cardinal function ([#190]).
 - Speed up RBF-FD stencil selection (`KNearestNeighbors`, `RadiusSearch`) by using a `KDTree`
   from NearestNeighbors.jl instead of a brute-force `O(N^2)` distance scan, reducing the overall
   neighborhood search to roughly `O(N log N)` ([#189]).
