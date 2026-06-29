@@ -82,16 +82,12 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection,
                                                                                AbstractRBFFDLocalBasis
                                                                                }
         m >= 0 || throw(ArgumentError("m must be >= 0, got $m"))
-        n = length(centers)
         ps = _local_polynomial_basis(local_basis, polyvars(Dim), m)
 
-        stencil_indices = Vector{Vector{Int}}(undef, n)
-        neighbor_nodesets = Vector{NodeSet{Dim, RealT}}(undef, n)
-        for i in 1:n
-            neigh = select_neighbors(i, centers, stencil_selection)
-            stencil_indices[i] = neigh.indices
-            neighbor_nodesets[i] = neigh.nodes
-        end
+        # Select all stencils at once, building a single spatial search structure that is
+        # reused across queries (O(N log N) instead of a brute-force O(N^2) distance scan).
+        stencil_indices = select_neighbors(centers, stencil_selection)
+        neighbor_nodesets = [NodeSet(centers.nodes[idx]) for idx in stencil_indices]
 
         cache = _build_local_cache(local_basis, kernel, neighbor_nodesets, ps, m)
 
