@@ -14,7 +14,7 @@ module KernelInterpolation
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
 using ForwardDiff: ForwardDiff
 using LinearAlgebra: Diagonal, Symmetric, I, norm, tr, dot, diagind, factorize, mul!
-using NearestNeighbors: KDTree, knn, inrange
+using NearestNeighbors: KDTree, inrange, knn, nn
 using Printf: @sprintf
 using Random: Random
 using ReadVTK: VTKFile, get_points, get_point_data, get_data

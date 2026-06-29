@@ -12,10 +12,13 @@ function _rbf_fd_sparse_matrix(op, basis::RBFFDBasis, nodeset::NodeSet)
     stencils = basis.stencil_indices
 
     # Each evaluation node uses the stencil of its nearest center, and the rows are mutually
-    # independent. Find the nearest center for every node first (threaded).
-    nearest = Vector{Int}(undef, n)
-    Threads.@threads for j in 1:n
-        nearest[j] = nearest_node_index(nodeset[j], X)
+    # independent. When the evaluation nodes are the centers themselves, the nearest center is
+    # the node itself; otherwise locate the nearest center for all nodes with a single KDTree
+    # query (O(n log N) instead of a brute-force O(n * N) scan).
+    if nodeset === X
+        nearest = collect(1:n)
+    else
+        nearest, _ = nn(KDTree(X.nodes), nodeset.nodes)
     end
 
     # Preallocate the COO buffers: each row contributes as many nonzeros as its stencil has
