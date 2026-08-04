@@ -1,5 +1,6 @@
 using KernelInterpolation
 using Documenter
+using DocumenterCodeBlocks: CodeBlocks
 import Changelog
 
 # Define module-wide setups such that the respective modules are available in doctests
@@ -24,6 +25,9 @@ makedocs(;
                                   edit_link = "main",
                                   assets = String[],
                                   mathengine = Documenter.MathJax3()),
+         # Improve code blocks in the documentation by using DocumenterCodeBlocks.jl
+         plugins = [CodeBlocks()],
+         # Explicitly specify documentation structure
          pages = ["Home" => "index.md",
              "Guide" => [
                  "Sets of nodes" => "nodesets.md",
