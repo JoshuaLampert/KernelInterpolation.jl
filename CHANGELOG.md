@@ -9,6 +9,11 @@ for human readability.
 
 #### Added
 
+- The whole interpolation process is now differentiable with forward-mode automatic differentiation,
+  e.g. with ForwardDiff.jl, i.e. not only the evaluation of an `Interpolation`, but also the assembly
+  of the system matrix and the linear solve. The interpolated values, the nodes, and the parameters of
+  the kernel may have different element types, which allows differentiating `interpolate` and
+  `solve_stationary` with respect to any of them ([#200]).
 - Added `fill_distance` function ([#187]).
 - Added support for RBF-FD ([#182]).
 - Added `differentiation_matrix` to assemble the matrix of a differential operator (sparse for

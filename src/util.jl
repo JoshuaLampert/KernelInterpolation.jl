@@ -39,6 +39,18 @@ function default_example()
     return joinpath(examples_dir(), "interpolation", "interpolation_2d.jl")
 end
 
+# Element type of an `n × m` matrix that is assembled entrywise, where `entry` returns one of
+# its entries and `fallback` is the element type to use if the matrix is empty. Deriving the
+# element type from an actual entry instead of from the node coordinates keeps the assembly
+# correct if the kernel carries parameters whose element type differs from the one of the
+# nodes. This is the case when differentiating with respect to, e.g., a shape parameter with
+# forward-mode automatic differentiation, where the kernel holds dual numbers, while the nodes
+# stay real.
+function matrix_eltype(entry, n, m, fallback)
+    (n == 0 || m == 0) && return fallback
+    return promote_type(typeof(entry()), fallback)
+end
+
 # Create `d` polyvars from `TypedPolynomials.jl`, don't use `@polyvars` because of
 # https://github.com/JuliaAlgebra/TypedPolynomials.jl/issues/51, instead use the
 # workaround from there

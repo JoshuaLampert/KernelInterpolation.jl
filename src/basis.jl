@@ -113,8 +113,8 @@ struct LagrangeBasis{Dim, RealT, Kernel, I <: AbstractInterpolation} <: Abstract
         # polynomials are baked into the cardinal functions (each carries its own polynomial
         # basis), so no separate basis-level polynomials are stored; cf.
         # `polynomial_basis(basis_functions[i])`.
-        Itp = Interpolation{typeof(std_basis), Dim, RealT, typeof(system_matrix),
-                            typeof(ps), typeof(xx)}
+        Itp = Interpolation{typeof(std_basis), Dim, RealT, eltype(coefficients),
+                            typeof(system_matrix), typeof(ps), typeof(xx)}
         basis_functions = [Itp(std_basis, centers, coefficients[:, i], system_matrix, ps,
                                xx)
                            for i in 1:K]

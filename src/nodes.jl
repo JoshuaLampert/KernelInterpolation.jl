@@ -45,6 +45,12 @@ end
 function NodeSet(nodes::Vector{SVector{Dim, RealT}}) where {Dim, RealT}
     return NodeSet(MVector.(nodes))
 end
+# Any other static vector, e.g. the `SizedVector`s that result from broadcasting an `MVector`
+# node with a plain `Vector`, as in `node .+ p` when differentiating with respect to a shift `p`
+# of the nodes.
+function NodeSet(nodes::Vector{<:StaticVector{Dim, RealT}}) where {Dim, RealT}
+    return NodeSet(MVector.(nodes))
+end
 function NodeSet(nodes::AbstractVector{Vector{RealT}}) where {RealT}
     n = length(nodes)
     @assert n > 0

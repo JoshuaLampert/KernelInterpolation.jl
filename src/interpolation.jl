@@ -12,13 +12,18 @@ polynomials of order [`order`](@ref). The additional conditions
 ```
 are enforced.
 
+The element type `CoeffT` of the coefficients is kept separate from the element type `RealT` of the
+node coordinates. Both usually coincide, but they differ whenever the interpolation is differentiated
+with automatic differentiation with respect to something other than the nodes, e.g. the `values` or a
+shape parameter, in which case the coefficients are dual numbers while the nodes stay real.
+
 See also [`interpolate`](@ref).
 """
-struct Interpolation{Basis, Dim, RealT, A, Monomials, PolyVars} <:
+struct Interpolation{Basis, Dim, RealT, CoeffT, A, Monomials, PolyVars} <:
        AbstractInterpolation{Basis, Dim, RealT}
     basis::Basis
     nodeset::NodeSet{Dim, RealT}
-    c::Vector{RealT}
+    c::Vector{CoeffT}
     system_matrix::A
     ps::Monomials
     xx::PolyVars
@@ -186,65 +191,134 @@ Otherwise, `nodeset` is set to `centers(basis)` or `centers`.
 
 A regularization can be applied to the kernel matrix using the `regularization` argument, cf. [`regularize!`](@ref).
 In addition, the `factorization_method` can be specified to determine how the system matrix is factorized. By default,
-the system matrix is just wrapped as a `Symmetric` matrix for interpolation and no factorization is applied
-for a least squares solution, but you can, e.g., also explicitly use `cholesky`, `lu`, or `qr` factorization.
+the system matrix is just wrapped as a `Symmetric` matrix for interpolation (see [`default_factorization_method`](@ref))
+and no factorization is applied for a least squares solution, but you can, e.g., also explicitly use `cholesky`, `lu`,
+or `qr` factorization.
 If `linsolve` is provided, the linear system is solved with LinearSolve.jl and any LinearSolve.jl algorithm can
 be passed there. If `linsolve` is not provided, the linear system is solved with the backslash operator, which will
 automatically use the factorization if `factorization_method` is provided.
+
+The `values`, the node coordinates, and the parameters of the kernel may have different element types. This makes
+the whole interpolation process, including the assembly of the system matrix and the linear solve, differentiable
+with forward-mode automatic differentiation, e.g. with ForwardDiff.jl, with respect to any of them, see also
+[`default_factorization_method`](@ref).
 """
-function interpolate(basis::AbstractBasis, values::Vector{RealT},
-                     nodeset::NodeSet{Dim, RealT} = centers(basis);
+function interpolate(basis::AbstractBasis, values::AbstractVector,
+                     nodeset::NodeSet{Dim} = centers(basis);
                      m = order(basis),
                      regularization = NoRegularization(),
                      factorization_method = nothing,
-                     linsolve = nothing) where {Dim, RealT}
+                     linsolve = nothing) where {Dim}
     @assert dim(basis) == Dim
     n = length(nodeset)
     @assert length(values) == n
+    RealT = promote_type(eltype(values), eltype(nodeset))
     xx = polyvars(Val(Dim))
     ps = monomials(xx, 0:(m - 1))
     q = length(ps)
 
+    # The element type of the system matrix is only known once it has been assembled since it
+    # depends on the nodes *and* on the parameters of the kernel. Both the default
+    # factorization method and a possible conversion of the system matrix to the element type
+    # it shares with the right-hand side are therefore deferred to `prepare_factorization`.
     if nodeset == centers(basis)
-        if isnothing(linsolve)
-            factorization_method = isnothing(factorization_method) ? Symmetric :
-                                   factorization_method
-            system_matrix = interpolation_matrix(basis, ps, regularization;
-                                                 factorization_method)
-        else
-            system_matrix = interpolation_matrix(basis, ps, regularization;
-                                                 factorization_method = Matrix)
-        end
+        method = isnothing(linsolve) ? factorization_method : Matrix
+        system_matrix = interpolation_matrix(basis, ps, regularization;
+                                             factorization_method = prepare_factorization(method,
+                                                                                          RealT))
     else
-        if isnothing(linsolve)
-            factorization_method = isnothing(factorization_method) ? Matrix :
-                                   factorization_method
-            system_matrix = least_squares_matrix(basis, nodeset, ps, regularization;
-                                                 factorization_method)
-        else
-            system_matrix = least_squares_matrix(basis, nodeset, ps, regularization;
-                                                 factorization_method = Matrix)
-        end
+        method = isnothing(linsolve) ? something(factorization_method, Matrix) : Matrix
+        system_matrix = least_squares_matrix(basis, nodeset, ps, regularization;
+                                             factorization_method = prepare_factorization(method,
+                                                                                          RealT))
     end
     b = [values; zeros(RealT, q)]
     c = solve_linear_system(system_matrix, b, linsolve)
-    return Interpolation{typeof(basis), dim(basis), eltype(nodeset), typeof(system_matrix),
-                         typeof(ps), typeof(xx)}(basis, nodeset, c, system_matrix, ps, xx)
+    return Interpolation{typeof(basis), dim(basis), eltype(nodeset), eltype(c),
+                         typeof(system_matrix), typeof(ps), typeof(xx)}(basis, nodeset, c,
+                                                                        system_matrix, ps,
+                                                                        xx)
+end
+
+@doc raw"""
+    default_factorization_method(system_matrix, rhs_type)
+
+Return the `factorization_method` used by [`interpolate`](@ref) for the assembled interpolation
+`system_matrix` and a right-hand side with element type `rhs_type`, if the user does not pass one
+explicitly.
+
+The default is `Symmetric`, which makes `\` pick a Bunch-Kaufman factorization that exploits the
+symmetry of the (possibly indefinite, if polynomials are added) interpolation matrix. The element
+types of the system matrix and the right-hand side differ when differentiating with respect to the
+interpolated `values` only with forward-mode automatic differentiation: the system matrix stays real,
+while the right-hand side carries dual numbers. If the system matrix is dense and its element type is
+the narrower one, an `lu` factorization is used instead. It is the only one that keeps the system
+matrix in its own element type, i.e. free of dual numbers, and carries out only the (generic)
+triangular solves in the promoted element type, which is considerably cheaper than factorizing in
+dual numbers. In all other cases [`prepare_factorization`](@ref) converts the system matrix instead.
+"""
+function default_factorization_method(system_matrix::AbstractMatrix,
+                                      ::Type{RealT}) where {RealT}
+    if system_matrix isa Matrix && eltype(system_matrix) !== RealT &&
+       promote_type(eltype(system_matrix), RealT) === RealT
+        return lu
+    end
+    return Symmetric
+end
+
+# Whether a factorization method applied to the system matrix `A` can be used to solve with a
+# right-hand side of a different element type than `A`. The dense `lu` and `cholesky`
+# factorizations (and an unfactorized matrix, for which `\` picks the factorization itself)
+# fall back to generic solves that support this. The LAPACK-backed `Symmetric` (Bunch-Kaufman)
+# and `qr` factorizations of a dense matrix and the SuiteSparse factorizations of a sparse
+# matrix do not. The conservative default is `false`, which also covers factorization methods
+# passed by the user that we know nothing about.
+supports_mixed_eltypes(factorization_method, A) = false
+supports_mixed_eltypes(::typeof(lu), ::Matrix) = true
+supports_mixed_eltypes(::typeof(cholesky), ::Matrix) = true
+supports_mixed_eltypes(::Type{Matrix}, ::AbstractMatrix) = true
+
+"""
+    prepare_factorization(factorization_method, RealT)
+
+Wrap `factorization_method` (or [`default_factorization_method`](@ref) if it is `nothing`) into a
+function of the assembled system matrix, where `RealT` is the element type of the right-hand side of
+the linear system. If the factorization method cannot solve with a right-hand side of a different
+element type than the system matrix, the system matrix is converted to the element type shared by
+both first. Both are no-ops if the element types already agree, which is the case whenever no
+automatic differentiation is involved.
+"""
+function prepare_factorization(factorization_method, ::Type{RealT}) where {RealT}
+    return function (A)
+        method = something(factorization_method, default_factorization_method(A, RealT))
+        supports_mixed_eltypes(method, A) && return method(A)
+        return method(convert(AbstractMatrix{promote_type(eltype(A), RealT)}, A))
+    end
 end
 
 solve_linear_system(system_matrix, b, ::Nothing) = system_matrix \ b
+
+# SuiteSparse only supports `BlasFloat` element types. For anything else, in particular for
+# dual numbers coming from forward-mode automatic differentiation, `\` on a sparse matrix does
+# not fall back to a generic solve, but either fails or recurses until the stack overflows.
+# Falling back to a dense solve is the only generic route available in that case.
+function solve_linear_system(system_matrix::AbstractSparseMatrix, b, ::Nothing)
+    promote_type(eltype(system_matrix), eltype(b)) <: BlasFloat &&
+        return system_matrix \ b
+    return Matrix(system_matrix) \ b
+end
 
 function solve_linear_system(system_matrix, b, linsolve)
     linear_problem = SciMLBase.LinearProblem(system_matrix, b)
     return SciMLBase.solve(linear_problem, linsolve).u
 end
-function interpolate(centers::NodeSet{Dim, RealT}, nodeset::NodeSet{Dim, RealT},
-                     values::AbstractVector{RealT}, kernel; kwargs...) where {Dim, RealT}
+function interpolate(centers::NodeSet{Dim}, nodeset::NodeSet{Dim},
+                     values::AbstractVector, kernel; kwargs...) where {Dim}
     return interpolate(StandardBasis(centers, kernel), values, nodeset; kwargs...)
 end
 
 function interpolate(centers::NodeSet{Dim, RealT},
-                     values::AbstractVector{RealT},
+                     values::AbstractVector,
                      kernel = GaussKernel{Dim}(; shape_parameter = RealT(1.0));
                      kwargs...) where {Dim, RealT}
     return interpolate(StandardBasis(centers, kernel), values; kwargs...)
@@ -508,7 +582,7 @@ on the corresponding `nodeset` and residual values.
   [DOI: 10.1007/978-3-642-18754-4](https://doi.org/10.1007/978-3-642-18754-4)
 """
 function multiscale_interpolate(nodesets::AbstractVector{<:NodeSet{Dim, RealT}},
-                                valuesets::AbstractVector{<:AbstractVector{RealT}},
+                                valuesets::AbstractVector{<:AbstractVector},
                                 kernels::AbstractVector;
                                 kwargs...) where {Dim, RealT}
     @assert length(nodesets) == length(valuesets) == length(kernels)

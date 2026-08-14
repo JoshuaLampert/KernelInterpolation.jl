@@ -1682,3 +1682,148 @@ end
     @test_nowarn println(summary_callback)
     @test_nowarn display(summary_callback)
 end
+
+@testitem "Automatic differentiation" setup=[Setup, AdditionalImports] begin
+    # Not only the evaluation of an interpolation is differentiable, but the whole interpolation
+    # process, i.e., the assembly of the system matrix and the linear solve as well. The element
+    # types of the interpolated values, of the nodes, and of the parameters of the kernel may
+    # therefore all differ from each other.
+    nodes = homogeneous_hypercube(4, (0.0, 0.0), (1.0, 1.0))
+    f(x) = sinpi(x[1]) * sinpi(x[2])
+    values = f.(nodes)
+    kernel = GaussKernel{2}(; shape_parameter = 2.0)
+    x = [0.3, 0.4]
+    # An interpolation depends linearly on the values it interpolates, so the derivative with
+    # respect to them is the vector of the cardinal functions evaluated at `x`. The `i`-th
+    # cardinal function is the interpolation of the `i`-th unit vector, which gives a reference
+    # for the derivative through the linear solve that uses solves of the same system only.
+    unit_vector(i, n) = [j == i ? 1.0 : 0.0 for j in 1:n]
+    cardinal_functions(itp_from_values, n) = [itp_from_values(unit_vector(i, n))
+                                              for i in 1:n]
+
+    # For a `StandardBasis` without polynomial augmentation, `s(x) = k(x)'A^{-1}f`, so the
+    # cardinal functions are `A^{-1}k(x)`, an independent closed-form reference
+    itp_values(v) = interpolate(nodes, v, kernel)(x)
+    A = kernel_matrix(nodes, kernel)
+    cardinal = A \ [kernel(nodes[i], x) for i in eachindex(nodes)]
+    @test isapprox(cardinal_functions(itp_values, length(nodes)), cardinal, atol = 1e-12)
+    @test isapprox(ForwardDiff.gradient(itp_values, values), cardinal, atol = 1e-12)
+
+    # The nodes and the system matrix stay real, only the coefficients become dual numbers
+    dual_values = ForwardDiff.Dual.(values, 1.0)
+    itp = @test_nowarn interpolate(nodes, dual_values, kernel)
+    @test eltype(nodeset(itp)) == Float64
+    @test eltype(system_matrix(itp)) == Float64
+    @test eltype(coefficients(itp)) == eltype(dual_values)
+
+    # All factorization methods and all linear solvers give the same derivative
+    for factorization_method in (lu, cholesky, qr, Symmetric, Matrix)
+        g(v) = interpolate(nodes, v, kernel; factorization_method)(x)
+        @test isapprox(ForwardDiff.gradient(g, values), cardinal, atol = 1e-12)
+    end
+    for linsolve in (LUFactorization(), QRFactorization(), KrylovJL_GMRES())
+        g(v) = interpolate(nodes, v, kernel; linsolve)(x)
+        @test isapprox(ForwardDiff.gradient(g, values), cardinal, atol = 1e-8)
+    end
+
+    # Conditionally positive definite kernel, i.e., a saddle point system with polynomial
+    # augmentation
+    tps = ThinPlateSplineKernel{2}()
+    itp_tps(v) = interpolate(nodes, v, tps)(x)
+    @test isapprox(ForwardDiff.gradient(itp_tps, values),
+                   cardinal_functions(itp_tps, length(nodes)), atol = 1e-12)
+
+    # Least squares approximation with fewer centers than nodes
+    centers = homogeneous_hypercube(3, (0.0, 0.0), (1.0, 1.0))
+    itp_ls(v) = interpolate(centers, nodes, v, kernel)(x)
+    @test isapprox(ForwardDiff.gradient(itp_ls, values),
+                   cardinal_functions(itp_ls, length(nodes)), atol = 1e-12)
+
+    # `LagrangeBasis` yields the same interpolation and hence the same derivative
+    itp_lagrange(v) = interpolate(LagrangeBasis(nodes, kernel), v)(x)
+    @test isapprox(ForwardDiff.gradient(itp_lagrange, values), cardinal, atol = 1e-12)
+
+    # For RBF-FD the coefficients are the nodal values themselves, so the derivative with respect
+    # to the values is the corresponding row of the (sparse) evaluation matrix
+    rbf_fd_basis = RBFFDBasis(nodes, PolyharmonicSplineKernel{2}(3), KNearestNeighbors(6))
+    itp_rbf_fd(v) = interpolate(rbf_fd_basis, v)(x)
+    weights = vec(Matrix(kernel_matrix(rbf_fd_basis, NodeSet([x]))))
+    @test isapprox(ForwardDiff.gradient(itp_rbf_fd, values), weights, atol = 1e-12)
+
+    # Derivative with respect to the shape parameter. The interpolation reproduces the values at
+    # the nodes independently of the shape parameter, so the derivative vanishes there.
+    itp_shape(epsilon) = interpolate(nodes, values,
+                                     GaussKernel{2}(; shape_parameter = epsilon))
+    @test isapprox(ForwardDiff.derivative(epsilon -> itp_shape(epsilon)(nodes[3]), 2.0),
+                   0.0,
+                   atol = 1e-10)
+    # Away from the nodes, compare against a central finite difference
+    h = 1e-6
+    @test isapprox(ForwardDiff.derivative(epsilon -> itp_shape(epsilon)(x), 2.0),
+                   (itp_shape(2.0 + h)(x) - itp_shape(2.0 - h)(x)) / (2 * h), rtol = 1e-5)
+    # ... and the same for RBF-FD, where the shape parameter enters the local systems
+    function itp_shape_rbf_fd(epsilon)
+        basis = RBFFDBasis(nodes, GaussKernel{2}(; shape_parameter = epsilon),
+                           KNearestNeighbors(6))
+        return interpolate(basis, values)
+    end
+    @test isapprox(ForwardDiff.derivative(epsilon -> itp_shape_rbf_fd(epsilon)(x), 2.0),
+                   (itp_shape_rbf_fd(2.0 + h)(x) - itp_shape_rbf_fd(2.0 - h)(x)) / (2 * h),
+                   rtol = 1e-5)
+
+    # Derivative with respect to the node positions. Translating all nodes by `p` and evaluating
+    # at `x` gives the same as evaluating the interpolation of the untranslated nodes at `x - p`,
+    # so the gradient with respect to `p` is `-∇s(x)`.
+    function itp_translated(p)
+        translated = NodeSet([node .+ p for node in nodes])
+        return interpolate(translated, values, kernel)(x)
+    end
+    @test isapprox(ForwardDiff.gradient(itp_translated, zeros(2)),
+                   -Gradient()(interpolate(nodes, values, kernel), x), atol = 1e-12)
+
+    # Multiscale interpolation with a single scale is a plain interpolation
+    itp_multiscale(v) = multiscale_interpolate([nodes], [v], [kernel])(x)
+    @test isapprox(ForwardDiff.gradient(itp_multiscale, values), cardinal, atol = 1e-12)
+end
+
+@testitem "Automatic differentiation (PDEs)" setup=[Setup, AdditionalImports] begin
+    # Solving a stationary PDE is differentiable as well, again including the linear solve.
+    nodeset_inner = homogeneous_hypercube(5, (0.1, 0.1), (0.9, 0.9))
+    nodeset_boundary = homogeneous_hypercube_boundary(6, (0.0, 0.0), (1.0, 1.0))
+    centers = merge(nodeset_inner, nodeset_boundary)
+    g(x) = zero(eltype(x))
+    x = [0.5, 0.5]
+
+    # The Poisson problem `-Δu = a f`, `u|_∂Ω = 0` is linear in the amplitude `a` of the source
+    # term, so its solution is `a u_1` and the derivative with respect to `a` is exactly `u_1`.
+    function solve_amplitude(a, basis)
+        pde = PoissonEquation((x, equations) -> a * 2 * pi^2 * sinpi(x[1]) * sinpi(x[2]))
+        sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, basis)
+        return solve_stationary(sd)
+    end
+    kernel = GaussKernel{2}(; shape_parameter = 2.0)
+    # `StandardBasis` gives a dense system matrix, `RBFFDBasis` a sparse one
+    for basis in (StandardBasis(centers, kernel),
+                  RBFFDBasis(centers, PolyharmonicSplineKernel{2}(3), KNearestNeighbors(9);
+                             m = 3))
+        @test isapprox(ForwardDiff.derivative(a -> solve_amplitude(a, basis)(x), 1.0),
+                       solve_amplitude(1.0, basis)(x), atol = 1e-10)
+    end
+
+    # Derivative with respect to the shape parameter, where the system matrix itself carries the
+    # dual numbers, compared against a central finite difference
+    pde = PoissonEquation((x, equations) -> 2 * pi^2 * sinpi(x[1]) * sinpi(x[2]))
+    function solve_shape(epsilon, make_basis)
+        basis = make_basis(GaussKernel{2}(; shape_parameter = epsilon))
+        sd = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, basis)
+        return solve_stationary(sd)
+    end
+    h = 1e-6
+    for make_basis in (k -> StandardBasis(centers, k),
+                       k -> RBFFDBasis(centers, k, KNearestNeighbors(9)))
+        @test isapprox(ForwardDiff.derivative(epsilon -> solve_shape(epsilon, make_basis)(x),
+                                              2.0),
+                       (solve_shape(2.0 + h, make_basis)(x) -
+                        solve_shape(2.0 - h, make_basis)(x)) / (2 * h), rtol = 1e-4)
+    end
+end

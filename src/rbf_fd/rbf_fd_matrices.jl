@@ -28,7 +28,9 @@ function _rbf_fd_sparse_matrix(op, basis::RBFFDBasis, nodeset::NodeSet)
     total = isempty(row_nnz) ? 0 : row_start[n] + row_nnz[n]
     rows = Vector{Int}(undef, total)
     cols = Vector{Int}(undef, total)
-    vals = Vector{eltype(nodeset)}(undef, total)
+    RealT = matrix_eltype(() -> first(local_weights(basis, nearest[1], nodeset[1], op)),
+                          total, 1, eltype(nodeset))
+    vals = Vector{RealT}(undef, total)
 
     Threads.@threads for j in 1:n
         i = nearest[j]

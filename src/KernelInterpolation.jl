@@ -13,7 +13,8 @@ module KernelInterpolation
 
 using DiffEqCallbacks: PeriodicCallback, PeriodicCallbackAffect
 using ForwardDiff: ForwardDiff
-using LinearAlgebra: Diagonal, Symmetric, I, norm, tr, dot, diagind, factorize, mul!
+using LinearAlgebra: BlasFloat, Diagonal, Symmetric, I, norm, tr, dot, diagind, factorize,
+                     cholesky, lu, mul!
 using NearestNeighbors: KDTree, inrange, knn, nn
 using Printf: @sprintf
 using Random: Random
@@ -22,8 +23,8 @@ using RecipesBase: RecipesBase, @recipe, @series
 using SciMLBase: SciMLBase, ODEFunction, ODEProblem, ODESolution, DiscreteCallback
 using SimpleUnPack: @unpack
 using SpecialFunctions: besselk, loggamma
-using StaticArrays: StaticArrays, MVector, SVector
-using SparseArrays: sparse
+using StaticArrays: StaticArrays, MVector, SVector, StaticVector
+using SparseArrays: AbstractSparseMatrix, sparse
 using Reexport: @reexport
 using TimerOutputs: TimerOutputs, print_timer, reset_timer!
 @reexport using TrixiBase: trixi_include

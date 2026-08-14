@@ -132,3 +132,45 @@ f_dx(x) = 4*exp(sin(2*x[1]^2))*x[1]*cos(2*x[1]^2) + 0.2*x[1] - pi/10
 plot(many_nodes, f_dx, label = "Derivative of original function")
 plot!(many_nodes, itp_dx_many_nodes, label = "Derivative of interpolated function")
 ```
+
+## Differentiating the interpolation process
+
+So far, we differentiated the interpolation ``s`` with respect to its argument ``x``, keeping the coefficients
+``c_j``, i.e. the solution of the linear system, fixed. The whole interpolation process is differentiable as
+well: the assembly of the system matrix and the linear solve determining the coefficients are ordinary Julia
+code and can be differentiated with forward-mode automatic differentiation, e.g. with
+[ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl).
+
+This is useful, for example, to tune the shape parameter of the kernel, which we chose by hand above: the
+derivative of some error measure with respect to the shape parameter can be obtained by differentiating
+through [`interpolate`](@ref) and can then be handed to an optimizer.
+
+```@example diff-itp
+using ForwardDiff
+function loss(epsilon)
+    itp = interpolate(nodeset, values, GaussKernel{1}(shape_parameter = epsilon))
+    return sum(abs2, itp.(many_nodes) .- f.(many_nodes))
+end
+ForwardDiff.derivative(loss, 1.8)
+```
+
+Note that this requires the interpolation system to be well-conditioned. For the shape parameter of 0.5 we
+started with, the coefficients themselves are dominated by round-off errors, and so is any derivative of them.
+
+The same works for the interpolated values, for the positions of the nodes, and for solving PDEs with
+[`solve_stationary`](@ref). Since the interpolation depends linearly on the values it interpolates, the
+gradient with respect to them is the vector of the cardinal functions evaluated at the point of interest.
+For a point close to the interpolation node at ``x = 1.0``, the largest entries are the ones belonging to
+the surrounding nodes.
+
+```@example diff-itp
+x_eval = [1.1]
+ForwardDiff.gradient(v -> interpolate(nodeset, v, kernel)(x_eval), values)
+```
+
+!!! note
+    The interpolated values, the nodes, and the parameters of the kernel are allowed to have different element
+    types. It is therefore not necessary to convert, e.g., the nodes to dual numbers when differentiating with
+    respect to the values only. Which factorization of the system matrix is used in this case is described in
+    [`default_factorization_method`](@ref KernelInterpolation.default_factorization_method).
+    Reverse-mode automatic differentiation is not supported.
