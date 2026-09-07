@@ -596,3 +596,109 @@ end
     @test isapprox(D2_2d * x1_at_X, zeros(length(eval_2d)), atol = 1e-12)
     @test isapprox(D2_2d * x2_at_X, ones(length(eval_2d)), atol = 1e-12)
 end
+
+@testitem "RBF-FD: full stencil recovers global collocation" setup=[
+    Setup,
+    AdditionalImports
+] begin
+    # In the extreme case where every stencil contains *all* nodes, the local interpolant of
+    # RBF-FD is the global (polynomially augmented) kernel interpolant of the nodal values.
+    # Hence the RBF-FD differentiation matrix is D = A_𝓛 A^{-1}, the boundary rows are the
+    # identity, and the RBF-FD system for the nodal values u = A c is the Kansa (global
+    # collocation) system for the coefficients c, transformed by the invertible map c ↦ u.
+    # Both discretizations therefore describe the same function (in exact arithmetic).
+    nodeset_inner = homogeneous_hypercube(4, (0.1, 0.1), (0.9, 0.9))
+    nodeset_boundary = homogeneous_hypercube_boundary(4, (0.0, 0.0), (1.0, 1.0))
+    nodeset = merge(nodeset_inner, nodeset_boundary)
+    N = length(nodeset)
+    full_stencil = KNearestNeighbors(N)
+
+    u(x) = sinpi(x[1]) * sinpi(x[2])
+    f(x, equations) = 2 * pi^2 * sinpi(x[1]) * sinpi(x[2])
+    pde = PoissonEquation(f)
+    g(x) = u(x)
+    # Evaluation points that are not nodes (there the interpolants agree trivially).
+    eval_nodes = homogeneous_hypercube(3, (0.15, 0.15), (0.85, 0.85))
+
+    # `GaussKernel` is strictly positive definite (`order == 0`, no polynomials), while
+    # `PolyharmonicSplineKernel` is only conditionally positive definite (`order == 2`).
+    # For the latter, the *global* augmentation of the collocation method and the *local*
+    # one of RBF-FD coincide precisely because the single stencil is the whole node set.
+    for kernel in (GaussKernel{2}(shape_parameter = 2.0), PolyharmonicSplineKernel{2}(3))
+        basis_global = StandardBasis(nodeset, kernel)
+        basis_full = RBFFDBasis(nodeset, kernel, full_stencil; m = order(kernel))
+        @test order(kernel) == order(basis_global)
+
+        # Matrix level: the sparse RBF-FD matrices are dense here and equal the global ones.
+        D_global = differentiation_matrix(Laplacian(), basis_global, nodeset)
+        D_full = differentiation_matrix(Laplacian(), basis_full, nodeset)
+        @test isapprox(Matrix(D_full), D_global, rtol = 1e-9)
+
+        A_global = operator_matrix(pde, nodeset_inner, nodeset_boundary, basis_global)
+        A_full = operator_matrix(pde, nodeset_inner, nodeset_boundary, basis_full)
+        @test isapprox(Matrix(A_full), A_global, rtol = 1e-9)
+
+        # Solution level: both discretizations yield the same function. Note that the
+        # coefficients cannot be compared directly since they mean different things; the
+        # RBF-FD coefficients are the nodal values of the collocation interpolant.
+        sd_global = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, kernel)
+        itp_global = solve_stationary(sd_global)
+        sd_full = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(),
+                                        kernel; stencil_selection = full_stencil)
+        itp_full = solve_stationary(sd_full)
+        @test isapprox(coefficients(itp_full), itp_global.(nodeset), atol = 1e-10)
+        @test isapprox(itp_full.(eval_nodes), itp_global.(eval_nodes), atol = 1e-10)
+
+        # The same holds for the other local-basis policy, which only differs numerically.
+        sd_full_std = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary,
+                                            RBFFD(), kernel;
+                                            stencil_selection = full_stencil,
+                                            local_basis = RBFFDStandardBasis())
+        itp_full_std = solve_stationary(sd_full_std)
+        @test isapprox(itp_full_std.(eval_nodes), itp_global.(eval_nodes), atol = 1e-10)
+
+        # Sanity check of the sanity check: with a genuinely local stencil the two methods
+        # are different discretizations and their solutions differ noticeably.
+        sd_local = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, RBFFD(),
+                                         kernel;
+                                         stencil_selection = KNearestNeighbors(5))
+        itp_local = solve_stationary(sd_local)
+        @test maximum(abs, itp_local.(eval_nodes) .- itp_global.(eval_nodes)) > 1e-4
+    end
+
+    # Time-dependent case: the semidiscretizations are related by the same transformation,
+    # M_RBFFD * A = M_collocation and A_LB_RBFFD * A = A_LB_collocation, where A is the
+    # (collocation) basis matrix mapping coefficients to nodal values. Note that the
+    # collocation semidiscretization does not use any polynomial augmentation, so the
+    # equivalence only holds for RBF-FD with `m = 0`, which is the default for the
+    # strictly positive definite `GaussKernel` used here.
+    kernel = GaussKernel{2}(shape_parameter = 2.0)
+    equations = HeatEquation(1.0, (x, t, equations) -> 0.0)
+    initial_condition(t, x, equations) = sinpi(x[1]) * sinpi(x[2]) * exp(-2 * pi^2 * t)
+    boundary_condition(t, x) = 0.0
+    semi_global = Semidiscretization(SpatialDiscretization(equations, nodeset_inner,
+                                                           boundary_condition,
+                                                           nodeset_boundary, kernel),
+                                     initial_condition)
+    semi_full = Semidiscretization(SpatialDiscretization(equations, nodeset_inner,
+                                                         boundary_condition,
+                                                         nodeset_boundary, RBFFD(), kernel;
+                                                         stencil_selection = full_stencil),
+                                   initial_condition)
+    A = Matrix(semi_global.cache.kernel_matrix)
+    @test semi_full.cache.kernel_matrix === I
+    @test isapprox(Matrix(semi_full.cache.mass_matrix) * A,
+                   Matrix(semi_global.cache.mass_matrix))
+    @test isapprox(Matrix(semi_full.cache.pde_boundary_matrix) * A,
+                   Matrix(semi_global.cache.pde_boundary_matrix), rtol = 1e-9)
+
+    tspan = (0.0, 0.02)
+    sol_global = solve(semidiscretize(semi_global, tspan), Rodas5P(), abstol = 1e-12,
+                       reltol = 1e-12, save_everystep = false)
+    sol_full = solve(semidiscretize(semi_full, tspan), Rodas5P(), abstol = 1e-12,
+                     reltol = 1e-12, save_everystep = false)
+    titp_global = TemporalInterpolation(sol_global)
+    titp_full = TemporalInterpolation(sol_full)
+    t = last(tspan)
+    @test isapprox(titp_full(t).(eval_nodes), titp_global(t).(eval_nodes), atol = 1e-10)
+end
