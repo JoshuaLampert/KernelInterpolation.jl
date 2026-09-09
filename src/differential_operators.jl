@@ -6,7 +6,19 @@ end
 
 # Convert a kernel or polynomial to a plain Julia function, so that operators/equations
 # can be defined once for `Function` and applied to either.
-callable(kernel::RadialSymmetricKernel) = x -> Phi(kernel, x)
+#
+# For a radial-symmetric kernel the result is a `CallableKernel` rather than an anonymous
+# closure. It behaves like any other `Function`, but it remembers which kernel it came from,
+# so operators that know a closed-form chain rule (see below) can dispatch on it. Everything
+# else, including all equations and any user-defined operator, keeps a single implementation
+# taking a `Function` and picks up those radial implementations automatically.
+struct CallableKernel{K <: RadialSymmetricKernel} <: Function
+    kernel::K
+end
+
+(f::CallableKernel)(x) = Phi(f.kernel, x)
+
+callable(kernel::RadialSymmetricKernel) = CallableKernel(kernel)
 function callable(p::AbstractPolynomialLike)
     xx = variables(p)
     return y -> p(xx => y)
@@ -86,13 +98,13 @@ function (operator::PartialDerivative)(f::Function, x)
     return ForwardDiff.gradient(f, x)[operator.i]
 end
 
-function (operator::PartialDerivative)(kernel::RadialSymmetricKernel, x)
+function (operator::PartialDerivative)(f::CallableKernel, x)
     r = norm(x)
     if iszero(r)
-        assert_smooth_enough(kernel, 1, "PartialDerivative")
+        assert_smooth_enough(f.kernel, 1, "PartialDerivative")
         return zero(eltype(x))
     end
-    return phi_deriv(kernel, r) * x[operator.i] / r
+    return phi_deriv(f.kernel, r) * x[operator.i] / r
 end
 
 """
@@ -115,13 +127,13 @@ function (::Gradient)(f::Function, x)
     return ForwardDiff.gradient(f, x)
 end
 
-function (::Gradient)(kernel::RadialSymmetricKernel, x)
+function (::Gradient)(f::CallableKernel, x)
     r = norm(x)
     if iszero(r)
-        assert_smooth_enough(kernel, 1, "Gradient")
+        assert_smooth_enough(f.kernel, 1, "Gradient")
         return zero(x)
     end
-    return phi_deriv(kernel, r) / r * x
+    return phi_deriv(f.kernel, r) / r * x
 end
 
 """
@@ -144,13 +156,14 @@ function (::Laplacian)(f::Function, x)
     return tr(ForwardDiff.hessian(f, x))
 end
 
-function (::Laplacian)(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
+function (::Laplacian)(f::CallableKernel, x)
+    kernel = f.kernel
     r = norm(x)
     if iszero(r)
         assert_smooth_enough(kernel, 2, "Laplacian")
-        return Dim * phi_deriv2(kernel, r)
+        return dim(kernel) * phi_deriv2(kernel, r)
     end
-    return phi_deriv2(kernel, r) + (Dim - 1) * phi_deriv(kernel, r) / r
+    return phi_deriv2(kernel, r) + (dim(kernel) - 1) * phi_deriv(kernel, r) / r
 end
 
 @doc raw"""
@@ -193,8 +206,10 @@ function (operator::EllipticOperator)(f::Function, x)
            cc * f(x)
 end
 
-function (operator::EllipticOperator)(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
+function (operator::EllipticOperator)(f::CallableKernel, x)
     @unpack A, b, c = operator
+    kernel = f.kernel
+    d = dim(kernel)
     AA = A(x)
     bb = b(x)
     cc = c(x)
@@ -203,14 +218,12 @@ function (operator::EllipticOperator)(kernel::RadialSymmetricKernel{Dim}, x) whe
         assert_smooth_enough(kernel, 2, "EllipticOperator")
         # ∂ᵢⱼΦ(0) = φ''(0) δᵢⱼ and ∇Φ(0) = 0
         d2 = phi_deriv2(kernel, r)
-        return -d2 * sum(AA[i, i] for i in 1:Dim) + cc * phi(kernel, r)
+        return -d2 * sum(AA[i, i] for i in 1:d) + cc * phi(kernel, r)
     end
-    d1 = phi_deriv(kernel, r)
+    d1r = phi_deriv(kernel, r) / r
     d2 = phi_deriv2(kernel, r)
-    d1r = d1 / r
-    return sum(-AA[i, j] *
-               ((i == j ? d1r : zero(d1r)) + (d2 - d1r) * x[i] * x[j] / r^2)
-               for i in 1:Dim, j in 1:Dim) +
-           sum(bb[i] * d1r * x[i] for i in 1:Dim) +
+    return sum(-AA[i, j] * ((i == j ? d1r : zero(d1r)) + (d2 - d1r) * x[i] * x[j] / r^2)
+               for i in 1:d, j in 1:d) +
+           sum(bb[i] * d1r * x[i] for i in 1:d) +
            cc * phi(kernel, r)
 end
