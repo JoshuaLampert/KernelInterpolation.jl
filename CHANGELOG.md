@@ -30,20 +30,20 @@ for human readability.
 
 - Derivatives of radial-symmetric kernels are now evaluated through the chain rule on the
   scalar radial profile `phi` instead of by differentiating `x -> Phi(kernel, x)` directly.
-  Previously, the `save_call` workaround perturbed the argument by `eps` at the kernel centre
+  Previously, the `save_call` workaround perturbed the argument by `eps` at the kernel center
   to keep automatic differentiation from producing `NaN` at the singularity of `norm`. That
   had three consequences, all of which are fixed:
-  - Second-order operators were badly wrong at the centre. The radial formula
+  - Second-order operators were badly wrong at the center. The radial formula
     `Delta Phi = phi'' + (d - 1) phi' / r` suffers catastrophic cancellation at `r = eps`, so
     every diagonal entry of a `Laplacian` or `EllipticOperator` collocation matrix carried an
     `O(10%)` error. For example, `Laplacian` of `WendlandKernel{2}(3, shape_parameter = 0.4)`
-    at the centre returned `-5.52` instead of the correct `-7.04`. Solutions of PDE examples
+    at the center returned `-5.52` instead of the correct `-7.04`. Solutions of PDE examples
     change accordingly, and are generally more accurate.
   - For kernels that are not differentiable at the origin (`smoothness == 0`, e.g.
     `WendlandKernel` with `k = 0`, `Matern12Kernel`, `RieszKernel` with `beta <= 1`), a
     non-existent derivative was silently returned as a value pointing along the first
     coordinate direction. Such calls now throw an `ArgumentError`.
-  - `save_call` mutated its argument, so derivatives at the centre errored for immutable
+  - `save_call` mutated its argument, so derivatives at the center errored for immutable
     input vectors such as `SVector`. These now work.
 
 #### Changed

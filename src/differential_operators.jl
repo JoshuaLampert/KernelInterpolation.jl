@@ -35,7 +35,7 @@ end
 
 function assert_smooth_enough(kernel::RadialSymmetricKernel, m::Int, name)
     if smoothness(kernel) < m
-        throw(ArgumentError("$name of $(get_name(kernel)) is not defined at the centre of " *
+        throw(ArgumentError("$name of $(get_name(kernel)) is not defined at the center of " *
                             "the kernel: the kernel is only C^$(smoothness(kernel)), but " *
                             "an operator of order $m requires smoothness at least $m."))
     end

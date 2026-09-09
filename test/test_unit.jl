@@ -229,11 +229,11 @@ end
     @test smoothness(MySmoothnessKernel{2}()) == 0
 end
 
-@testitem "derivatives at the kernel centre" setup=[Setup, AdditionalImports] begin
+@testitem "derivatives at the kernel center" setup=[Setup, AdditionalImports] begin
     using LinearAlgebra: tr
     const ForwardDiff = KernelInterpolation.ForwardDiff
     # Derivatives are evaluated through the chain rule on the radial profile, so the
-    # removable singularity at the centre is resolved by the analytic limit and immutable
+    # removable singularity at the center is resolved by the analytic limit and immutable
     # input vectors are supported.
     x = SVector(0.3, -0.4)
     for kernel in (GaussKernel{2}(shape_parameter = 1.3), ThinPlateSplineKernel{2}(),
@@ -247,17 +247,17 @@ end
     @test isapprox(Laplacian()(GaussKernel{2}(shape_parameter = 1.0), x, x), -4.0)
     @test isapprox(Laplacian()(GaussKernel{3}(shape_parameter = 1.0),
                                SVector(0.1, 0.2, 0.3), SVector(0.1, 0.2, 0.3)), -6.0)
-    # phi = r^3 has vanishing Laplacian at the centre
+    # phi = r^3 has vanishing Laplacian at the center
     @test isapprox(Laplacian()(PolyharmonicSplineKernel{2}(3), x, x), 0.0, atol = 1e-14)
 
-    # Not smooth enough: the derivative does not exist at the centre and must be refused
+    # Not smooth enough: the derivative does not exist at the center and must be refused
     # rather than silently returning an arbitrary value.
     @test_throws ArgumentError Gradient()(WendlandKernel{2}(0), x, x)
     @test_throws ArgumentError PartialDerivative(1)(RieszKernel{2}(1.0), x, x)
     @test_throws ArgumentError Laplacian()(ThinPlateSplineKernel{2}(), x, x)
     @test_throws ArgumentError PoissonEquation(x -> 0.0)(ThinPlateSplineKernel{2}(), x, x)
 
-    # Away from the centre the chain rule agrees with plain automatic differentiation.
+    # Away from the center the chain rule agrees with plain automatic differentiation.
     y = SVector(0.0, 0.0)
     for kernel in (GaussKernel{2}(shape_parameter = 1.3), ThinPlateSplineKernel{2}(),
                    PolyharmonicSplineKernel{2}(4), WendlandKernel{2}(2),

@@ -243,7 +243,7 @@ Note that this is in general *not* the smoothness of the radial profile ``\phi``
 example ``\phi(r) = r`` is smooth on ``(0,\infty)``, while ``\Phi(x) = \Vert x\Vert`` is
 merely continuous at the origin. The smoothness is available programmatically via
 [`smoothness`](@ref) and determines whether a differential operator of order ``m`` can be
-evaluated at the centre of a kernel, which requires ``\texttt{smoothness(kernel)} \ge m``.
+evaluated at the center of a kernel, which requires ``\texttt{smoothness(kernel)} \ge m``.
 
 | Kernel name | Formula | Order | Smoothness
 | --- | --- | --- | ---
@@ -264,7 +264,7 @@ which applies a transformation to the input before evaluating the kernel.
 However, you can also define your own kernel. A radial-symmetric kernel is a subtype of [`KernelInterpolation.RadialSymmetricKernel`](@ref), which in
 turn is a subtype of [`KernelInterpolation.AbstractKernel`](@ref) and needs to implement the functions [`phi`](@ref) and [`order`](@ref).
 Optionally, it can implement [`smoothness`](@ref); the fallback is the conservative value ``0``, which means that derivatives of
-the kernel are refused exactly at its centre. Let's define an exponential
+the kernel are refused exactly at its center. Let's define an exponential
 kernel with ``\phi(r) = \mathrm{e}^{-r^{1.5}}`` and use it for the interpolation problem above.
 
 ```@example interpolation
