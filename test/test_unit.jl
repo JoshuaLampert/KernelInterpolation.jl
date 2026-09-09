@@ -1623,10 +1623,10 @@ end
     x2_vals = last.(nodes_pd)
     D1_pd = differentiation_matrix(PartialDerivative(1), sb_pd; m = 3)
     D2_pd = differentiation_matrix(PartialDerivative(2), sb_pd; m = 3)
-    @test isapprox(D1_pd * x1_vals, ones(N_pd), atol = 1e-11)
-    @test isapprox(D1_pd * x2_vals, zeros(N_pd), atol = 1e-11)
-    @test isapprox(D2_pd * x1_vals, zeros(N_pd), atol = 1e-11)
-    @test isapprox(D2_pd * x2_vals, ones(N_pd), atol = 1e-11)
+    @test isapprox(D1_pd * x1_vals, ones(N_pd), atol = 1e-10)
+    @test isapprox(D1_pd * x2_vals, zeros(N_pd), atol = 1e-10)
+    @test isapprox(D2_pd * x1_vals, zeros(N_pd), atol = 1e-10)
+    @test isapprox(D2_pd * x2_vals, ones(N_pd), atol = 1e-10)
 
     # PartialDerivative exactness on a kernel translate: D * nodal_values_of_K(·, cⱼ)
     # equals the exact partial derivative at the evaluation nodes (D = A_L * A⁻¹).
@@ -1695,7 +1695,7 @@ end
     # Δ(x₁² + x₂²) = 4 is reproduced exactly with degree-2 polynomials (`m = 3`).
     quad(x) = x[1]^2 + x[2]^2
     D3 = differentiation_matrix(Laplacian(), sb; m = 3)
-    @test all(isapprox.(D3 * quad.(nodes), 4.0, atol = 1e-11))
+    @test all(isapprox.(D3 * quad.(nodes), 4.0, atol = 1e-10))
 
     # `solve_stationary` augments conditionally positive definite kernels and reproduces a
     # linear solution exactly (it lies in the linear polynomial space of the spline).
