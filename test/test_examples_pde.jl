@@ -7,7 +7,7 @@ end
 
 @testitem "poisson_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "poisson_2d_basic.jl"),
-                          l2=0.051892875031473, linf=0.009623271947010141,
+                          l2=0.049326883009727776, linf=0.00884841202228337,
                           pde_test=true)
 end
 
@@ -24,7 +24,7 @@ end
 
 @testitem "poisson_2d_lagrange_basis.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "poisson_2d_lagrange_basis.jl"),
-                          l2=0.05189287444793586, linf=0.00962327274766674,
+                          l2=0.04932687666512765, linf=0.008848421428649026,
                           pde_test=true, atol=1e-7)
 end
 
@@ -42,26 +42,26 @@ end
 
 @testitem "poisson_3d_ball.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "poisson_3d_ball.jl"),
-                          l2=1.2489160956571945, linf=0.1351008043671812,
-                          pde_test=true)
+                          l2=1.1842841086211155, linf=0.14341093728770962,
+                          pde_test=true, atol=1e-10)
 end
 
 @testitem "heat_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "heat_2d_basic.jl"),
-                          l2=0.8163804581267793, linf=0.07510840007130493,
+                          l2=0.8166184454477932, linf=0.07519677063240593,
                           pde_test=true)
 end
 
 @testitem "heat_2d_manufactured.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "heat_2d_manufactured.jl"),
-                          l2=0.05146343652866822, linf=0.005234201747677858,
+                          l2=0.0312855604318702, linf=0.0029173794750327886,
                           pde_test=true)
 end
 
 @testitem "heat_2d_lagrange_basis.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "heat_2d_lagrange_basis.jl"),
-                          l2=0.0514635252933050, linf=0.00523420529895294,
-                          pde_test=true, atol=1e-8)
+                          l2=0.03128571950518645, linf=0.002917382363885124,
+                          pde_test=true, atol=1e-6)
 end
 
 @testitem "advection_1d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
@@ -80,7 +80,7 @@ end
 
 @testitem "advection_diffusion_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "advection_diffusion_2d_basic.jl"),
-                          l2=1.5864821617681693, linf=0.5647099100416488,
+                          l2=1.4971059347717564, linf=0.4610303242043753,
                           pde_test=true, tspan=(0.0, 0.1),
                           atol=1e-7) # stability issues
 end

@@ -34,6 +34,8 @@ function Base.show(io::IO, kernel::TransformationKernel{Dim}) where {Dim}
 end
 
 order(kernel::TransformationKernel) = order(kernel.kernel)
+# Assumes the transformation itself is smooth.
+smoothness(kernel::TransformationKernel) = smoothness(kernel.kernel)
 
 @doc raw"""
     ProductKernel{Dim}(kernels)
@@ -80,6 +82,7 @@ end
 
 # TODO: Is that correct in general?
 order(kernel::ProductKernel) = maximum(order.(kernel.kernels))
+smoothness(kernel::ProductKernel) = minimum(smoothness.(kernel.kernels))
 
 Base.:*(k1::AbstractKernel, k2::AbstractKernel) = ProductKernel{dim(k1)}([k1, k2])
 
@@ -128,5 +131,6 @@ end
 
 # TODO: Is that correct in general?
 order(kernel::SumKernel) = minimum(order.(kernel.kernels))
+smoothness(kernel::SumKernel) = minimum(smoothness.(kernel.kernels))
 
 Base.:+(k1::AbstractKernel, k2::AbstractKernel) = SumKernel{dim(k2)}([k1, k2])

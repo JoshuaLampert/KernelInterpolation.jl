@@ -4,16 +4,7 @@ const DifferentialOperatorOrEquation = Union{AbstractDifferentialOperator, Abstr
 
 function (op::DifferentialOperatorOrEquation)(kernel::RadialSymmetricKernel, x, y)
     @assert length(x) == length(y) == dim(kernel)
-    return save_call(op, kernel, x .- y)
-end
-
-# Workaround to avoid evaluating the derivative at zeros to allow automatic differentiation,
-# see https://github.com/JuliaDiff/ForwardDiff.jl/issues/303
-function save_call(op::DifferentialOperatorOrEquation, kernel::RadialSymmetricKernel, x)
-    if all(iszero, x)
-        x[1] = eps(typeof(x[1]))
-    end
-    return op(kernel, x)
+    return op(kernel, x .- y)
 end
 
 # Abstract fallback: convert kernel or polynomial to a callable, then apply the operator/equation.
