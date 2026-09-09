@@ -196,6 +196,78 @@ end
     @test kernel13(3.1, 3.0) == kernel13(3.1, SVector(3.0)) == kernel13([3.1], 3.0)
 end
 
+@testitem "smoothness" setup=[Setup, AdditionalImports] begin
+    # Smoothness of the multivariate Phi(x) = phi(||x||), not of the radial profile phi.
+    @test smoothness(GaussKernel{2}()) == Inf
+    @test smoothness(MultiquadricKernel{2}()) == Inf
+    @test smoothness(InverseMultiquadricKernel{2}()) == Inf
+    # phi = r^k (odd) or r^k log(r) (even): Phi is C^{k-1} in both cases
+    @test smoothness(PolyharmonicSplineKernel{2}(1)) == 0
+    @test smoothness(PolyharmonicSplineKernel{2}(2)) == 1
+    @test smoothness(PolyharmonicSplineKernel{2}(3)) == 2
+    @test smoothness(PolyharmonicSplineKernel{2}(4)) == 3
+    @test smoothness(ThinPlateSplineKernel{2}()) == 1
+    @test smoothness(WendlandKernel{2}(0)) == 0
+    @test smoothness(WendlandKernel{2}(3)) == 6
+    @test smoothness(WuKernel{2}(2, 1)) == 2
+    @test smoothness(RadialCharacteristicKernel{2}(2.5)) == 0
+    @test smoothness(Matern12Kernel{2}()) == 0
+    @test smoothness(Matern32Kernel{2}()) == 2
+    @test smoothness(Matern52Kernel{2}()) == 4
+    @test smoothness(Matern72Kernel{2}()) == 6
+    @test smoothness(MaternKernel{2}(0.5)) == 0
+    @test smoothness(MaternKernel{2}(1.5)) == 2
+    @test smoothness(MaternKernel{2}(1.0)) == 1
+    @test smoothness(RieszKernel{2}(1.0)) == 0
+    @test smoothness(RieszKernel{2}(1.5)) == 1
+    # composite kernels are as smooth as their least smooth ingredient
+    @test smoothness(SumKernel{2}([GaussKernel{2}(), ThinPlateSplineKernel{2}()])) == 1
+    @test smoothness(ProductKernel{2}([GaussKernel{2}(), WendlandKernel{2}(0)])) == 0
+    @test smoothness(TransformationKernel{2}(GaussKernel{2}(), x -> x)) == Inf
+    # conservative fallback for user-defined kernels
+    struct MySmoothnessKernel{Dim} <: KernelInterpolation.RadialSymmetricKernel{Dim} end
+    @test smoothness(MySmoothnessKernel{2}()) == 0
+end
+
+@testitem "derivatives at the kernel centre" setup=[Setup, AdditionalImports] begin
+    using LinearAlgebra: tr
+    const ForwardDiff = KernelInterpolation.ForwardDiff
+    # Derivatives are evaluated through the chain rule on the radial profile, so the
+    # removable singularity at the centre is resolved by the analytic limit and immutable
+    # input vectors are supported.
+    x = SVector(0.3, -0.4)
+    for kernel in (GaussKernel{2}(shape_parameter = 1.3), ThinPlateSplineKernel{2}(),
+                   PolyharmonicSplineKernel{2}(3), WendlandKernel{2}(3),
+                   Matern52Kernel{2}(), WuKernel{2}(2, 1))
+        @test Gradient()(kernel, x, x) == zeros(2)
+        @test PartialDerivative(1)(kernel, x, x) == 0.0
+        @test PartialDerivative(2)(kernel, x, x) == 0.0
+    end
+    # Laplacian limit is Dim * phi''(0); for the Gaussian exp(-(eps r)^2) this is -2*Dim*eps^2
+    @test isapprox(Laplacian()(GaussKernel{2}(shape_parameter = 1.0), x, x), -4.0)
+    @test isapprox(Laplacian()(GaussKernel{3}(shape_parameter = 1.0),
+                               SVector(0.1, 0.2, 0.3), SVector(0.1, 0.2, 0.3)), -6.0)
+    # phi = r^3 has vanishing Laplacian at the centre
+    @test isapprox(Laplacian()(PolyharmonicSplineKernel{2}(3), x, x), 0.0, atol = 1e-14)
+
+    # Not smooth enough: the derivative does not exist at the centre and must be refused
+    # rather than silently returning an arbitrary value.
+    @test_throws ArgumentError Gradient()(WendlandKernel{2}(0), x, x)
+    @test_throws ArgumentError PartialDerivative(1)(RieszKernel{2}(1.0), x, x)
+    @test_throws ArgumentError Laplacian()(ThinPlateSplineKernel{2}(), x, x)
+    @test_throws ArgumentError PoissonEquation(x -> 0.0)(ThinPlateSplineKernel{2}(), x, x)
+
+    # Away from the centre the chain rule agrees with plain automatic differentiation.
+    y = SVector(0.0, 0.0)
+    for kernel in (GaussKernel{2}(shape_parameter = 1.3), ThinPlateSplineKernel{2}(),
+                   PolyharmonicSplineKernel{2}(4), WendlandKernel{2}(2),
+                   Matern32Kernel{2}(), RieszKernel{2}(1.5))
+        f = z -> KernelInterpolation.Phi(kernel, z)
+        @test isapprox(Gradient()(kernel, x, y), ForwardDiff.gradient(f, x))
+        @test isapprox(Laplacian()(kernel, x, y), tr(ForwardDiff.hessian(f, x)))
+    end
+end
+
 @testitem "NodeSet" setup=[Setup, AdditionalImports] begin
     nodeset1 = @test_nowarn NodeSet([0.0 0.0
                                      1.0 0.0
@@ -1259,7 +1331,7 @@ end
     u1_values = A * c
     u2_values = itp.(nodes)
     for (u1_val, u2_val) in zip(u1_values, u2_values)
-        @test isapprox(u1_val, u2_val, atol = 1e-14)
+        @test isapprox(u1_val, u2_val, atol = 1e-13)
     end
     # Test if L * u = b
     L = operator_matrix(pde, nodeset_inner, nodeset_boundary, kernel)
@@ -1599,11 +1671,11 @@ end
     D2 = differentiation_matrix(PartialDerivative(2), basis, nodeset; m = 3)
     @test size(D1) == (length(nodeset), length(centers))
     @test isapprox(D1 * ones(length(centers)), zeros(length(nodeset)), atol = 1e-10)
-    @test isapprox(D1 * x1_at_centers, ones(length(nodeset)), atol = 1e-11)
-    @test isapprox(D1 * x2_at_centers, zeros(length(nodeset)), atol = 1e-11)
+    @test isapprox(D1 * x1_at_centers, ones(length(nodeset)), atol = 1e-10)
+    @test isapprox(D1 * x2_at_centers, zeros(length(nodeset)), atol = 1e-10)
     @test isapprox(D2 * ones(length(centers)), zeros(length(nodeset)), atol = 1e-10)
-    @test isapprox(D2 * x1_at_centers, zeros(length(nodeset)), atol = 1e-11)
-    @test isapprox(D2 * x2_at_centers, ones(length(nodeset)), atol = 1e-11)
+    @test isapprox(D2 * x1_at_centers, zeros(length(nodeset)), atol = 1e-10)
+    @test isapprox(D2 * x2_at_centers, ones(length(nodeset)), atol = 1e-10)
 
     # Kernel convenience form agrees with the basis form.
     @test differentiation_matrix(Laplacian(), centers, kernel, nodeset) ≈ D

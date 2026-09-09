@@ -55,6 +55,31 @@ Return order of kernel.
 function order end
 
 @doc raw"""
+    smoothness(kernel)
+
+Return the smoothness of a kernel, i.e. the largest ``k`` such that the multivariate
+function ``\Phi(x) = \phi(\Vert x\Vert)`` is ``k`` times continuously differentiable on
+``\mathbb{R}^{\mathrm{Dim}}``. The return value is an integer or `Inf`.
+
+Note that this is the smoothness of ``\Phi`` and **not** of the radial profile ``\phi``,
+which are in general different: ``\phi(r) = r`` is smooth on ``(0,\infty)``, while
+``\Phi(x) = \Vert x\Vert`` is only continuous at the origin. The smoothness is therefore
+governed by the behaviour of ``\phi`` at ``r = 0``.
+
+Apart from being of interest in itself, e.g. for convergence rates or for choosing a kernel
+for a PDE of a given order, the smoothness determines whether a differential operator of
+order ``m`` may be evaluated at the centre of the kernel: this requires
+`smoothness(kernel) >= m`. Otherwise the corresponding derivative of ``\Phi`` does not
+exist at the origin.
+
+The fallback returns `0`, i.e. the conservative assumption that a kernel is merely
+continuous. Custom kernels that are smoother should define this function.
+
+See also [`order`](@ref), [`phi`](@ref), [`Phi`](@ref).
+"""
+smoothness(::AbstractKernel) = 0
+
+@doc raw"""
     GaussKernel{Dim}(; shape_parameter = 1.0)
 
 Gaussian kernel function with
@@ -87,6 +112,7 @@ end
 
 phi(kernel::GaussKernel, r::Real) = exp(-(kernel.shape_parameter * r)^2)
 order(::GaussKernel) = 0
+smoothness(::GaussKernel) = Inf
 
 @doc raw"""
     MultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0)
@@ -123,6 +149,7 @@ end
 
 phi(kernel::MultiquadricKernel, r::Real) = (1 + (kernel.shape_parameter * r)^2)^kernel.beta
 order(kernel::MultiquadricKernel) = ceil(Int, kernel.beta)
+smoothness(::MultiquadricKernel) = Inf
 
 @doc raw"""
     InverseMultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0)
@@ -161,6 +188,7 @@ function phi(kernel::InverseMultiquadricKernel, r::Real)
     return (1 + (kernel.shape_parameter * r)^2)^(-kernel.beta)
 end
 order(::InverseMultiquadricKernel) = 0
+smoothness(::InverseMultiquadricKernel) = Inf
 
 @doc raw"""
     PolyharmonicSplineKernel{Dim}(k)
@@ -210,6 +238,7 @@ function order(kernel::PolyharmonicSplineKernel)
     k2 = ceil(Int, kernel.k / 2)
     return isodd(kernel.k) ? k2 : k2 + 1
 end
+smoothness(kernel::PolyharmonicSplineKernel) = kernel.k - 1
 
 @doc raw"""
     ThinPlateSplineKernel{Dim}()
@@ -238,6 +267,7 @@ end
 
 phi(::ThinPlateSplineKernel, r::Real) = iszero(r) ? 0.0 : r^2 * log(r)
 order(::ThinPlateSplineKernel) = 2
+smoothness(::ThinPlateSplineKernel) = 1
 
 @doc raw"""
 	WendlandKernel{Dim}(k; shape_parameter = 1.0, d = Dim)
@@ -307,6 +337,7 @@ function phi(kernel::WendlandKernel, r::RealT) where {RealT <: Real}
     end
 end
 order(::WendlandKernel) = 0
+smoothness(kernel::WendlandKernel) = 2 * kernel.k
 
 @doc raw"""
 	WuKernel{Dim}(l, k; shape_parameter = 1.0)
@@ -395,6 +426,7 @@ function phi(kernel::WuKernel, r::RealT) where {RealT <: Real}
     end
 end
 order(::WuKernel) = 0
+smoothness(kernel::WuKernel) = 2 * (kernel.l - kernel.k)
 
 @doc raw"""
     RadialCharacteristicKernel{Dim}(beta = 2.0; shape_parameter = 1.0)
@@ -439,6 +471,7 @@ end
 function order(kernel::RadialCharacteristicKernel{Dim}) where {Dim}
     return kernel.beta > (Dim + 1) / 2 ? 0 : Inf
 end
+smoothness(::RadialCharacteristicKernel) = 0
 
 @doc raw"""
     MaternKernel{Dim}(nu = 1.5; shape_parameter = 1.0)
@@ -487,6 +520,7 @@ function phi(kernel::MaternKernel, r::Real)
     end
 end
 order(::MaternKernel) = 0
+smoothness(kernel::MaternKernel) = ceil(Int, 2 * kernel.nu) - 1
 
 # Implement special Matern kernels for faster evaluation
 @doc raw"""
@@ -525,6 +559,7 @@ function phi(kernel::Matern12Kernel, r::Real)
     return exp(-y)
 end
 order(::Matern12Kernel) = 0
+smoothness(::Matern12Kernel) = 0
 
 @doc raw"""
     Matern32Kernel{Dim}(; shape_parameter = 1.0)
@@ -562,6 +597,7 @@ function phi(kernel::Matern32Kernel, r::RealT) where {RealT <: Real}
     return (1 + y) * exp(-y)
 end
 order(::Matern32Kernel) = 0
+smoothness(::Matern32Kernel) = 2
 
 @doc raw"""
     Matern52Kernel{Dim}(; shape_parameter = 1.0)
@@ -599,6 +635,7 @@ function phi(kernel::Matern52Kernel, r::RealT) where {RealT <: Real}
     return 1 // 3 * (3 + 3 * y + y^2) * exp(-y)
 end
 order(::Matern52Kernel) = 0
+smoothness(::Matern52Kernel) = 4
 
 @doc raw"""
     Matern72Kernel{Dim}(; shape_parameter = 1.0)
@@ -636,6 +673,7 @@ function phi(kernel::Matern72Kernel, r::RealT) where {RealT <: Real}
     return (1 + y + 6 * y^2 / 15 + y^3 / 15) * exp(-y)
 end
 order(::Matern72Kernel) = 0
+smoothness(::Matern72Kernel) = 6
 
 @doc raw"""
     RieszKernel{Dim}(beta; shape_parameter = 1.0)
@@ -671,3 +709,4 @@ end
 
 phi(kernel::RieszKernel, r::Real) = -r^kernel.beta
 order(::RieszKernel) = 1
+smoothness(kernel::RieszKernel) = ceil(Int, kernel.beta) - 1

@@ -9,6 +9,10 @@ for human readability.
 
 #### Added
 
+- Added `smoothness(kernel)`, returning the largest `k` such that the multivariate function
+  `Phi(x) = phi(||x||)` is `k` times continuously differentiable. It is used to decide whether a
+  differential operator of order `m` may be evaluated at the center of a kernel, which requires
+  `smoothness(kernel) >= m`. The fallback for user-defined kernels is the conservative value `0`.
 - Added `fill_distance` function ([#187]).
 - Added support for RBF-FD ([#182]).
 - Added `differentiation_matrix` to assemble the matrix of a differential operator (sparse for
@@ -21,6 +25,26 @@ for human readability.
 - Added support for methods from `LinearSolve.jl` in `interpolate` ([#176]).
 - Added a keyword argument `factorization_method` to `interpolate`, `interpolation_matrix`,
   and `least_squares_matrix` to allow for different factorization methods ([#130]).
+
+#### Fixed
+
+- Derivatives of radial-symmetric kernels are now evaluated through the chain rule on the
+  scalar radial profile `phi` instead of by differentiating `x -> Phi(kernel, x)` directly.
+  Previously, the `save_call` workaround perturbed the argument by `eps` at the kernel centre
+  to keep automatic differentiation from producing `NaN` at the singularity of `norm`. That
+  had three consequences, all of which are fixed:
+  - Second-order operators were badly wrong at the centre. The radial formula
+    `Delta Phi = phi'' + (d - 1) phi' / r` suffers catastrophic cancellation at `r = eps`, so
+    every diagonal entry of a `Laplacian` or `EllipticOperator` collocation matrix carried an
+    `O(10%)` error. For example, `Laplacian` of `WendlandKernel{2}(3, shape_parameter = 0.4)`
+    at the centre returned `-5.52` instead of the correct `-7.04`. Solutions of PDE examples
+    change accordingly, and are generally more accurate.
+  - For kernels that are not differentiable at the origin (`smoothness == 0`, e.g.
+    `WendlandKernel` with `k = 0`, `Matern12Kernel`, `RieszKernel` with `beta <= 1`), a
+    non-existent derivative was silently returned as a value pointing along the first
+    coordinate direction. Such calls now throw an `ArgumentError`.
+  - `save_call` mutated its argument, so derivatives at the centre errored for immutable
+    input vectors such as `SVector`. These now work.
 
 #### Changed
 

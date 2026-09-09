@@ -69,7 +69,7 @@ export AbstractSpatialMethod, Collocation, RBFFD
 export AbstractStencilSelection, KNearestNeighbors, RadiusSearch
 export AbstractRBFFDLocalBasis, RBFFDStandardBasis, RBFFDLagrangeBasis
 export RBFFDBasis
-export phi, Phi, order, local_order
+export phi, Phi, order, local_order, smoothness
 export Identity, PartialDerivative, Gradient, Laplacian, EllipticOperator
 export PoissonEquation, EllipticEquation, AdvectionEquation, HeatEquation,
        AdvectionDiffusionEquation

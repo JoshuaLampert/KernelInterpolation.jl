@@ -237,24 +237,34 @@ In the previous example, we used the [`ThinPlateSplineKernel`](@ref), which is a
 There is a number of different [kernels already defined](@ref api-kernels), which can be used in an analogous way. For an
 overview of the existing radial-symmetric kernels, see the following table.
 
+The smoothness column gives the largest ``k`` such that the multivariate function
+``\Phi(x) = \phi(\Vert x\Vert)`` is ``k`` times continuously differentiable on ``\mathbb{R}^d``.
+Note that this is in general *not* the smoothness of the radial profile ``\phi`` itself: for
+example ``\phi(r) = r`` is smooth on ``(0,\infty)``, while ``\Phi(x) = \Vert x\Vert`` is
+merely continuous at the origin. The smoothness is available programmatically via
+[`smoothness`](@ref) and determines whether a differential operator of order ``m`` can be
+evaluated at the centre of a kernel, which requires ``\texttt{smoothness(kernel)} \ge m``.
+
 | Kernel name | Formula | Order | Smoothness
 | --- | --- | --- | ---
 | [`GaussKernel`](@ref) | ``\phi(r) = \mathrm{e}^{-r^2}`` | ``0`` | ``C^\infty``
 | [`MultiquadricKernel`](@ref) | ``\phi(r) = (1 + r^2)^\beta, \beta > 0`` | ``\lceil{\beta}\rceil`` | ``C^\infty``
 | [`InverseMultiquadricKernel`](@ref) | ``\phi(r) = (1 + r^2)^{-\beta}, \beta > 0`` | ``0`` | ``C^\infty``
-| [`PolyharmonicSplineKernel`](@ref) | ``\phi_k(r) = \begin{cases} r^k, &\text{ if } k \text{ odd}\\ r^k\log{r}, &\text{ if } k \text{ even} \end{cases}, k\in\mathbb{N}`` | ``\left\lceil{\frac{k}{2}}\right\rceil`` for odd ``k`` and ``\frac{k}{2} + 1`` for even ``k`` | ``C^{k - 1}`` for odd ``k`` and ``C^k`` for even ``k``
-| [`ThinPlateSplineKernel`](@ref) | ``\phi(r) = r^2\log{r}`` | 2 | ``C^2``
+| [`PolyharmonicSplineKernel`](@ref) | ``\phi_k(r) = \begin{cases} r^k, &\text{ if } k \text{ odd}\\ r^k\log{r}, &\text{ if } k \text{ even} \end{cases}, k\in\mathbb{N}`` | ``\left\lceil{\frac{k}{2}}\right\rceil`` for odd ``k`` and ``\frac{k}{2} + 1`` for even ``k`` | ``C^{k - 1}``
+| [`ThinPlateSplineKernel`](@ref) | ``\phi(r) = r^2\log{r}`` | 2 | ``C^1``
 | [`WendlandKernel`](@ref) | ``\phi_{d,k}(r) = \begin{cases}p_{d,k}(r), &\text{ if } 0\le r\le 1\\0, &\text{ else}\end{cases}, d, k\in\mathbb{N}`` for some polynomial ``p_{d,k}``| ``0`` | ``C^{2k}``
 | [`WuKernel`](@ref) | ``\phi_{l,k}(r) = \begin{cases}p_{l,k}(r), &\text{ if } 0\le r\le 1\\0, &\text{ else}\end{cases}, l, k\in\mathbb{N}`` for some polynomial ``p_{l,k}``| ``0`` | ``C^{2(l - k)}``
 | [`RadialCharacteristicKernel`](@ref) | ``\phi(r) = (1 - r)^\beta_+, \beta\ge(d + 1)/2`` | ``0`` | ``C^0``
-| [`MaternKernel`](@ref) | ``\phi_{\nu}(r) = \frac{2^{1 - \nu}}{\Gamma(\nu)}\left(\sqrt{2\nu}r\right)^\nu K_{\nu}\left(\sqrt{2\nu}r\right), \nu > 0`` | ``0`` | ``C^{2(\lceil\nu\rceil - 1)}``
-| [`RieszKernel`](@ref) | ``\phi(r) = -r^\beta, 0 < \beta < 2`` | ``1`` | ``C^\infty``
+| [`MaternKernel`](@ref) | ``\phi_{\nu}(r) = \frac{2^{1 - \nu}}{\Gamma(\nu)}\left(\sqrt{2\nu}r\right)^\nu K_{\nu}\left(\sqrt{2\nu}r\right), \nu > 0`` | ``0`` | ``C^{\lceil 2\nu\rceil - 1}``
+| [`RieszKernel`](@ref) | ``\phi(r) = -r^\beta, 0 < \beta < 2`` | ``1`` | ``C^{\lceil\beta\rceil - 1}``
 
 Kernels can be composed by using [`SumKernel`](@ref) and [`ProductKernel`](@ref). Anisotropic kernels can be created by using [`TransformationKernel`](@ref),
 which applies a transformation to the input before evaluating the kernel.
 
 However, you can also define your own kernel. A radial-symmetric kernel is a subtype of [`KernelInterpolation.RadialSymmetricKernel`](@ref), which in
-turn is a subtype of [`KernelInterpolation.AbstractKernel`](@ref) and needs to implement the functions [`phi`](@ref) and [`order`](@ref). Let's define an exponential
+turn is a subtype of [`KernelInterpolation.AbstractKernel`](@ref) and needs to implement the functions [`phi`](@ref) and [`order`](@ref).
+Optionally, it can implement [`smoothness`](@ref); the fallback is the conservative value ``0``, which means that derivatives of
+the kernel are refused exactly at its centre. Let's define an exponential
 kernel with ``\phi(r) = \mathrm{e}^{-r^{1.5}}`` and use it for the interpolation problem above.
 
 ```@example interpolation
