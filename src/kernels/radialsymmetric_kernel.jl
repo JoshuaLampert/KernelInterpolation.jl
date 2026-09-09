@@ -64,11 +64,11 @@ function ``\Phi(x) = \phi(\Vert x\Vert)`` is ``k`` times continuously differenti
 Note that this is the smoothness of ``\Phi`` and **not** of the radial profile ``\phi``,
 which are in general different: ``\phi(r) = r`` is smooth on ``(0,\infty)``, while
 ``\Phi(x) = \Vert x\Vert`` is only continuous at the origin. The smoothness is therefore
-governed by the behaviour of ``\phi`` at ``r = 0``.
+governed by the behavior of ``\phi`` at ``r = 0``.
 
 Apart from being of interest in itself, e.g. for convergence rates or for choosing a kernel
 for a PDE of a given order, the smoothness determines whether a differential operator of
-order ``m`` may be evaluated at the centre of the kernel: this requires
+order ``m`` may be evaluated at the center of the kernel: this requires
 `smoothness(kernel) >= m`. Otherwise the corresponding derivative of ``\Phi`` does not
 exist at the origin.
 

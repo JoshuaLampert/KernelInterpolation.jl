@@ -16,7 +16,7 @@ end
 # radial profile `phi`, and never by differentiating `x -> Phi(kernel, x)` directly. The
 # reason is that the only singularity is in `norm(x)` at the origin, not in `phi` itself, so
 # differentiating the profile is well behaved and the removable singularity at the kernel
-# centre can be handled by its analytic limit instead of by perturbing the argument.
+# center can be handled by its analytic limit instead of by perturbing the argument.
 #
 # With r = ||x|| and s = x / r:
 #
