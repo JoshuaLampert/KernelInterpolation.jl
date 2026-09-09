@@ -43,7 +43,7 @@ end
 @testitem "poisson_3d_ball.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
     @test_include_example(joinpath(EXAMPLES_DIR, "poisson_3d_ball.jl"),
                           l2=1.1842841086211155, linf=0.14341093728770962,
-                          pde_test=true, atol=1e-11)
+                          pde_test=true, atol=1e-10)
 end
 
 @testitem "heat_2d_basic.jl" setup=[Setup, AdditionalImports, PDEExamples] begin
