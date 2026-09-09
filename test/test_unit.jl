@@ -320,7 +320,7 @@ end
     # neighbor at distance 0, so the fill distance is 0.
     @test fill_distance(nodeset1, nodeset1) == 0.0
     # Single node at 0.5 on [0,1]; reference includes both endpoints (distance 0.5)
-    # and the node itself (distance 0). The maximum nearest-neighbour distance is 0.5.
+    # and the node itself (distance 0). The maximum nearest-neighbor distance is 0.5.
     nodeset_fd = NodeSet([0.5])
     reference_fd = NodeSet([0.0, 0.5, 1.0])
     @test fill_distance(nodeset_fd, reference_fd) ≈ 0.5
