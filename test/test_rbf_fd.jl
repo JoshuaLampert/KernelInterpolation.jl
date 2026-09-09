@@ -433,10 +433,17 @@ end
         neigh = select_neighbors(i, X, stencil)
         local_basis = LagrangeBasis(neigh.nodes, kernel; m = 0)
         nz_cols = findall(!iszero, L[j, :])
-        @test Set(nz_cols) == Set(neigh.indices)
+        # The row's support is contained in the stencil. Requiring equality is too
+        # strong: a weight can be exactly zero for symmetry reasons -- e.g. the center
+        # weight of a symmetric first-derivative stencil -- and whether such a weight
+        # rounds to 0.0 or to O(1e-14) is platform dependent. The loop below pins every
+        # stencil weight to its reference value anyway, so the row is fully determined.
+        @test issubset(Set(nz_cols), Set(neigh.indices))
 
         for (k, global_idx) in enumerate(neigh.indices)
-            @test L[j, global_idx] ≈ Laplacian()(local_basis[k], y_j)
+            # `atol` is needed for the same reason: a weight that vanishes by symmetry is
+            # compared against an effectively zero relative tolerance otherwise.
+            @test isapprox(L[j, global_idx], Laplacian()(local_basis[k], y_j), atol = 1e-12)
         end
     end
 
@@ -537,9 +544,17 @@ end
         neigh = select_neighbors(i, X, stencil)
         local_basis_j = LagrangeBasis(neigh.nodes, kernel; m = 0)
         nz_cols = findall(!iszero, D[j, :])
-        @test Set(nz_cols) == Set(neigh.indices)
+        # The row's support is contained in the stencil. Requiring equality is too
+        # strong: a weight can be exactly zero for symmetry reasons -- e.g. the center
+        # weight of a symmetric first-derivative stencil -- and whether such a weight
+        # rounds to 0.0 or to O(1e-14) is platform dependent. The loop below pins every
+        # stencil weight to its reference value anyway, so the row is fully determined.
+        @test issubset(Set(nz_cols), Set(neigh.indices))
         for (k, global_idx) in enumerate(neigh.indices)
-            @test D[j, global_idx] ≈ PartialDerivative(1)(local_basis_j[k], y_j)
+            # `atol` is needed for the same reason: a weight that vanishes by symmetry is
+            # compared against an effectively zero relative tolerance otherwise.
+            @test isapprox(D[j, global_idx], PartialDerivative(1)(local_basis_j[k], y_j),
+                           atol = 1e-12)
         end
     end
 
