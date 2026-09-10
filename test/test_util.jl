@@ -1,4 +1,4 @@
-using TrixiTest: @trixi_test_nowarn, get_kwarg
+using TrixiTest: @trixi_test_nowarn, get_kwarg, trixi_include_kwargs
 
 """
     test_include_example(example; l2=nothing, linf=nothing,
@@ -21,22 +21,18 @@ macro test_include_example(example, args...)
     local least_square_test = get_kwarg(args, :least_square_test, false)
     local regularization_test = get_kwarg(args, :regularization_test, false)
     local pde_test = get_kwarg(args, :pde_test, false)
-    local kwargs = Pair{Symbol, Any}[]
-    for arg in args
-        if (arg.head == :(=) &&
-            !(arg.args[1] in (:l2, :linf, :l2_ls, :linf_ls, :l2_reg, :linf_reg,
-                              :atol, :rtol,
-                              :interpolation_test, :least_square_test, :regularization_test,
-                              :pde_test)))
-            push!(kwargs, Pair(arg.args...))
-        end
-    end
+    local kwargs = trixi_include_kwargs(args;
+                                        reserved = (:l2, :linf, :l2_ls, :linf_ls,
+                                                    :l2_reg, :linf_reg, :atol, :rtol,
+                                                    :interpolation_test,
+                                                    :least_square_test,
+                                                    :regularization_test, :pde_test))
     return quote
         println("═"^100)
-        println($example)
+        println($(esc(example)))
 
         # evaluate examples in the scope of the module they're called from
-        @trixi_test_nowarn trixi_include(@__MODULE__, $example; $kwargs...)
+        @trixi_test_nowarn trixi_include(@__MODULE__, $(esc(example)); $(kwargs...))
         # if present, compare l2 and linf against reference values
         if !isnothing($l2) || !isnothing($linf)
             if !$pde_test
