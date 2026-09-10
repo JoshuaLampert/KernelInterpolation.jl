@@ -1826,8 +1826,7 @@ end
     itp_shape(epsilon) = interpolate(nodes, values,
                                      GaussKernel{2}(; shape_parameter = epsilon))
     @test isapprox(ForwardDiff.derivative(epsilon -> itp_shape(epsilon)(nodes[3]), 2.0),
-                   0.0,
-                   atol = 1e-10)
+                   0.0, atol = 1e-10)
     # Away from the nodes, compare against a central finite difference
     h = 1e-6
     @test isapprox(ForwardDiff.derivative(epsilon -> itp_shape(epsilon)(x), 2.0),
