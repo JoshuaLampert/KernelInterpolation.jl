@@ -231,7 +231,6 @@ end
 
 @testitem "derivatives at the kernel center" setup=[Setup, AdditionalImports] begin
     using LinearAlgebra: tr
-    const ForwardDiff = KernelInterpolation.ForwardDiff
     # Derivatives are evaluated through the chain rule on the radial profile, so the
     # removable singularity at the center is resolved by the analytic limit and immutable
     # input vectors are supported.
