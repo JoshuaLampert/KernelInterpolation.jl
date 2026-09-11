@@ -17,7 +17,8 @@ If `nodeset2` is not given, it defaults to `nodeset1`.
 function kernel_matrix(basis::AbstractBasis, nodeset::NodeSet = centers(basis))
     n = length(nodeset)
     m = length(basis)
-    A = Matrix{eltype(nodeset)}(undef, n, m)
+    RealT = matrix_eltype(() -> basis[1](nodeset[1]), n, m, eltype(nodeset))
+    A = Matrix{RealT}(undef, n, m)
     # The rows are independent, so they are filled in parallel.
     Threads.@threads for i in 1:n
         for j in 1:m
@@ -176,7 +177,9 @@ See also [`differentiation_matrix`](@ref), [`pde_boundary_matrix`](@ref).
 function pde_matrix(diff_op_or_pde, nodeset1, nodeset2, kernel)
     n = length(nodeset1)
     m = length(nodeset2)
-    A = Matrix{eltype(nodeset1)}(undef, n, m)
+    RealT = matrix_eltype(() -> diff_op_or_pde(kernel, nodeset1[1], nodeset2[1]), n, m,
+                          eltype(nodeset1))
+    A = Matrix{RealT}(undef, n, m)
     # The rows are independent, so they are filled in parallel.
     Threads.@threads for i in 1:n
         for j in 1:m
@@ -189,8 +192,10 @@ end
 function pde_matrix(diff_op_or_pde, nodeset::NodeSet, basis::LagrangeBasis)
     n = length(nodeset)
     m = length(basis)
-    A = Matrix{eltype(nodeset)}(undef, n, m)
     basis_functions = collect(basis)
+    RealT = matrix_eltype(() -> diff_op_or_pde(basis_functions[1], nodeset[1]), n, m,
+                          eltype(nodeset))
+    A = Matrix{RealT}(undef, n, m)
     # The rows are independent, so they are filled in parallel.
     Threads.@threads for i in 1:n
         x_i = nodeset[i]

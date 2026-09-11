@@ -8,7 +8,8 @@ using TestItemRunner
 end
 
 @testsnippet AdditionalImports begin
-    using LinearAlgebra: LinearAlgebra, norm, dot, cholesky, qr, Symmetric, Cholesky, I
+    using ForwardDiff: ForwardDiff
+    using LinearAlgebra: LinearAlgebra, norm, dot, cholesky, lu, qr, Symmetric, Cholesky, I
     using LinearSolve: LUFactorization, QRFactorization, KrylovJL_GMRES
     using OrdinaryDiffEqRosenbrock: solve, Rodas5P
     import OrdinaryDiffEqNonlinearSolve

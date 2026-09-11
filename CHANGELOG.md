@@ -9,6 +9,11 @@ for human readability.
 
 #### Added
 
+- The whole interpolation process is now differentiable with forward-mode automatic differentiation,
+  e.g. with ForwardDiff.jl, i.e. not only the evaluation of an `Interpolation`, but also the assembly
+  of the system matrix and the linear solve. The interpolated values, the nodes, and the parameters of
+  the kernel may have different element types, which allows differentiating `interpolate` and
+  `solve_stationary` with respect to any of them ([#200]).
 - Added `smoothness(kernel)`, returning the largest `k` such that the multivariate function
   `Phi(x) = phi(||x||)` is `k` times continuously differentiable. It is used to decide whether a
   differential operator of order `m` may be evaluated at the center of a kernel, which requires
