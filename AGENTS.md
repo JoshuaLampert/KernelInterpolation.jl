@@ -12,7 +12,7 @@ and local RBF finite differences (RBF-FD) for sparse PDE discretization. Minimum
 
 ## Common commands
 
-Tests use [TestItemRunner](https://github.com/julia-actions/TestItemRunner). Each test is an isolated `@testitem`
+Tests use [TestItemRunner.jl](https://github.com/julia-testitems/TestItemRunner.jl). Each test is an isolated `@testitem`
 with `setup=[...]` snippets (`Setup`, `AdditionalImports`, `PDEExamples`, ...) defined in `test/runtests.jl` and
 `test/test_util.jl`.
 
