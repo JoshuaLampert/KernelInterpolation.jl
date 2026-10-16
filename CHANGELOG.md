@@ -54,7 +54,7 @@ for human readability.
     non-existent derivative was silently returned as a value pointing along the first
     coordinate direction. Such calls now throw an `ArgumentError`.
   - `save_call` mutated its argument, so derivatives at the center errored for immutable
-    input vectors such as `SVector`. These now work.
+    input vectors such as `SVector`. These now work ([#204]).
 
 #### Changed
 
@@ -78,7 +78,7 @@ for human readability.
 
 #### Changed
 
-- The functions `random_hypersphere` and `random_hypersphere_boundary` not require a `Tuple` for
+- The functions `random_hypersphere` and `random_hypersphere_boundary` now require a `Tuple` for
   the argument `center`. Before, e.g., a `Vector` was allowed ([#121]).
 - The element type of `NodeSet`s will now always be converted to a floating point type, i.e., also when
   integer values are passed. This is more consistent for an interpolation framework makes many things easier.
