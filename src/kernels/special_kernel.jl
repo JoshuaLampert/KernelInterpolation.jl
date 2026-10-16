@@ -76,7 +76,7 @@ function Base.show(io::IO, kernel::ProductKernel{Dim}) where {Dim}
             print(io, k)
         end
     end
-    print("])")
+    print(io, "])")
     return nothing
 end
 
@@ -125,7 +125,7 @@ function Base.show(io::IO, kernel::SumKernel{Dim}) where {Dim}
             print(io, k)
         end
     end
-    print("])")
+    print(io, "])")
     return nothing
 end
 

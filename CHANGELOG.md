@@ -33,6 +33,11 @@ for human readability.
 
 #### Fixed
 
+- `multiscale_interpolate` failed if the kernels of the different scales are of different
+  types. Constructing a `MultiquadricKernel`, `InverseMultiquadricKernel`,
+  `RadialCharacteristicKernel`, `MaternKernel`, or `RieszKernel` with an integer
+  `shape_parameter` failed with an `InexactError`; it is now converted to a floating point
+  number ([#212]).
 - `random_hypersphere_boundary` ignored the `center` in one dimension. `homogeneous_hypercube`
   produced `NaN` coordinates if only one node is used in a dimension; this node is now placed at
   the midpoint between the bounds. The heatmap of a two-dimensional kernel was transposed, which
