@@ -248,6 +248,24 @@ end
                                SVector(0.1, 0.2, 0.3), SVector(0.1, 0.2, 0.3)), -6.0)
     # phi = r^3 has vanishing Laplacian at the center
     @test isapprox(Laplacian()(PolyharmonicSplineKernel{2}(3), x, x), 0.0, atol = 1e-14)
+    # The general Matern kernel agrees with the special ones at the center, also for the
+    # derivatives computed by automatic differentiation of `phi` at `r = 0`.
+    for (nu, kernel_special) in ((1.5, Matern32Kernel{2}(shape_parameter = 0.7)),
+                                 (2.5, Matern52Kernel{2}(shape_parameter = 0.7)),
+                                 (3.5, Matern72Kernel{2}(shape_parameter = 0.7)))
+        kernel = MaternKernel{2}(nu; shape_parameter = 0.7)
+        @test isapprox(Laplacian()(kernel, x, x), Laplacian()(kernel_special, x, x))
+        @test isapprox(KernelInterpolation.phi_deriv(kernel, 0.0), 0.0)
+        @test isapprox(KernelInterpolation.phi_deriv2(kernel, 0.0),
+                       KernelInterpolation.phi_deriv2(kernel_special, 0.0))
+    end
+    # phi = r^k log(r) with even k >= 4 has vanishing second derivatives at the center
+    @test Laplacian()(PolyharmonicSplineKernel{2}(4), x, x) == 0.0
+    @test Laplacian()(PolyharmonicSplineKernel{3}(6), SVector(0.1, 0.2, 0.3),
+                      SVector(0.1, 0.2, 0.3)) == 0.0
+    # For nu = 1, the expansion at the origin is not valid, but phi(0) = 1 still holds.
+    @test phi(MaternKernel{2}(1.0), 0.0) == 1.0
+    @test_throws ArgumentError Laplacian()(MaternKernel{2}(1.0), x, x)
 
     # Not smooth enough: the derivative does not exist at the center and must be refused
     # rather than silently returning an arbitrary value.
