@@ -5,6 +5,14 @@
     kernel_1d = Matern12Kernel{1}()
     trafo_kernel = TransformationKernel{2}(kernel, x -> [x[1] + x[2]^2, x[1]])
     @test_nowarn plot(-1.0:0.1:1.0, kernel)
+    # The heatmap of a 2D kernel has the first coordinate along the x-axis, i.e., the rows of
+    # `z` correspond to `y`. Check this with an anisotropic kernel.
+    aniso_kernel = TransformationKernel{2}(GaussKernel{2}(), x -> [2 * x[1], x[2]])
+    x_plot, y_plot, z_plot = only(Plots.RecipesBase.apply_recipe(Dict{Symbol, Any}(),
+                                                                 aniso_kernel)).args
+    @test !(z_plot[end, 2] ≈ z_plot[2, end]) # otherwise the test below is not meaningful
+    @test z_plot[end, 2] ≈ aniso_kernel([x_plot[2], y_plot[end]])
+    @test z_plot[2, end] ≈ aniso_kernel([x_plot[end], y_plot[2]])
     for dim in 1:3
         nodes = homogeneous_hypercube(5; dim = dim)
         @test_nowarn plot(nodes)
