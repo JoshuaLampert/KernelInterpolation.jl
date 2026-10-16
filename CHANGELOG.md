@@ -71,6 +71,10 @@ for human readability.
 
 #### Changed
 
+- `fill_distance` uses a `KDTree` instead of the full distance matrix, which makes it much faster
+  and avoids the memory of size `length(nodeset) * length(reference)`. Evaluating an RBF-FD
+  interpolation, or applying a differential operator to it, finds the nearest center with the
+  `KDTree` stored in the `RBFFDBasis` instead of a linear search over all centers ([#217]).
 - Applying differential operators and equations to a radial-symmetric kernel at static vectors
   no longer allocates, which speeds up the assembly of collocation matrices. Evaluating an
   interpolation with polynomial augmentation, or applying a differential operator to it, at a

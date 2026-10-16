@@ -276,8 +276,11 @@ accuracy improves with the density of `reference`.
 See also [`separation_distance`](@ref), [`distance_matrix`](@ref).
 """
 function fill_distance(nodeset::NodeSet, reference::NodeSet)
-    D = distance_matrix(reference, nodeset)
-    return maximum(minimum(D, dims = 2))
+    # Find the nearest node for each reference node with a `KDTree`, which avoids the full
+    # distance matrix. The distances are recomputed with `norm`, such that the result is the
+    # same as computing it from `distance_matrix(reference, nodeset)`.
+    nearest, _ = nn(KDTree(nodeset.nodes), reference.nodes)
+    return maximum(i -> norm(reference[i] - nodeset[nearest[i]]), eachindex(reference))
 end
 
 @deprecate values_along_dim(nodeset::NodeSet, i::Int) nodeset[:, i]
