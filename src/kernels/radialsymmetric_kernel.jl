@@ -508,12 +508,6 @@ function Base.show(io::IO, kernel::MaternKernel{Dim}) where {Dim}
     return nothing
 end
 
-# Value of `x` with all (possibly nested) dual parts from ForwardDiff.jl removed. Since
-# ForwardDiff.jl v1, comparisons of dual numbers, including `iszero`, also take the partials
-# into account, so checking whether a dual number represents zero needs to look at its value.
-primal_value(x::ForwardDiff.Dual) = primal_value(ForwardDiff.value(x))
-primal_value(x) = x
-
 # See https://github.com/JuliaGaussianProcesses/KernelFunctions.jl/blob/9a2f7bbec515c55e5594feef7928670cb811169c/src/basekernels/matern.jl#L42
 function phi(kernel::MaternKernel, r::Real)
     nu = kernel.nu
