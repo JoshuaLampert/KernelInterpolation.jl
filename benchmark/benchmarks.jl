@@ -1,10 +1,12 @@
 using BenchmarkTools
-using Random
+using Random: Random, Xoshiro
 using OrdinaryDiffEqRosenbrock, OrdinaryDiffEqNonlinearSolve
 using LinearAlgebra
 using LinearSolve
 using KernelInterpolation
 Random.seed!(1234)
+# Node sets of benchmarks added later use their own random number generator `Xoshiro(1)`,
+# such that they do not change the random nodes of the other benchmarks.
 
 const SUITE = BenchmarkGroup()
 
@@ -25,6 +27,9 @@ SUITE["interpolation 2D"] = @benchmarkable interpolate($nodeset, $values, $kerne
 itp = interpolate(nodeset, values, kernel)
 x = [0.5, 0.5]
 SUITE["interpolation evaluation 2D"] = @benchmarkable $itp($x)
+# Evaluation at the nodes of a `NodeSet`, as for computing errors or plotting
+nodeset_eval = random_hypercube(Xoshiro(1), 1000; dim = 2)
+SUITE["interpolation evaluation 2D at nodes"] = @benchmarkable $itp.($nodeset_eval)
 SUITE["computing Lagrange basis"] = @benchmarkable LagrangeBasis($nodeset, $kernel)
 basis = LagrangeBasis(nodeset, kernel)
 SUITE["interpolation 2D Lagrange basis"] = @benchmarkable interpolate($basis, $values)
@@ -39,6 +44,18 @@ SUITE["interpolation 5D cholesky"] = @benchmarkable interpolate($nodeset, $value
 SUITE["interpolation 5D KrylovJL_GMRES"] = @benchmarkable interpolate($nodeset, $values,
                                                                       $kernel;
                                                                       linsolve = KrylovJL_GMRES())
+
+# Kernel matrix assembly (without solving a linear system)
+nodeset = random_hypercube(Xoshiro(1), 500; dim = 2)
+kernel = GaussKernel{dim(nodeset)}(shape_parameter = 0.5)
+SUITE["kernel matrix 2D"] = @benchmarkable kernel_matrix($nodeset, $kernel)
+kernel = GaussKernel{dim(nodeset)}(shape_parameter = 0.5) * Matern32Kernel{dim(nodeset)}()
+SUITE["kernel matrix 2D product kernel"] = @benchmarkable kernel_matrix($nodeset, $kernel)
+
+# Fill distance with respect to a reference node set
+nodeset = random_hypercube(Xoshiro(1), 1000; dim = 2)
+nodeset_reference = homogeneous_hypercube(50; dim = 2)
+SUITE["fill distance 2D"] = @benchmarkable fill_distance($nodeset, $nodeset_reference)
 
 # Least squares benchmarks
 centers = random_hypercube(81; dim = 2)
@@ -147,6 +164,9 @@ itp_standard = solve_stationary(sd_standard)
 x = [0.5, 0.5]
 SUITE["RBF-FD evaluation Lagrange basis 2D"] = @benchmarkable $itp_lagrange($x)
 SUITE["RBF-FD evaluation standard basis 2D"] = @benchmarkable $itp_standard($x)
+# Evaluation at many points, where the stencil of the nearest center is located for each point
+nodeset_eval = random_hypercube(Xoshiro(1), 500; dim = 2)
+SUITE["RBF-FD evaluation Lagrange basis 2D at many points"] = @benchmarkable $itp_lagrange.($nodeset_eval)
 
 # Overdetermined (least-squares) RBF-FD: fewer centers than evaluation nodes.
 inner_centers = homogeneous_hypercube(10, (0.1, 0.1), (0.9, 0.9); dim = 2)
