@@ -138,7 +138,7 @@ struct MultiquadricKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function MultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where {Dim}
-    return MultiquadricKernel{Dim, typeof(shape_parameter)}(beta, shape_parameter)
+    return MultiquadricKernel{Dim, float(typeof(shape_parameter))}(beta, shape_parameter)
 end
 
 function Base.show(io::IO, kernel::MultiquadricKernel{Dim}) where {Dim}
@@ -175,7 +175,8 @@ struct InverseMultiquadricKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function InverseMultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where {Dim}
-    return InverseMultiquadricKernel{Dim, typeof(shape_parameter)}(beta, shape_parameter)
+    return InverseMultiquadricKernel{Dim, float(typeof(shape_parameter))}(beta,
+                                                                          shape_parameter)
 end
 
 function Base.show(io::IO, kernel::InverseMultiquadricKernel{Dim}) where {Dim}
@@ -458,7 +459,8 @@ struct RadialCharacteristicKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function RadialCharacteristicKernel{Dim}(beta = 2.0; shape_parameter = 1.0) where {Dim}
-    return RadialCharacteristicKernel{Dim, typeof(shape_parameter)}(beta, shape_parameter)
+    return RadialCharacteristicKernel{Dim, float(typeof(shape_parameter))}(beta,
+                                                                           shape_parameter)
 end
 
 function Base.show(io::IO, kernel::RadialCharacteristicKernel{Dim}) where {Dim}
@@ -499,7 +501,7 @@ struct MaternKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function MaternKernel{Dim}(nu = 1.5; shape_parameter = 1.0) where {Dim}
-    return MaternKernel{Dim, typeof(shape_parameter)}(nu, shape_parameter)
+    return MaternKernel{Dim, float(typeof(shape_parameter))}(nu, shape_parameter)
 end
 
 function Base.show(io::IO, kernel::MaternKernel{Dim}) where {Dim}
@@ -704,7 +706,7 @@ end
 
 function RieszKernel{Dim}(beta; shape_parameter = 1.0) where {Dim}
     @assert 0<beta<2 "beta has to be in (0, 2)"
-    return RieszKernel{Dim, typeof(shape_parameter)}(beta, shape_parameter)
+    return RieszKernel{Dim, float(typeof(shape_parameter))}(beta, shape_parameter)
 end
 
 function Base.show(io::IO, kernel::RieszKernel{Dim}) where {Dim}

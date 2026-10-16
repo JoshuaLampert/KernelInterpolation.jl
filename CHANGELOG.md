@@ -33,6 +33,11 @@ for human readability.
 
 #### Fixed
 
+- `multiscale_interpolate` failed if the kernels of the different scales are of different
+  types. Constructing a `MultiquadricKernel`, `InverseMultiquadricKernel`,
+  `RadialCharacteristicKernel`, `MaternKernel`, or `RieszKernel` with an integer
+  `shape_parameter` failed with an `InexactError`; it is now converted to a floating point
+  number ([#212]).
 - Setting a node of a `NodeSet` by an `MVector` did not invalidate the cached separation
   distance, so `separation_distance` could return an outdated value. Setting a node of a
   one-dimensional `NodeSet` by a `Vector` or an `MVector` failed with a method ambiguity ([#211]).
