@@ -71,6 +71,10 @@ for human readability.
 
 #### Changed
 
+- Applying differential operators and equations to a radial-symmetric kernel at static vectors
+  no longer allocates, which speeds up the assembly of collocation matrices. Evaluating an
+  interpolation with polynomial augmentation, or applying a differential operator to it, at a
+  plain `Vector` allocates less and is faster ([#216]).
 - Evaluating a radial-symmetric kernel at static vectors, e.g., at the nodes of a `NodeSet`, no
   longer allocates, which speeds up the evaluation of interpolants and the assembly of kernel
   matrices ([#215]).

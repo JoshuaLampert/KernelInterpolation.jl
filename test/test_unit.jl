@@ -1214,6 +1214,43 @@ end
     @test isapprox(PartialDerivative(1)(p1, xp1), 3.0)
     @test isapprox(Laplacian()(p1, xp1), 6.0)
     @test isapprox(Gradient()(p1, xp1), [3.0])
+
+    # Applying operators to a kernel at static vectors, e.g., the nodes of a `NodeSet`, does not
+    # allocate, also not if only one of the points is a static vector
+    function allocations_operator(op, kernel, x, y)
+        op(kernel, x, y)
+        return @allocated op(kernel, x, y)
+    end
+    for d in (2, 5)
+        nodeset_alloc = homogeneous_hypercube(2; dim = d)
+        x_vector = collect(nodeset_alloc[2])
+        kernel_alloc = WendlandKernel{d}(3)
+        a = ntuple(_ -> 0.5, d)
+        for op in (PartialDerivative(1), Gradient(), Laplacian(), PoissonEquation(nothing),
+                   AdvectionEquation(a, nothing),
+                   AdvectionDiffusionEquation(0.1, a, nothing))
+            @test allocations_operator(op, kernel_alloc, nodeset_alloc[1],
+                                       nodeset_alloc[2]) == 0
+            @test allocations_operator(op, kernel_alloc, x_vector, nodeset_alloc[1]) == 0
+            @test op(kernel_alloc, nodeset_alloc[1], nodeset_alloc[2]) ≈
+                  op(kernel_alloc, collect(nodeset_alloc[1]), x_vector)
+        end
+    end
+
+    # Evaluating an interpolation with polynomial augmentation and applying operators to it
+    # does not allocate, also not at a plain `Vector`
+    function allocations_evaluation(f, x)
+        f(x)
+        return @allocated f(x)
+    end
+    nodeset_itp = homogeneous_hypercube(4; dim = 2)
+    itp = interpolate(nodeset_itp, sum.(nodeset_itp), PolyharmonicSplineKernel{2}(3))
+    @test order(itp) == 2
+    for x in ([0.3, 0.4], nodeset_itp[6])
+        @test allocations_evaluation(itp, x) == 0
+        @test allocations_evaluation(Laplacian()(itp), x) == 0
+        @test allocations_evaluation(PartialDerivative(1)(itp), x) == 0
+    end
 end
 
 @testitem "PDEs" setup=[Setup, AdditionalImports] begin

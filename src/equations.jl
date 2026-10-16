@@ -2,14 +2,17 @@ abstract type AbstractEquation end
 
 const DifferentialOperatorOrEquation = Union{AbstractDifferentialOperator, AbstractEquation}
 
-function (op::DifferentialOperatorOrEquation)(kernel::RadialSymmetricKernel, x, y)
+# The methods along the call chain from here down to the operators applied to a `CallableKernel`
+# are inlined. Together with `difference`, this avoids allocations without making the evaluation
+# slower in higher dimensions, cf. the evaluation of a `RadialSymmetricKernel`.
+@inline function (op::DifferentialOperatorOrEquation)(kernel::RadialSymmetricKernel, x, y)
     @assert length(x) == length(y) == dim(kernel)
-    return op(kernel, x .- y)
+    return op(kernel, difference(x, y))
 end
 
 # Abstract fallback: convert kernel or polynomial to a callable, then apply the operator/equation.
-function (op::DifferentialOperatorOrEquation)(f::Union{RadialSymmetricKernel,
-                                                       AbstractPolynomialLike}, x)
+@inline function (op::DifferentialOperatorOrEquation)(f::Union{RadialSymmetricKernel,
+                                                               AbstractPolynomialLike}, x)
     return op(callable(f), x)
 end
 
@@ -48,7 +51,7 @@ function Base.show(io::IO, ::PoissonEquation)
     return nothing
 end
 
-function (::PoissonEquation)(f::Function, x)
+@inline function (::PoissonEquation)(f::F, x) where {F <: Function}
     return -Laplacian()(f, x)
 end
 
@@ -80,7 +83,7 @@ function Base.show(io::IO, ::EllipticEquation)
     return nothing
 end
 
-function (equations::EllipticEquation)(f::Function, x)
+@inline function (equations::EllipticEquation)(f::F, x) where {F <: Function}
     return equations.op(f, x)
 end
 
@@ -121,7 +124,7 @@ function Base.show(io::IO, ::AdvectionEquation)
     return nothing
 end
 
-function (equations::AdvectionEquation)(f::Function, x)
+@inline function (equations::AdvectionEquation)(f::F, x) where {F <: Function}
     return dot(equations.advection_velocity, Gradient()(f, x))
 end
 
@@ -148,7 +151,7 @@ function Base.show(io::IO, ::HeatEquation)
     return nothing
 end
 
-function (equations::HeatEquation)(f::Function, x)
+@inline function (equations::HeatEquation)(f::F, x) where {F <: Function}
     return -equations.diffusivity * Laplacian()(f, x)
 end
 
@@ -186,7 +189,7 @@ function Base.show(io::IO, ::AdvectionDiffusionEquation)
     return nothing
 end
 
-function (equations::AdvectionDiffusionEquation)(f::Function, x)
+@inline function (equations::AdvectionDiffusionEquation)(f::F, x) where {F <: Function}
     return dot(equations.advection_velocity, Gradient()(f, x)) -
            equations.diffusivity * Laplacian()(f, x)
 end

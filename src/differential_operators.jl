@@ -98,7 +98,7 @@ function (operator::PartialDerivative)(f::Function, x)
     return ForwardDiff.gradient(f, x)[operator.i]
 end
 
-function (operator::PartialDerivative)(f::CallableKernel, x)
+@inline function (operator::PartialDerivative)(f::CallableKernel, x)
     r = norm(x)
     if iszero(r)
         assert_smooth_enough(f.kernel, 1, "PartialDerivative")
@@ -127,7 +127,7 @@ function (::Gradient)(f::Function, x)
     return ForwardDiff.gradient(f, x)
 end
 
-function (::Gradient)(f::CallableKernel, x)
+@inline function (::Gradient)(f::CallableKernel, x)
     r = norm(x)
     if iszero(r)
         assert_smooth_enough(f.kernel, 1, "Gradient")
@@ -156,7 +156,7 @@ function (::Laplacian)(f::Function, x)
     return tr(ForwardDiff.hessian(f, x))
 end
 
-function (::Laplacian)(f::CallableKernel, x)
+@inline function (::Laplacian)(f::CallableKernel, x)
     kernel = f.kernel
     r = norm(x)
     if iszero(r)
