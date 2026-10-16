@@ -212,6 +212,25 @@ end
     end
     # The floating point type of the shape parameter is preserved
     @test MaternKernel{2}(shape_parameter = 1.0f0).nu isa Float32
+
+    # Evaluating a radial-symmetric kernel does not allocate, also not for the `MVector` nodes of
+    # a `NodeSet`. `MaternKernel` is not included since it still allocates on Julia < 1.12.
+    function allocations_kernel(kernel, x, y)
+        kernel(x, y)
+        return @allocated kernel(x, y)
+    end
+    for d in (2, 5)
+        nodeset_alloc = homogeneous_hypercube(2; dim = d)
+        x_vector = collect(nodeset_alloc[2])
+        for kernel in (GaussKernel{d}(), WendlandKernel{d}(3),
+                       PolyharmonicSplineKernel{d}(3))
+            @test allocations_kernel(kernel, nodeset_alloc[1], nodeset_alloc[2]) == 0
+            @test allocations_kernel(kernel, x_vector, nodeset_alloc[1]) == 0
+            @test allocations_kernel(kernel, nodeset_alloc[1], x_vector) == 0
+            @test kernel(nodeset_alloc[1], nodeset_alloc[2]) ≈
+                  kernel(collect(nodeset_alloc[1]), x_vector)
+        end
+    end
 end
 
 @testitem "smoothness" setup=[Setup, AdditionalImports] begin
