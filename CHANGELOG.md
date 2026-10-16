@@ -33,6 +33,9 @@ for human readability.
 
 #### Fixed
 
+- Setting a node of a `NodeSet` by an `MVector` did not invalidate the cached separation
+  distance, so `separation_distance` could return an outdated value. Setting a node of a
+  one-dimensional `NodeSet` by a `Vector` or an `MVector` failed with a method ambiguity ([#211]).
 - Second derivatives at the kernel center of the general `MaternKernel` (with `nu > 1`) and of
   `PolyharmonicSplineKernel` with even `k >= 4` returned `NaN`, e.g., for `Laplacian` and
   `EllipticOperator`. Hence, collocation matrices of second-order PDEs with these kernels had

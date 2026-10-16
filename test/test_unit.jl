@@ -425,6 +425,21 @@ end
     @test_nowarn nodeset7[2] = 4
     @test nodeset7[2] == [4]
     @test isapprox(separation_distance(nodeset7), 0.0)
+    # Vectors and `MVector`s can also be used to set nodes of a one-dimensional `NodeSet`
+    @test_nowarn nodeset7[2] = [2.0]
+    @test nodeset7[2] == [2.0]
+    @test_nowarn nodeset7[2] = MVector(2.5)
+    @test nodeset7[2] == [2.5]
+    @test isapprox(separation_distance(nodeset7), 0.25)
+
+    # Setting a node invalidates the cached separation distance, for all types of nodes
+    nodeset8 = NodeSet([0.0 0.0; 1.0 0.0; 0.0 1.0])
+    @test isapprox(separation_distance(nodeset8), 0.5)
+    nodeset8[2] = MVector(0.1, 0.0)
+    @test isapprox(separation_distance(nodeset8), 0.05)
+    nodeset8[2] = [0.0, 0.2]
+    @test isapprox(separation_distance(nodeset8), 0.1)
+    @test setindex!(nodeset8, MVector(1.0, 0.0), 2) === nodeset8
 
     @test_nowarn merge!(nodeset1, nodeset2)
     @test isapprox(separation_distance(nodeset1), 0.0)
