@@ -78,6 +78,10 @@ for human readability.
 
 #### Changed
 
+- The right-hand side `rhs!` of a `Semidiscretization` no longer allocates. The
+  `ThinPlateSplineKernel`, the `SumKernel`, and `kernel_inner_product` keep the floating point
+  type of their input, e.g., `Float32`. `vtk_read` no longer silently ignores errors when
+  reading the point data ([#218]).
 - `fill_distance` uses a `KDTree` instead of the full distance matrix, which makes it much faster
   and avoids the memory of size `length(nodeset) * length(reference)`. Evaluating an RBF-FD
   interpolation, or applying a differential operator to it, finds the nearest center with the
