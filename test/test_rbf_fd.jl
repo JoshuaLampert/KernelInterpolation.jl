@@ -355,7 +355,7 @@ end
 end
 
 @testitem "RBF-FD: kernel_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
-    using SparseArrays: findnz
+    using SparseArrays: findnz, AbstractSparseMatrix
     X = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
     Y = NodeSet([0.1, 0.3, 0.6, 0.9, 1.0, 0.0])
     kernel = GaussKernel{1}(shape_parameter = 1.0)
@@ -377,6 +377,16 @@ end
         for (k, global_idx) in enumerate(neigh.indices)
             @test C[j, global_idx] ≈ local_basis[k](y_j)
         end
+    end
+
+    # The assembly of the sparse matrices is type-stable, both at the centers themselves and at
+    # other nodes, for both local bases
+    for local_basis in (RBFFDLagrangeBasis(), RBFFDStandardBasis())
+        basis_inferred = RBFFDBasis(X, kernel, stencil; m = 0, local_basis)
+        @test (@inferred kernel_matrix(basis_inferred)) isa AbstractSparseMatrix
+        @test (@inferred kernel_matrix(basis_inferred, Y)) isa AbstractSparseMatrix
+        @test (@inferred differentiation_matrix(Laplacian(), basis_inferred, Y)) isa
+              AbstractSparseMatrix
     end
 end
 

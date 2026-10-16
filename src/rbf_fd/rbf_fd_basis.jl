@@ -68,11 +68,7 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection,
     ps::Polys
     local_basis::LocalBasis
     cache::Cache
-    # `KDTree` of the centers to find the nearest center of a point. It is stored behind a `Ref`,
-    # since storing it inline makes the `RBFFDBasis` larger, which costs memory whenever the
-    # basis is passed to a function that is not inlined, e.g., once per row in the assembly of
-    # RBF-FD matrices.
-    tree::Tree
+    tree::Tree # `KDTree` of the centers to find the nearest center of a point
 
     function RBFFDBasis(centers::NodeSet{Dim, RealT}, kernel::Kernel,
                         stencil_selection::Stencil;
@@ -100,11 +96,9 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection,
         cache = _build_local_cache(local_basis, kernel, neighbor_nodesets, ps, m)
 
         return new{Dim, RealT, Kernel, Stencil, LocalBasis, typeof(ps),
-                   typeof(cache), Base.RefValue{typeof(tree)}}(centers, kernel,
-                                                               stencil_selection,
-                                                               stencil_indices, ps,
-                                                               local_basis, cache,
-                                                               Ref(tree))
+                   typeof(cache), typeof(tree)}(centers, kernel, stencil_selection,
+                                                stencil_indices, ps, local_basis, cache,
+                                                tree)
     end
 end
 
@@ -117,7 +111,7 @@ order(::RBFFDBasis) = 0
 # values of `x`, such that it also works for dual numbers from automatic differentiation.
 function nearest_center_index(basis::RBFFDBasis{Dim}, x) where {Dim}
     point = SVector{Dim}(ntuple(i -> primal_value(x[i]), Val(Dim)))
-    index, _ = nn(basis.tree[], point)
+    index, _ = nn(basis.tree, point)
     return index
 end
 
