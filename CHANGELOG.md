@@ -38,6 +38,11 @@ for human readability.
   `RadialCharacteristicKernel`, `MaternKernel`, or `RieszKernel` with an integer
   `shape_parameter` failed with an `InexactError`; it is now converted to a floating point
   number ([#212]).
+- `random_hypersphere_boundary` ignored the `center` in one dimension. `homogeneous_hypercube`
+  produced `NaN` coordinates if only one node is used in a dimension; this node is now placed at
+  the midpoint between the bounds. The heatmap of a two-dimensional kernel was transposed, which
+  is visible for kernels that are not symmetric with respect to swapping the coordinates
+  ([#213]).
 - Setting a node of a `NodeSet` by an `MVector` did not invalidate the cached separation
   distance, so `separation_distance` could return an outdated value. Setting a node of a
   one-dimensional `NodeSet` by a `Vector` or an `MVector` failed with a method ambiguity ([#211]).

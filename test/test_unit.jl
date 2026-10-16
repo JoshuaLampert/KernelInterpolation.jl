@@ -690,6 +690,10 @@ end
         @test nodeset11_4[i] == expected_nodes[i]
     end
 
+    # A single node in one dimension is placed at the midpoint
+    nodeset11_5 = @test_nowarn homogeneous_hypercube((3, 1), (0.0, -1.0), (1.0, 2.0))
+    @test collect(nodeset11_5) == [[0.0, 0.5], [0.5, 0.5], [1.0, 0.5]]
+
     nodeset12_3 = @test_nowarn homogeneous_hypercube_boundary((4, 3), (-2, 1), (1, 3))
     expected_nodes = [
         [-2.0, 1.0],
@@ -744,6 +748,8 @@ end
     end
 
     @test length(random_hypersphere_boundary(10, r; dim = 1)) == 2
+    # In 1D, the boundary of the hypersphere consists of the two points around the center
+    @test random_hypersphere_boundary(2, 0.5, (2.0,))[:, 1] == [1.5, 2.5]
 
     nodeset14 = @test_nowarn random_hypersphere_boundary(50, r, center)
     @test nodeset14 isa NodeSet{4, Float64}

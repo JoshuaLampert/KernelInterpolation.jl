@@ -8,7 +8,9 @@
         nodeset = homogeneous_hypercube(N, x_min, x_max; dim = 2)
         x = unique(nodeset[:, 1])
         y = unique(nodeset[:, 2])
-        z = reshape(kernel.(nodeset), (N, N))
+        # The first coordinate of the nodes varies fastest, but `heatmap` expects the rows of
+        # `z` to correspond to `y`
+        z = reshape(kernel.(nodeset), (N, N))'
         seriestype --> :heatmap # :contourf
         title --> get_name(kernel)
         x, y, z
