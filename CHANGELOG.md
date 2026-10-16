@@ -33,6 +33,9 @@ for human readability.
 
 #### Fixed
 
+- Setting a node of a `NodeSet` by an `MVector` did not invalidate the cached separation
+  distance, so `separation_distance` could return an outdated value. Setting a node of a
+  one-dimensional `NodeSet` by a `Vector` or an `MVector` failed with a method ambiguity ([#211]).
 - Derivatives of radial-symmetric kernels are now evaluated through the chain rule on the
   scalar radial profile `phi` instead of by differentiating `x -> Phi(kernel, x)` directly.
   Previously, the `save_call` workaround perturbed the argument by `eps` at the kernel center

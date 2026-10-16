@@ -181,7 +181,9 @@ Base.keys(nodeset::NodeSet) = keys(nodeset.nodes)
 function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::MVector{Dim, RealT},
                         i::Int) where {Dim, RealT}
     nodeset.nodes[i] = v
-    return v
+    # update separation distance of nodeset because it possibly changed
+    # could be done more efficiently
+    return update_separation_distance!(nodeset)
 end
 function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT},
                         i::Int) where {Dim, RealT}
@@ -191,8 +193,8 @@ function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT},
     # could be done more efficiently
     return update_separation_distance!(nodeset)
 end
-function Base.setindex!(nodeset::NodeSet{1, RealT}, v, i::Int) where {RealT}
-    @assert dim(nodeset) == 1
+# Allow setting a node of a one-dimensional `NodeSet` by a scalar
+function Base.setindex!(nodeset::NodeSet{1, RealT}, v::Real, i::Int) where {RealT}
     nodeset.nodes[i] = [v]
     # update separation distance of nodeset because it possibly changed
     # could be done more efficiently
