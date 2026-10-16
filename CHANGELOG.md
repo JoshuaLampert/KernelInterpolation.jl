@@ -33,6 +33,13 @@ for human readability.
 
 #### Fixed
 
+- `homogeneous_hypercube` and `homogeneous_hypercube_boundary` did not terminate if the bounds
+  were of different types, e.g., `homogeneous_hypercube(3, 0, 1.0; dim = 2)`. The functions
+  creating `NodeSet`s (`random_hypercube`, `random_hypercube_boundary`, `homogeneous_hypercube`,
+  `homogeneous_hypercube_boundary`, `random_hypersphere`, `random_hypersphere_boundary`) as well
+  as `AdvectionEquation` and `AdvectionDiffusionEquation` now accept arguments of different
+  types, e.g., integer and floating point bounds, radii, centers, or advection velocities, and
+  convert them to a common type ([#218]).
 - `multiscale_interpolate` failed if the kernels of the different scales are of different
   types. Constructing a `MultiquadricKernel`, `InverseMultiquadricKernel`,
   `RadialCharacteristicKernel`, `MaternKernel`, or `RieszKernel` with an integer

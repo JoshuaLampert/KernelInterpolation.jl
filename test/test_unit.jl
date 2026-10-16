@@ -718,6 +718,29 @@ end
     nodeset11_5 = @test_nowarn homogeneous_hypercube((3, 1), (0.0, -1.0), (1.0, 2.0))
     @test collect(nodeset11_5) == [[0.0, 0.5], [0.5, 0.5], [1.0, 0.5]]
 
+    # Bounds, radii, and centers of different types can be mixed. This gives the same nodes as
+    # floating point arguments (previously, `homogeneous_hypercube(3, 0, 1.0; dim = 2)` did not
+    # terminate).
+    rng = Random.Xoshiro
+    @test random_hypercube(rng(1), 20, 0, 1.0; dim = 2) ==
+          random_hypercube(rng(1), 20, 0.0, 1.0; dim = 2)
+    @test random_hypercube(rng(1), 20, (0, 0), (1.0, 1.0)) ==
+          random_hypercube(rng(1), 20, (0.0, 0.0), (1.0, 1.0))
+    @test random_hypercube_boundary(rng(1), 20, 0, 1.0; dim = 2) ==
+          random_hypercube_boundary(rng(1), 20, 0.0, 1.0; dim = 2)
+    @test homogeneous_hypercube(3, 0, 1.0; dim = 2) ==
+          homogeneous_hypercube(3, 0.0, 1.0; dim = 2)
+    @test homogeneous_hypercube((3, 3), (0, 0), (1.0, 1.0)) ==
+          homogeneous_hypercube((3, 3), (0.0, 0.0), (1.0, 1.0))
+    @test homogeneous_hypercube_boundary(3, 0, 1.0; dim = 2) ==
+          homogeneous_hypercube_boundary(3, 0.0, 1.0; dim = 2)
+    @test random_hypersphere(rng(1), 10, 1, (0.0, 0.0)) ==
+          random_hypersphere(rng(1), 10, 1.0, (0.0, 0.0))
+    @test random_hypersphere_boundary(rng(1), 10, 1; dim = 2) ==
+          random_hypersphere_boundary(rng(1), 10, 1.0; dim = 2)
+    @test_throws MethodError homogeneous_hypercube(3, "a", 1.0; dim = 2)
+    @test empty_nodeset(2).nodes isa Vector{MVector{2, Float64}}
+
     nodeset12_3 = @test_nowarn homogeneous_hypercube_boundary((4, 3), (-2, 1), (1, 3))
     expected_nodes = [
         [-2.0, 1.0],
@@ -1259,6 +1282,14 @@ end
 end
 
 @testitem "PDEs" setup=[Setup, AdditionalImports] begin
+    # Arguments of different types are converted to a common type
+    f_zero(t, x, equations) = 0.0
+    @test AdvectionEquation((1, 0.5), f_zero).advection_velocity == [1.0, 0.5]
+    advection_diffusion = AdvectionDiffusionEquation(1, (0.5, 0.5), f_zero)
+    @test advection_diffusion.diffusivity === 1.0
+    @test advection_diffusion.advection_velocity == [0.5, 0.5]
+    @test AdvectionDiffusionEquation(0.1, [1, 2], f_zero).advection_velocity == [1.0, 2.0]
+
     # stationary PDEs
     # Passing a function
     f1(x, equations) = x[1] + x[2]
@@ -1416,6 +1447,28 @@ end
     @test_nowarn display(semi)
     @test dim(semi) == 2
     @test eltype(semi) == Float64
+
+    # Evaluating the right-hand side of a semidiscretization does not allocate, both for
+    # collocation and RBF-FD
+    f_adv(t, x, equations) = 0.0
+    g_adv(t, x) = 0.0
+    u_adv(t, x, equations) = exp(-x[1]^2)
+    function allocations_rhs!(dc, c, semi)
+        KernelInterpolation.rhs!(dc, c, semi, 0.0)
+        return @allocated KernelInterpolation.rhs!(dc, c, semi, 0.0)
+    end
+    semi_alloc = Semidiscretization(AdvectionEquation((0.5,), f_adv),
+                                    homogeneous_hypercube(10, 0.1, 1.0), g_adv,
+                                    NodeSet([0.0]),
+                                    u_adv, WendlandKernel{1}(3))
+    @test allocations_rhs!(zeros(11), ones(11), semi_alloc) == 0
+    sd_alloc = SpatialDiscretization(AdvectionEquation((0.5, 0.5), f_adv),
+                                     homogeneous_hypercube(5, 0.1, 0.9; dim = 2), g_adv,
+                                     homogeneous_hypercube_boundary(6; dim = 2), RBFFD(),
+                                     PolyharmonicSplineKernel{2}(3);
+                                     stencil_selection = KNearestNeighbors(9))
+    semi_alloc_rbffd = Semidiscretization(sd_alloc, u_adv)
+    @test allocations_rhs!(zeros(45), ones(45), semi_alloc_rbffd) == 0
 end
 
 @testitem "solving PDEs" setup=[Setup, AdditionalImports] begin
@@ -1555,6 +1608,17 @@ end
 end
 
 @testitem "Different floating point types" setup=[Setup] begin
+    # Kernels and inner products keep the floating point type
+    @test (@inferred phi(ThinPlateSplineKernel{1}(), 0.0f0)) isa Float32
+    @test (@inferred phi(PolyharmonicSplineKernel{1}(4), 0.0f0)) isa Float32
+    sum_kernel = GaussKernel{1}(shape_parameter = 1.0f0) +
+                 GaussKernel{1}(shape_parameter = 2.0f0)
+    @test sum_kernel([0.1f0], [0.2f0]) isa Float32
+    nodeset_f32 = NodeSet(Float32[0.0 0.0; 1.0 0.0; 0.0 1.0])
+    itp_f32 = interpolate(nodeset_f32, Float32[1, 2, 3],
+                          GaussKernel{2}(shape_parameter = 1.0f0))
+    @test (@inferred KernelInterpolation.kernel_inner_product(itp_f32, itp_f32)) isa Float32
+
     # Special nodesets
     @test eltype(@inferred random_hypercube(10, (0.5f0, 0.5f0), (1.0f0, 1.0f0))) == Float32
     @test eltype(@inferred random_hypercube_boundary(10, (0.5f0, 0.5f0), (1.0f0, 1.0f0))) ==

@@ -183,7 +183,7 @@ It can also be called with an [`Interpolation`](@ref) object and a point `x` to 
 the elliptic operator of the interpolation at `x`.
 """
 struct EllipticOperator{AType, BType, CType} <:
-       AbstractDifferentialOperator where {AType, BType, CType}
+       AbstractDifferentialOperator
     A::AType
     b::BType
     c::CType

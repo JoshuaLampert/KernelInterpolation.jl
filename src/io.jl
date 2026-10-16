@@ -65,13 +65,19 @@ function vtk_read(filename)
     vtk = VTKFile(filename)
     nodeset = NodeSet(transpose(get_points(vtk)))
     point_data = Dict{String, AbstractArray}()
-    # If there are no point_data `get_point_data` will throw an error
-    # I don't see a way to check for point_data without catching the error
-    try
-        for (key, data) in get_point_data(vtk)
+    # If the file contains no point data, `get_point_data` throws a `BoundsError` (there is no
+    # public way to check for point data beforehand). Only this error is caught, such that
+    # other errors, e.g., when reading the data arrays, are not silently ignored.
+    vtk_point_data = try
+        get_point_data(vtk)
+    catch e
+        e isa BoundsError || rethrow()
+        nothing
+    end
+    if !isnothing(vtk_point_data)
+        for (key, data) in vtk_point_data
             point_data[key] = get_data(data)
         end
-    catch
     end
     return nodeset, point_data
 end

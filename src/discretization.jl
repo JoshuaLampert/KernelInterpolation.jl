@@ -228,8 +228,8 @@ applying the RBF-FD operator matrix to the vector of nodal values, leading to a 
 
 See also [`SpatialDiscretization`](@ref), [`semidiscretize`](@ref).
 """
-struct Semidiscretization{InitialCondition, Cache}
-    spatial_discretization::SpatialDiscretization
+struct Semidiscretization{SD <: SpatialDiscretization, InitialCondition, Cache}
+    spatial_discretization::SD
     initial_condition::InitialCondition
     cache::Cache
 end
@@ -244,9 +244,9 @@ function Semidiscretization(spatial_discretization::SpatialDiscretization{Dim, R
                          basis,
                          pdeb_matrix, RealT)
 
-    return Semidiscretization{typeof(initial_condition), typeof(cache)}(spatial_discretization,
-                                                                        initial_condition,
-                                                                        cache)
+    return Semidiscretization{typeof(spatial_discretization), typeof(initial_condition),
+                              typeof(cache)}(spatial_discretization, initial_condition,
+                                             cache)
 end
 
 # Build the method-specific cache (kernel/mass matrices) for the semidiscretization.
