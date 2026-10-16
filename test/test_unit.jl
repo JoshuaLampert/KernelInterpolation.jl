@@ -219,10 +219,17 @@ end
         kernel(x, y)
         return @allocated kernel(x, y)
     end
-    nodeset_alloc = NodeSet([0.1 0.2; 0.4 0.3])
-    for kernel in (GaussKernel{2}(), WendlandKernel{2}(3), PolyharmonicSplineKernel{2}(3))
-        @test allocations_kernel(kernel, nodeset_alloc[1], nodeset_alloc[2]) == 0
-        @test allocations_kernel(kernel, [0.1, 0.2], nodeset_alloc[2]) == 0
+    for d in (2, 5)
+        nodeset_alloc = homogeneous_hypercube(2; dim = d)
+        x_vector = collect(nodeset_alloc[2])
+        for kernel in (GaussKernel{d}(), WendlandKernel{d}(3),
+                       PolyharmonicSplineKernel{d}(3))
+            @test allocations_kernel(kernel, nodeset_alloc[1], nodeset_alloc[2]) == 0
+            @test allocations_kernel(kernel, x_vector, nodeset_alloc[1]) == 0
+            @test allocations_kernel(kernel, nodeset_alloc[1], x_vector) == 0
+            @test kernel(nodeset_alloc[1], nodeset_alloc[2]) ≈
+                  kernel(collect(nodeset_alloc[1]), x_vector)
+        end
     end
 end
 
