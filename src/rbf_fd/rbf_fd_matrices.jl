@@ -18,7 +18,7 @@ function _rbf_fd_sparse_matrix(op, basis::RBFFDBasis, nodeset::NodeSet)
     if nodeset === X
         nearest = collect(1:n)
     else
-        nearest, _ = nn(basis.tree, nodeset.nodes)
+        nearest, _ = nn(basis.tree[], nodeset.nodes)
     end
 
     # Preallocate the COO buffers: each row contributes as many nonzeros as its stencil has
