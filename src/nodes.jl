@@ -370,6 +370,7 @@ If `n` is integer, create a [`NodeSet`](@ref) with `n` homogeneously distributed
 then use as many nodes in each dimension as described by `n`. The resulting `NodeSet` will have
 ``n^{\textrm{dim}}`` respectively ``\prod_{j = 1}^{\textrm{dim}}n_j`` points. If the bounds are given as single values,
 they are applied for each dimension. If they are `Tuple`s of size `dim`, the hypercube has the according bounds.
+If only one node is used in a dimension, it is placed at the midpoint between the bounds in that dimension.
 If `dim` is not given explicitly, it is inferred by the lengths of `n`, `x_min` and `x_max` if possible.
 """
 function homogeneous_hypercube(n::Int, x_min = 0.0, x_max = 1.0;
@@ -399,7 +400,12 @@ function homogeneous_hypercube(n::NTuple{Dim, Int},
     for (i, indices) in enumerate(Iterators.product(ntuple(j -> 1:n[j], Dim)...))
         node = MVector{Dim, float(RealT)}(undef)
         for j in 1:dim
-            node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j] - 1) / (n[j] - 1)
+            if n[j] == 1
+                # A single node in this dimension is placed at the midpoint
+                node[j] = (x_min[j] + x_max[j]) / 2
+            else
+                node[j] = x_min[j] + (x_max[j] - x_min[j]) * (indices[j] - 1) / (n[j] - 1)
+            end
         end
         nodes[i] = node
     end
@@ -549,7 +555,7 @@ function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r::RealT,
     @assert Dim == dim
     if Dim == 1 && n >= 2
         @warn "For one dimension the boundary of the hypersphere consists only of 2 points"
-        return NodeSet([-r, r])
+        return NodeSet([center[1] - r, center[1] + r])
     end
     nodes = randn(rng, float(RealT), n, dim)
     for i in 1:n
