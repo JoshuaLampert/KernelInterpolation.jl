@@ -194,6 +194,24 @@ end
     # Test evaluating 1D kernels at a scalar
     kernel13 = @test_nowarn GaussKernel{1}(shape_parameter = 2.0)
     @test kernel13(3.1, 3.0) == kernel13(3.1, SVector(3.0)) == kernel13([3.1], 3.0)
+
+    # Integer shape parameters are converted to floating point numbers, such that the other
+    # (non-integer) parameters of the kernels can be stored in the same type
+    for (kernel_int, kernel_float) in ((MultiquadricKernel{2}(shape_parameter = 2),
+                                        MultiquadricKernel{2}(shape_parameter = 2.0)),
+                                       (InverseMultiquadricKernel{2}(shape_parameter = 2),
+                                        InverseMultiquadricKernel{2}(shape_parameter = 2.0)),
+                                       (RadialCharacteristicKernel{2}(shape_parameter = 2),
+                                        RadialCharacteristicKernel{2}(shape_parameter = 2.0)),
+                                       (MaternKernel{2}(shape_parameter = 2),
+                                        MaternKernel{2}(shape_parameter = 2.0)),
+                                       (RieszKernel{2}(1.5; shape_parameter = 2),
+                                        RieszKernel{2}(1.5; shape_parameter = 2.0)))
+        @test kernel_int.shape_parameter isa Float64
+        @test kernel_int(x, y) == kernel_float(x, y)
+    end
+    # The floating point type of the shape parameter is preserved
+    @test MaternKernel{2}(shape_parameter = 1.0f0).nu isa Float32
 end
 
 @testitem "smoothness" setup=[Setup, AdditionalImports] begin
@@ -1005,6 +1023,14 @@ end
     x_test = [0.5]
     @test isapprox(mitp(x_test), fms(x_test), atol = 1e-6)
     @test isapprox(mitp(x_test), mitp[1](x_test) + mitp[2](x_test), atol = 1e-12)
+
+    # The kernels of the different scales may be of different types
+    kernels_ms_mixed = [WendlandKernel{1}(3; shape_parameter = 0.4), GaussKernel{1}()]
+    mitp_mixed = @test_nowarn multiscale_interpolate(nodesets, valuesets, kernels_ms_mixed)
+    @test interpolation_kernel(mitp_mixed[1]) == kernels_ms_mixed[1]
+    @test interpolation_kernel(mitp_mixed[2]) == kernels_ms_mixed[2]
+    @test isapprox(mitp_mixed(x_test), mitp_mixed[1](x_test) + mitp_mixed[2](x_test),
+                   atol = 1e-12)
 
     # Applying operators to the interpolation
     f_prime(x) = pi * cospi(x[1])

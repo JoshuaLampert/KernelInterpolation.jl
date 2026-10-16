@@ -602,9 +602,10 @@ function multiscale_interpolate(nodesets::AbstractVector{<:NodeSet{Dim, RealT}},
         itps_any[i] = itp
     end
 
-    # Convert to a concretely-typed vector of interpolants to preserve type information
-    Itp = typeof(itps_any[end])
-    itps = Vector{Itp}(itps_any)
+    # Narrow the element type to the common type of all interpolants. This type is concrete if
+    # all scales use the same type of kernel, but the kernels may also be of different types.
+    itps = [itp for itp in itps_any]
+    Itp = eltype(itps)
     final_basis = basis(itps[end])
     return MultiscaleInterpolation{typeof(final_basis), Dim, RealT, Itp}(final_basis,
                                                                          nodesets[end],
