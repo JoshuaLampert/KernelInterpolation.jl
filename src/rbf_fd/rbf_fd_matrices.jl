@@ -15,11 +15,10 @@ function _rbf_fd_sparse_matrix(op, basis::RBFFDBasis, nodeset::NodeSet)
     # independent. When the evaluation nodes are the centers themselves, the nearest center is
     # the node itself; otherwise locate the nearest center for all nodes with a single KDTree
     # query (O(n log N) instead of a brute-force O(n * N) scan).
-    if nodeset === X
-        nearest = collect(1:n)
-    else
-        nearest, _ = nn(KDTree(X.nodes), nodeset.nodes)
-    end
+    # `nearest` is assigned only once: it is captured by the closures below, and assigning a
+    # captured variable more than once makes it type-unstable (`Core.Box`), such that, e.g., each
+    # call of `local_weights` in the threaded loop would be dispatched dynamically.
+    nearest = nodeset === X ? collect(1:n) : first(nn(basis.tree, nodeset.nodes))
 
     # Preallocate the COO buffers: each row contributes as many nonzeros as its stencil has
     # entries, and the prefix sums give every row a disjoint block to fill in parallel.

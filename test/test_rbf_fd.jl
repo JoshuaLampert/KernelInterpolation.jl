@@ -251,6 +251,20 @@ end
     disc_ls = SpatialDiscretization(pde, nodeset_inner, g, nodeset_boundary, basis_ls)
     itp_ls = @test_nowarn solve_stationary(disc_ls)
     @test nodeset(itp_ls) == merge(nodeset_inner, nodeset_boundary)
+
+    # The nearest center found with the `KDTree` stored in the basis agrees with a brute-force
+    # search, and the evaluation and the operators use the stencil of this center.
+    bas = KernelInterpolation.basis(itp)
+    xs = random_hypercube(Random.Xoshiro(1), 50; dim = 2)
+    for x in xs
+        j = nearest_node_index(x, centers(itp))
+        @test KernelInterpolation.nearest_center_index(bas, x) == j
+        @test itp(x) == itp(x, j)
+        @test Laplacian()(itp, x) == Laplacian()(itp, x, j)
+    end
+    # Automatic differentiation with respect to the evaluation point uses the same stencil
+    x = [0.42, 0.6]
+    @test isapprox(ForwardDiff.gradient(itp, x), Gradient()(itp, x))
 end
 
 @testitem "RBF-FD: basis indexing API" setup=[Setup, AdditionalImports] begin
@@ -341,7 +355,7 @@ end
 end
 
 @testitem "RBF-FD: kernel_matrix with RBFFDBasis" setup=[Setup, AdditionalImports] begin
-    using SparseArrays: findnz
+    using SparseArrays: findnz, AbstractSparseMatrix
     X = NodeSet([0.0, 0.25, 0.5, 0.75, 1.0])
     Y = NodeSet([0.1, 0.3, 0.6, 0.9, 1.0, 0.0])
     kernel = GaussKernel{1}(shape_parameter = 1.0)
@@ -363,6 +377,16 @@ end
         for (k, global_idx) in enumerate(neigh.indices)
             @test C[j, global_idx] ≈ local_basis[k](y_j)
         end
+    end
+
+    # The assembly of the sparse matrices is type-stable, both at the centers themselves and at
+    # other nodes, for both local bases
+    for local_basis in (RBFFDLagrangeBasis(), RBFFDStandardBasis())
+        basis_inferred = RBFFDBasis(X, kernel, stencil; m = 0, local_basis)
+        @test (@inferred kernel_matrix(basis_inferred)) isa AbstractSparseMatrix
+        @test (@inferred kernel_matrix(basis_inferred, Y)) isa AbstractSparseMatrix
+        @test (@inferred differentiation_matrix(Laplacian(), basis_inferred, Y)) isa
+              AbstractSparseMatrix
     end
 end
 

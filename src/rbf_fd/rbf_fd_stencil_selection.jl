@@ -35,11 +35,16 @@ Returns a `Vector` whose `i`-th entry holds the global neighbor indices of `node
 
 See also [`select_neighbors(i, nodeset, stencil_selection)`](@ref).
 """
-function select_neighbors(nodeset::NodeSet, stencil::KNearestNeighbors)
+function select_neighbors(nodeset::NodeSet, stencil::AbstractStencilSelection)
+    return select_neighbors(KDTree(nodeset.nodes), nodeset, stencil)
+end
+
+# Select the stencils for all nodes of `nodeset` using the given `KDTree` of these nodes, such
+# that a tree that is already available (e.g., in an `RBFFDBasis`) can be reused.
+function select_neighbors(tree::KDTree, nodeset::NodeSet, stencil::KNearestNeighbors)
     k = stencil.k
     n = length(nodeset)
     k ≤ n || throw(ArgumentError("k=$(k) exceeds nodeset size $(n)"))
-    tree = KDTree(nodeset.nodes)
     # `knn` returns the `k` nearest neighbors sorted by distance; the center node itself has
     # distance 0 and is therefore always included in its own stencil.
     indices, _ = knn(tree, nodeset.nodes, k, true)
@@ -97,9 +102,8 @@ function select_neighbors(i::Int, nodeset::NodeSet, stencil::RadiusSearch)
     return (indices = neighbor_indices, nodes = neighbor_nodes)
 end
 
-function select_neighbors(nodeset::NodeSet, stencil::RadiusSearch)
+function select_neighbors(tree::KDTree, nodeset::NodeSet, stencil::RadiusSearch)
     radius = stencil.radius
-    tree = KDTree(nodeset.nodes)
     indices = inrange(tree, nodeset.nodes, radius)
     for (i, ind) in enumerate(indices)
         isempty(ind) &&

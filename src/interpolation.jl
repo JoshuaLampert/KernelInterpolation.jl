@@ -370,7 +370,7 @@ end
 
 # Default 1-arg evaluation: use the stencil of the nearest center
 function (itp::RBFFDInterpolation)(x)
-    return itp(x, nearest_node_index(x, centers(itp)))
+    return itp(x, nearest_center_index(basis(itp), x))
 end
 
 # To fix a method ambiguity
@@ -427,7 +427,7 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::RBFFDInterpola
 end
 
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::RBFFDInterpolation, x)
-    return diff_op_or_pde(s, itp, x, nearest_node_index(x, centers(itp)))
+    return diff_op_or_pde(s, itp, x, nearest_center_index(basis(itp), x))
 end
 
 function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation, x)

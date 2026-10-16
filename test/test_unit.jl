@@ -383,6 +383,11 @@ end
     nodeset_fd2 = NodeSet([0.25, 0.75])
     reference_fd2 = NodeSet([0.0, 0.5, 1.0])
     @test fill_distance(nodeset_fd2, reference_fd2) ≈ 0.25
+    # The fill distance agrees with the brute-force computation from the distance matrix
+    nodeset_fd3 = random_hypercube(Random.Xoshiro(1), 50; dim = 3)
+    reference_fd3 = random_hypercube(Random.Xoshiro(2), 200; dim = 3)
+    @test fill_distance(nodeset_fd3, reference_fd3) ==
+          maximum(minimum(distance_matrix(reference_fd3, nodeset_fd3), dims = 2))
 
     # Saving the nodeset to a VTK file
     @test_nowarn vtk_save("nodeset1", nodeset1)

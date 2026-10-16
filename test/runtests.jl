@@ -12,6 +12,7 @@ end
     using LinearAlgebra: LinearAlgebra, norm, dot, cholesky, lu, qr, Symmetric, Cholesky, I
     using LinearSolve: LUFactorization, QRFactorization, KrylovJL_GMRES
     using OrdinaryDiffEqRosenbrock: solve, Rodas5P
+    using Random: Random
     import OrdinaryDiffEqNonlinearSolve
     using StaticArrays: SVector, MVector
     using Meshes: Meshes, Sphere, Point, PointSet, RegularSampling

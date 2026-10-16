@@ -59,7 +59,8 @@ polynomials are added, so [`order`](@ref) of an `RBFFDBasis` is always `0`, cons
 [`LagrangeBasis`](@ref).
 """
 struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection,
-                  LocalBasis <: AbstractRBFFDLocalBasis, Polys, Cache} <: AbstractBasis
+                  LocalBasis <: AbstractRBFFDLocalBasis, Polys, Cache, Tree} <:
+       AbstractBasis
     centers::NodeSet{Dim, RealT}
     kernel::Kernel
     stencil_selection::Stencil
@@ -67,6 +68,7 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection,
     ps::Polys
     local_basis::LocalBasis
     cache::Cache
+    tree::Tree # `KDTree` of the centers to find the nearest center of a point
 
     function RBFFDBasis(centers::NodeSet{Dim, RealT}, kernel::Kernel,
                         stencil_selection::Stencil;
@@ -86,14 +88,17 @@ struct RBFFDBasis{Dim, RealT, Kernel, Stencil <: AbstractStencilSelection,
 
         # Select all stencils at once, building a single spatial search structure that is
         # reused across queries (O(N log N) instead of a brute-force O(N^2) distance scan).
-        stencil_indices = select_neighbors(centers, stencil_selection)
+        # The tree is stored to also find the nearest center of evaluation points later.
+        tree = KDTree(centers.nodes)
+        stencil_indices = select_neighbors(tree, centers, stencil_selection)
         neighbor_nodesets = [NodeSet(centers.nodes[idx]) for idx in stencil_indices]
 
         cache = _build_local_cache(local_basis, kernel, neighbor_nodesets, ps, m)
 
         return new{Dim, RealT, Kernel, Stencil, LocalBasis, typeof(ps),
-                   typeof(cache)}(centers, kernel, stencil_selection, stencil_indices,
-                                  ps, local_basis, cache)
+                   typeof(cache), typeof(tree)}(centers, kernel, stencil_selection,
+                                                stencil_indices, ps, local_basis, cache,
+                                                tree)
     end
 end
 
@@ -101,6 +106,14 @@ end
 # `polynomials(::RBFFDBasis, xx)` in `discretization.jl`), so `order` is 0 just like for
 # `LagrangeBasis`. The local augmentation degree is given by [`local_order`](@ref).
 order(::RBFFDBasis) = 0
+
+# Index of the center of `basis` that is closest to the point `x`. The query uses the primal
+# values of `x`, such that it also works for dual numbers from automatic differentiation.
+function nearest_center_index(basis::RBFFDBasis{Dim}, x) where {Dim}
+    point = SVector{Dim}(ntuple(i -> primal_value(x[i]), Val(Dim)))
+    index, _ = nn(basis.tree, point)
+    return index
+end
 
 """
     local_order(basis::RBFFDBasis)
