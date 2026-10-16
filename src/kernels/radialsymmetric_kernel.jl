@@ -42,26 +42,12 @@ function Phi(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
     return phi(kernel, r)
 end
 
+# `difference` avoids allocating the difference on the heap if at least one of the points is a
+# static vector, e.g., a node of a `NodeSet`. In addition, `Phi` is inlined, since otherwise the
+# evaluation is slower in higher dimensions.
 function (kernel::RadialSymmetricKernel)(x::AbstractVector, y::AbstractVector)
     @assert length(x)==length(y) "x and y must have the same length"
-    return Phi(kernel, x - y)
-end
-
-# If at least one of the points is a static vector, e.g., a node of a `NodeSet`, the length of
-# the points is known at compile time. Then, the difference is formed as an immutable `SVector`
-# and `Phi` is inlined, such that the difference is not allocated on the heap. Both are needed:
-# for an `MVector` difference or without inlining, the evaluation is slower in higher dimensions.
-function (kernel::RadialSymmetricKernel)(x::StaticVector, y::StaticVector)
-    @assert length(x)==length(y) "x and y must have the same length"
-    return @inline Phi(kernel, SVector(x) - SVector(y))
-end
-function (kernel::RadialSymmetricKernel)(x::AbstractVector, y::StaticVector{N}) where {N}
-    @assert length(x)==length(y) "x and y must have the same length"
-    return @inline Phi(kernel, SVector{N}(x) - SVector(y))
-end
-function (kernel::RadialSymmetricKernel)(x::StaticVector{N}, y::AbstractVector) where {N}
-    @assert length(x)==length(y) "x and y must have the same length"
-    return @inline Phi(kernel, SVector(x) - SVector{N}(y))
+    return @inline Phi(kernel, difference(x, y))
 end
 
 """

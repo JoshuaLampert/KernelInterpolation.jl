@@ -57,6 +57,19 @@ end
 primal_value(x::ForwardDiff.Dual) = primal_value(ForwardDiff.value(x))
 primal_value(x) = x
 
+# Difference `x - y` of two points. If at least one of the points is a static vector, e.g., a
+# node of a `NodeSet`, the difference is formed as an immutable `SVector`, such that it is not
+# allocated on the heap. The other point must have the same length.
+difference(x::StaticVector, y::StaticVector) = SVector(x) - SVector(y)
+difference(x, y::StaticVector{N}) where {N} = SVector{N}(x) - SVector(y)
+difference(x::StaticVector{N}, y) where {N} = SVector(x) - SVector{N}(y)
+difference(x, y) = x .- y
+
+# The point `x` of dimension `Dim` as an immutable `SVector`. Evaluating (derivatives of)
+# polynomials from TypedPolynomials.jl at a `Vector` or `MVector` allocates, while it does not
+# at an `SVector`.
+static_point(x, ::Val{Dim}) where {Dim} = SVector{Dim}(x)
+
 # Create `d` polyvars from `TypedPolynomials.jl`, don't use `@polyvars` because of
 # https://github.com/JuliaAlgebra/TypedPolynomials.jl/issues/51, instead use the
 # workaround from there

@@ -337,8 +337,9 @@ function (itp::Interpolation)(x)
     d = polynomial_coefficients(itp)
     ps = polynomial_basis(itp)
     xx = polyvars(itp)
+    x_static = static_point(x, Val(dim(itp)))
     for k in eachindex(d)
-        s += d[k] * ps[k](xx => x)
+        s += d[k] * ps[k](xx => x_static)
     end
     return s
 end
@@ -388,8 +389,9 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(s, itp::Interpolation,
 
     d = polynomial_coefficients(itp)
     ps = polynomial_basis(itp)
+    x_static = static_point(x, Val(dim(itp)))
     for k in eachindex(d)
-        s += d[k] * diff_op_or_pde(ps[k], x)
+        s += d[k] * diff_op_or_pde(ps[k], x_static)
     end
     return s
 end
