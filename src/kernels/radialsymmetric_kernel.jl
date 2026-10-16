@@ -37,7 +37,9 @@ For a [`RadialSymmetricKernel`](@ref) `kernel` return value of the multivariate 
 
 See also [`RadialSymmetricKernel`](@ref), [`phi`](@ref).
 """
-function Phi(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
+# Inlining allows the compiler to avoid allocating the difference `x - y` of two `MVector`s
+# (the nodes of a `NodeSet`) on the heap when evaluating `kernel(x, y)`.
+@inline function Phi(kernel::RadialSymmetricKernel{Dim}, x) where {Dim}
     r = norm(x)
     return phi(kernel, r)
 end

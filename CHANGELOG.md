@@ -71,6 +71,8 @@ for human readability.
 
 #### Changed
 
+- Evaluating a radial-symmetric kernel no longer allocates, which speeds up the evaluation of
+  interpolants and the assembly of kernel matrices ([#215]).
 - Several performance improvements reducing allocations, using threaded loops, using `KDTree`
   for nearest-neighbor searches, and computing the separation distance lazily ([#191]).
 - Speed up `LagrangeBasis` construction (and hence also the RBF-FD `RBFFDLagrangeBasis` cache) by
