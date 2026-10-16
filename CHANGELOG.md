@@ -33,6 +33,11 @@ for human readability.
 
 #### Fixed
 
+- Second derivatives at the kernel center of the general `MaternKernel` (with `nu > 1`) and of
+  `PolyharmonicSplineKernel` with even `k >= 4` returned `NaN`, e.g., for `Laplacian` and
+  `EllipticOperator`. Hence, collocation matrices of second-order PDEs with these kernels had
+  `NaN` on the diagonal. In addition, `phi(MaternKernel{d}(1.0), 0.0)` returned `NaN` instead
+  of `1.0` ([#210]).
 - Derivatives of radial-symmetric kernels are now evaluated through the chain rule on the
   scalar radial profile `phi` instead of by differentiating `x -> Phi(kernel, x)` directly.
   Previously, the `save_call` workaround perturbed the argument by `eps` at the kernel center

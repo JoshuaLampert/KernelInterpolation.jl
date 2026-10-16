@@ -230,7 +230,9 @@ function phi(kernel::PolyharmonicSplineKernel, r::Real)
     elseif isodd(kernel.k)
         return r^kernel.k
     else
-        return isapprox(r, 0.0) ? 0.0 : r^kernel.k * log(r)
+        # All derivatives of r^k * log(r) up to order k - 1 vanish at the origin. The check is on
+        # the primal value, such that this also holds for dual numbers with zero value.
+        return iszero(primal_value(r)) ? zero(r) : r^kernel.k * log(r)
     end
 end
 
@@ -506,13 +508,23 @@ function Base.show(io::IO, kernel::MaternKernel{Dim}) where {Dim}
     return nothing
 end
 
+# Value of `x` with all (possibly nested) dual parts from ForwardDiff.jl removed. Since
+# ForwardDiff.jl v1, comparisons of dual numbers, including `iszero`, also take the partials
+# into account, so checking whether a dual number represents zero needs to look at its value.
+primal_value(x::ForwardDiff.Dual) = primal_value(ForwardDiff.value(x))
+primal_value(x) = x
+
 # See https://github.com/JuliaGaussianProcesses/KernelFunctions.jl/blob/9a2f7bbec515c55e5594feef7928670cb811169c/src/basekernels/matern.jl#L42
 function phi(kernel::MaternKernel, r::Real)
     nu = kernel.nu
     a_r = kernel.shape_parameter * r
-    if iszero(r)
-        c = -nu / (nu - 1)
-        return one(a_r) + c * a_r^2 / 2
+    # At the origin, use the expansion phi(r) = 1 - nu / (2 * (nu - 1)) * (eps * r)^2 + o(r^2),
+    # which holds for nu > 1. For nu <= 1, phi''(0) does not exist (see `smoothness`), so only
+    # phi(0) = 1 is needed. The check is on the primal value, such that dual numbers with zero
+    # value also take this branch and derivatives at the kernel center are finite.
+    if iszero(primal_value(a_r))
+        primal_value(nu) > 1 || return one(a_r)
+        return one(a_r) - nu / (nu - 1) * a_r^2 / 2
     else
         y = sqrt(2 * nu) * a_r
         b = log(besselk(nu, y))
