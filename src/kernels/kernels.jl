@@ -15,7 +15,7 @@ dim(::AbstractKernel{Dim}) where {Dim} = Dim
 """
     get_name(kernel::AbstractKernel)
 
-Returns the canonical, human-readable name for the given system of equations.
+Return a human-readable name of the kernel, which is, e.g., used as the title of plots.
 """
 get_name(kernel::AbstractKernel) = string(nameof(typeof(kernel))) * "{" *
                                    string(dim(kernel)) * "}"

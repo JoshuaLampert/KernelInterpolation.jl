@@ -356,7 +356,7 @@ function fill_rhs_vector!(out, t, nodeset_inner, boundary_condition, nodeset_bou
 end
 
 """
-    semidiscetize(semi::Semidiscretization, tspan)
+    semidiscretize(semi::Semidiscretization, tspan)
 
 Wrap a [`Semidiscretization`](@ref) object into an `ODEProblem` object from SciMLBase.jl with time span `tspan`.
 """
