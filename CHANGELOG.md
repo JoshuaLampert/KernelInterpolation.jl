@@ -5,6 +5,26 @@ KernelInterpolation.jl follows the interpretation of
 used in the Julia ecosystem. Notable changes will be documented in this file
 for human readability.
 
+## Changes when updating to v0.4 from v0.3.x
+
+#### Changed
+
+- `MultiquadricKernel` and `PolyharmonicSplineKernel` now include the sign `(-1)^m`, where `m` is
+  the order of the kernel, such that they are conditionally positive definite of order `m` (see
+  Wendland (2004), Corollary 8.18, and Fasshauer (2007), Chapter 8). This changes the sign of
+  `phi` and of the kernel coefficients of the `MultiquadricKernel` with odd `ceil(beta)` (e.g.,
+  the default `beta = 0.5`) and of the `PolyharmonicSplineKernel` with `k = 1, 4, 5, 8, 9, ...`.
+  Interpolants and least squares approximations are the same as before. However, `kernel_norm`
+  now returns the native space semi-norm for these kernels instead of `0`, and interpolants with
+  an `L2Regularization` change, since the regularization only acts as intended with the sign
+  ([#220]).
+- `kernel_norm` throws a `DomainError` if the squared native space norm is negative beyond the
+  level of round-off errors instead of silently returning `0` ([#220]).
+
+#### Removed
+
+- The deprecated function `values_along_dim` is removed. Use `nodeset[:, i]` instead ([#220]).
+
 ## Changes in the v0.3 lifecycle
 
 #### Added

@@ -450,7 +450,6 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation)
     return x -> diff_op_or_pde(itp, x)
 end
 
-# TODO: Does this also make sense for conditionally positive definite kernels?
 @doc raw"""
     kernel_inner_product(itp1, itp2)
 
@@ -459,12 +458,30 @@ with the same kernel. The inner product is defined as
 ```math
     \langle f, g\rangle_K = \sum_{i = 1}^N\sum_{j = 1}^Mc_i^fc_j^gK(x_i, \xi_j)
 ```
-for the interpolants ``f(x) = \sum_{i = 1}^Nc_i^fK(x, x_i)`` and
-``g(x) = \sum_{j = 1}^Mc_j^gK(x, \xi_j)``.
+for the interpolants ``f(x) = \sum_{i = 1}^Nc_i^fK(x, x_i) + p_f(x)`` and
+``g(x) = \sum_{j = 1}^Mc_j^gK(x, \xi_j) + p_g(x)`` with polynomials ``p_f`` and ``p_g``.
+
+For a conditionally positive definite kernel of order ``m``, this is the semi-inner product of
+the native space, see Wendland (2004), Section 10.3, provided the kernel coefficients satisfy
+``\sum_{i = 1}^Nc_i^fp(x_i) = 0`` (and analogously for ``g``) for all polynomials ``p`` of
+order ``m``. This holds for interpolations with polynomial augmentation of order ``m``. The
+polynomial parts do not contribute.
 
 See also [`kernel_norm`](@ref).
+
+- Holger Wendland (2004)
+  Scattered Data Approximation
+  Cambridge University Press
+  [DOI: 10.1017/CBO9780511617539](https://doi.org/10.1017/CBO9780511617539)
 """
 function kernel_inner_product(itp1::Interpolation, itp2::Interpolation)
+    s, _ = kernel_inner_product_and_scale(itp1, itp2)
+    return s
+end
+
+# The inner product and the sum of the absolute values of its terms, which is the scale for the
+# round-off errors in the inner product.
+function kernel_inner_product_and_scale(itp1::Interpolation, itp2::Interpolation)
     kernel = interpolation_kernel(itp1)
     @assert kernel == interpolation_kernel(itp2)
     c_f = kernel_coefficients(itp1)
@@ -472,12 +489,15 @@ function kernel_inner_product(itp1::Interpolation, itp2::Interpolation)
     xs = centers(itp1)
     xis = centers(itp2)
     s = zero(promote_type(eltype(c_f), eltype(c_g), eltype(xs)))
+    scale = abs(s)
     for i in eachindex(c_f)
         for j in eachindex(c_g)
-            s += c_f[i] * c_g[j] * kernel(xs[i], xis[j])
+            term = c_f[i] * c_g[j] * kernel(xs[i], xis[j])
+            s += term
+            scale += abs(term)
         end
     end
-    return s
+    return s, scale
 end
 
 @doc raw"""
@@ -488,11 +508,32 @@ The norm is defined as
 ```math
     \|f\|_K^2 = \sum_{i,j=1}^Nc_ic_jK(x_i, x_j)
 ```
-for the interpolant ``f(x) = \sum_{j = 1}^nc_jK(x, x_j)``.
+for the interpolant ``f(x) = \sum_{j = 1}^Nc_jK(x, x_j) + p(x)`` with a polynomial ``p``.
+For a conditionally positive definite kernel, this is the semi-norm of the native space, see
+[`kernel_inner_product`](@ref).
+
+Small negative values of ``\|f\|_K^2`` caused by round-off errors are set to zero. A
+`DomainError` is thrown if ``\|f\|_K^2`` is negative beyond the level of round-off errors. This
+means that the kernel is not conditionally positive definite of the order used for the
+interpolation, e.g., a custom kernel without the sign ``(-1)^m`` (see
+[`MultiquadricKernel`](@ref)), or that the coefficients do not satisfy the conditions above,
+e.g., for a least squares approximation.
 
 See also [`kernel_inner_product`](@ref).
 """
-kernel_norm(itp::Interpolation) = sqrt(max(0, kernel_inner_product(itp, itp))) # Use max to avoid numerical issues with negative values due to round-off errors
+function kernel_norm(itp::Interpolation)
+    s, scale = kernel_inner_product_and_scale(itp, itp)
+    # The comparison is on the primal values, such that dual numbers are also supported.
+    s_value, scale_value = primal_value(s), primal_value(scale)
+    if s_value < -sqrt(eps(float(typeof(scale_value)))) * scale_value
+        throw(DomainError(s,
+                          "The squared native space norm is negative, i.e., the kernel is not " *
+                          "conditionally positive definite of the order used for the " *
+                          "interpolation, or the coefficients do not satisfy the moment " *
+                          "conditions, see the docstring of `kernel_norm`."))
+    end
+    return sqrt(max(zero(s), s))
+end
 
 """
     TemporalInterpolation(ode_sol::ODESolution)

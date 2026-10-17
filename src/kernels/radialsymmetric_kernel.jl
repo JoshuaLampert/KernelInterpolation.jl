@@ -57,6 +57,14 @@ Return order of kernel.
 """
 function order end
 
+# Conditionally positive definite kernels of order `m` are `(-1)^m` times the classical formulas,
+# e.g., of the multiquadric or the polyharmonic splines, see Wendland (2004), Corollary 8.18, and
+# Fasshauer (2007), Chapter 8. Only with this sign, the quadratic form of the kernel matrix is
+# positive for all coefficient vectors that are orthogonal to the polynomials of order `m`. This
+# is needed, e.g., for the native space (semi-)norm and for regularization, but not for plain
+# interpolation, which gives the same interpolant for both signs.
+with_cpd_sign(kernel, value) = isodd(max(order(kernel), 0)) ? -value : value
+
 @doc raw"""
     smoothness(kernel)
 
@@ -122,11 +130,16 @@ smoothness(::GaussKernel) = Inf
 
 Multiquadric kernel function with
 ```math
-    \phi(r) = (1 + (\varepsilon r)^2)^\beta,
+    \phi(r) = (-1)^{\lceil\beta\rceil}(1 + (\varepsilon r)^2)^\beta,
 ```
-where ``\varepsilon`` is the shape parameter. The multiquadric kernel
-is conditionally positive definite of order ``m = \lceil\beta \rceil``.
-See Wendland (2004), p. 109.
+where ``\varepsilon`` is the shape parameter and ``\beta > 0``, ``\beta\notin\mathbb{N}``. The
+multiquadric kernel is conditionally positive definite of order ``m = \lceil\beta \rceil``.
+See Wendland (2004), Corollary 8.18, p. 113, and Fasshauer (2007), Section 8.1, p. 67.
+
+The multiquadric kernel is often written without the sign ``(-1)^{\lceil\beta\rceil}``. This
+gives the same interpolant, but only with the sign is the kernel conditionally positive definite,
+which is needed, e.g., for the native space semi-norm ([`kernel_norm`](@ref)) and for
+regularization ([`L2Regularization`](@ref)).
 
 See also [`RadialSymmetricKernel`](@ref).
 
@@ -134,6 +147,10 @@ See also [`RadialSymmetricKernel`](@ref).
   Scattered Data Approximation
   Cambridge University Press
   [DOI: 10.1017/CBO9780511617539](https://doi.org/10.1017/CBO9780511617539)
+- Gregory Fasshauer (2007)
+  Meshfree Approximation Methods with MATLAB
+  World Scientific
+  [DOI: 10.1142/6437](https://doi.org/10.1142/6437)
 """
 struct MultiquadricKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     beta::RealT
@@ -150,7 +167,9 @@ function Base.show(io::IO, kernel::MultiquadricKernel{Dim}) where {Dim}
     return nothing
 end
 
-phi(kernel::MultiquadricKernel, r::Real) = (1 + (kernel.shape_parameter * r)^2)^kernel.beta
+function phi(kernel::MultiquadricKernel, r::Real)
+    return with_cpd_sign(kernel, (1 + (kernel.shape_parameter * r)^2)^kernel.beta)
+end
 order(kernel::MultiquadricKernel) = ceil(Int, kernel.beta)
 smoothness(::MultiquadricKernel) = Inf
 
@@ -200,13 +219,20 @@ smoothness(::InverseMultiquadricKernel) = Inf
 Polyharmonic spline kernel function with
 ```math
     \phi_k(r) = \begin{cases}
-        r^k, &\text{ if } k \text{ odd}\\
-        r^k\log(r), &\text{ if } k \text{ even}
+        (-1)^{\lceil k/2\rceil} r^k, &\text{ if } k \text{ odd}\\
+        (-1)^{k/2 + 1} r^k\log(r), &\text{ if } k \text{ even}
     \end{cases}.
 ```
 The polyharmonic spline is conditionally positive definite of order ``m = \lceil k/2\rceil``
-for odd `k` and order ``m = k/2 + 1`` for even `k`.
-See Wendland (2004), pp. 111--112.
+for odd `k` and order ``m = k/2 + 1`` for even `k`, i.e., the sign is ``(-1)^m`` in both cases.
+See Wendland (2004), Corollary 8.18, p. 113, and Fasshauer (2007), Sections 8.2 and 8.3,
+pp. 69--70.
+
+The polyharmonic splines are often written without the sign. This gives the same interpolant,
+but only with the sign is the kernel conditionally positive definite, which is needed, e.g., for
+the native space semi-norm ([`kernel_norm`](@ref)) and for regularization
+([`L2Regularization`](@ref)). For `k = 2` ([`ThinPlateSplineKernel`](@ref)) and `k = 3`, the
+sign is ``+1``.
 
 See also [`RadialSymmetricKernel`](@ref).
 
@@ -214,6 +240,10 @@ See also [`RadialSymmetricKernel`](@ref).
   Scattered Data Approximation
   Cambridge University Press
   [DOI: 10.1017/CBO9780511617539](https://doi.org/10.1017/CBO9780511617539)
+- Gregory Fasshauer (2007)
+  Meshfree Approximation Methods with MATLAB
+  World Scientific
+  [DOI: 10.1142/6437](https://doi.org/10.1142/6437)
 """
 struct PolyharmonicSplineKernel{Dim} <: RadialSymmetricKernel{Dim}
     k::Int
@@ -230,14 +260,15 @@ end
 
 function phi(kernel::PolyharmonicSplineKernel, r::Real)
     if kernel.k == 1 # to improve performance a little bit by saving the exponentiation
-        return r
+        value = r
     elseif isodd(kernel.k)
-        return r^kernel.k
+        value = r^kernel.k
     else
         # All derivatives of r^k * log(r) up to order k - 1 vanish at the origin. The check is on
         # the primal value, such that this also holds for dual numbers with zero value.
-        return iszero(primal_value(r)) ? zero(r) : r^kernel.k * log(r)
+        value = iszero(primal_value(r)) ? zero(r) : r^kernel.k * log(r)
     end
+    return with_cpd_sign(kernel, value)
 end
 
 function order(kernel::PolyharmonicSplineKernel)

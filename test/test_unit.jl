@@ -22,9 +22,10 @@ end
     @test_nowarn display(kernel2)
     @test_nowarn get_name(kernel2)
     @test order(kernel2) == 1
-    @test isapprox(phi(kernel2, 0.0), 1.0)
-    @test isapprox(phi(kernel2, 0.5), 1.118033988749895)
-    @test isapprox(kernel2(x, y), 1.0448588176555913)
+    # With the sign (-1)^m = -1 for the order m = 1
+    @test isapprox(phi(kernel2, 0.0), -1.0)
+    @test isapprox(phi(kernel2, 0.5), -1.118033988749895)
+    @test isapprox(kernel2(x, y), -1.0448588176555913)
 
     kernel3 = @test_nowarn InverseMultiquadricKernel{2}()
     @test_nowarn println(kernel3)
@@ -230,6 +231,28 @@ end
             @test kernel(nodeset_alloc[1], nodeset_alloc[2]) ≈
                   kernel(collect(nodeset_alloc[1]), x_vector)
         end
+    end
+
+    # Conditionally positive definite kernels of order m include the sign (-1)^m, see Wendland
+    # (2004), Corollary 8.18
+    @test phi(PolyharmonicSplineKernel{2}(1), 0.5) == -0.5
+    @test phi(PolyharmonicSplineKernel{2}(3), 0.5) == 0.125
+    @test isapprox(phi(PolyharmonicSplineKernel{2}(4), 0.5), -0.5^4 * log(0.5))
+    @test isapprox(phi(PolyharmonicSplineKernel{2}(5), 0.5), -0.5^5)
+    @test isapprox(phi(MultiquadricKernel{2}(1.5), 0.5), 1.25^1.5)
+    # With the sign, the quadratic form of the kernel matrix is positive for all coefficient
+    # vectors orthogonal to the polynomials of order m (which is the definition)
+    nodeset_cpd = homogeneous_hypercube(5; dim = 2)
+    for kernel in (MultiquadricKernel{2}(), MultiquadricKernel{2}(1.5),
+                   PolyharmonicSplineKernel{2}(1), ThinPlateSplineKernel{2}(),
+                   PolyharmonicSplineKernel{2}(3), PolyharmonicSplineKernel{2}(4),
+                   PolyharmonicSplineKernel{2}(5), RieszKernel{2}(1.5))
+        xx = polyvars(Val(2))
+        ps = KernelInterpolation.monomials(xx, 0:(order(kernel) - 1))
+        P = KernelInterpolation.polynomial_matrix(nodeset_cpd, ps)
+        Q = LinearAlgebra.nullspace(Matrix(P'))
+        A = kernel_matrix(nodeset_cpd, kernel)
+        @test minimum(LinearAlgebra.eigvals(Symmetric(Q' * A * Q))) > 0
     end
 end
 
@@ -1002,6 +1025,24 @@ end
     @test size(system_matrix(itp)) == (7, 6)
     @test isapprox(itp([0.5, 0.5]), 1.0)
     @test isapprox(kernel_norm(itp), 0.0, atol = 1e-15)
+
+    # The native space semi-norm of conditionally positive definite kernels is positive
+    nodeset_norm = homogeneous_hypercube(5; dim = 2)
+    values_norm = sin.(nodeset_norm[:, 1]) .+ nodeset_norm[:, 2] .^ 2
+    for kernel in (PolyharmonicSplineKernel{2}(1), MultiquadricKernel{2}(),
+                   RieszKernel{2}(1.5))
+        itp_norm = interpolate(nodeset_norm, values_norm, kernel)
+        @test kernel_norm(itp_norm) > 0.1
+        @test isapprox(kernel_norm(itp_norm)^2,
+                       KernelInterpolation.kernel_inner_product(itp_norm, itp_norm))
+    end
+    # A kernel without the sign (-1)^m is not conditionally positive definite, so the squared
+    # norm is negative, which is not silently set to zero
+    struct UnsignedMultiquadricKernel <: KernelInterpolation.RadialSymmetricKernel{2} end
+    KernelInterpolation.phi(::UnsignedMultiquadricKernel, r::Real) = sqrt(1 + r^2)
+    KernelInterpolation.order(::UnsignedMultiquadricKernel) = 1
+    itp_unsigned = interpolate(nodeset_norm, values_norm, UnsignedMultiquadricKernel())
+    @test_throws DomainError kernel_norm(itp_unsigned)
 
     itp = @test_nowarn interpolate(centers, nodes, ff,
                                    Matern52Kernel{dim(nodes)}(shape_parameter = 0.5);

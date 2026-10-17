@@ -291,8 +291,6 @@ function fill_distance(nodeset::NodeSet, reference::NodeSet)
     return maximum(i -> norm(reference[i] - nodeset[nearest[i]]), eachindex(reference))
 end
 
-@deprecate values_along_dim(nodeset::NodeSet, i::Int) nodeset[:, i]
-
 # Some convenience function to create some specific `NodeSet`s
 
 # Convert numbers and tuples of numbers to a common floating point type, such that arguments of

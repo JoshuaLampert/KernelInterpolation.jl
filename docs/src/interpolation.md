@@ -109,19 +109,23 @@ The linear system now consists of a system-matrix that has 4 blocks:
 where the entries of ``P\in\mathbb{R}^{N\times Q}`` are given by ``P_{jk} = p_k(x_j)``. This strategy does not only guarantee to be able to reproduce
 polynomials exactly, but also leads to a larger class of possible kernels that can be taken for the interpolation because now it is not required
 anymore that the kernel is positive definite, but it suffices that the new system matrix ``\begin{pmatrix}A_X & P\\P^T & 0\end{pmatrix}`` is regular.
-This leads to the notion of *conditionally positive definite kernels of order ``m``*, which are kernel functions that produce an invertible system
-matrix provided that the interpolant is augmented by polynomials of order ``m`` (i.e. degree ``m - 1``). It turns out that any positive definite kernel
-(i.e. conditionally positive definite of order 0) is also conditionally positive definite of any order ``m\ge 0``. One popular class of conditionally
-positive definite kernels are the *polyharmonic splines*, which are built by the basic function
+This leads to the notion of *conditionally positive definite kernels of order ``m``*: a kernel ``K`` is conditionally positive definite of order ``m``
+if ``\sum_{i,j = 1}^Nc_ic_jK(x_i, x_j) > 0`` for all pairwise distinct ``x_1,\ldots,x_N`` and all ``c\neq 0`` with ``\sum_{j = 1}^Nc_jp(x_j) = 0`` for
+all polynomials ``p`` of order ``m`` (i.e. degree ``m - 1``). For such a kernel, the system matrix above is regular if the interpolant is augmented by
+polynomials of order ``m`` and the nodes are unisolvent for these polynomials, see [^Wendland2004], Theorem 8.21, or [^Fasshauer2007], Theorem 7.2.
+It turns out that any positive definite kernel (i.e. conditionally positive definite of order 0) is also conditionally positive definite of any order
+``m\ge 0``. One popular class of conditionally positive definite kernels are the *polyharmonic splines*, which are built by the basic function
 
 ```math
 \phi_k(r) = \begin{cases}
-  r^k, &\text{ if } k \text{ odd}\\
-  r^k\log{r}, &\text{ if } k \text{ even}
+  (-1)^{\lceil k/2\rceil}r^k, &\text{ if } k \text{ odd}\\
+  (-1)^{k/2 + 1}r^k\log{r}, &\text{ if } k \text{ even}
 \end{cases}
 ```
 
-and are of order ``m = \left\lceil{\frac{k}{2}}\right\rceil`` for odd ``k`` and ``m = \frac{k}{2} + 1`` for even ``k``.
+and are of order ``m = \left\lceil{\frac{k}{2}}\right\rceil`` for odd ``k`` and ``m = \frac{k}{2} + 1`` for even ``k``. The sign ``(-1)^m`` is often
+omitted in the literature. It does not change the interpolant, but only with the sign is the kernel conditionally positive definite, which is needed,
+e.g., for the native space semi-norm ([`kernel_norm`](@ref)) and for regularization ([`L2Regularization`](@ref)).
 
 ## Performing an interpolation
 
@@ -248,9 +252,9 @@ evaluated at the center of a kernel, which requires ``\texttt{smoothness(kernel)
 | Kernel name | Formula | Order | Smoothness
 | --- | --- | --- | ---
 | [`GaussKernel`](@ref) | ``\phi(r) = \mathrm{e}^{-r^2}`` | ``0`` | ``C^\infty``
-| [`MultiquadricKernel`](@ref) | ``\phi(r) = (1 + r^2)^\beta, \beta > 0`` | ``\lceil{\beta}\rceil`` | ``C^\infty``
+| [`MultiquadricKernel`](@ref) | ``\phi(r) = (-1)^{\lceil\beta\rceil}(1 + r^2)^\beta, \beta > 0, \beta\notin\mathbb{N}`` | ``\lceil{\beta}\rceil`` | ``C^\infty``
 | [`InverseMultiquadricKernel`](@ref) | ``\phi(r) = (1 + r^2)^{-\beta}, \beta > 0`` | ``0`` | ``C^\infty``
-| [`PolyharmonicSplineKernel`](@ref) | ``\phi_k(r) = \begin{cases} r^k, &\text{ if } k \text{ odd}\\ r^k\log{r}, &\text{ if } k \text{ even} \end{cases}, k\in\mathbb{N}`` | ``\left\lceil{\frac{k}{2}}\right\rceil`` for odd ``k`` and ``\frac{k}{2} + 1`` for even ``k`` | ``C^{k - 1}``
+| [`PolyharmonicSplineKernel`](@ref) | ``\phi_k(r) = \begin{cases} (-1)^{\lceil k/2\rceil}r^k, &\text{ if } k \text{ odd}\\ (-1)^{k/2 + 1}r^k\log{r}, &\text{ if } k \text{ even} \end{cases}, k\in\mathbb{N}`` | ``\left\lceil{\frac{k}{2}}\right\rceil`` for odd ``k`` and ``\frac{k}{2} + 1`` for even ``k`` | ``C^{k - 1}``
 | [`ThinPlateSplineKernel`](@ref) | ``\phi(r) = r^2\log{r}`` | 2 | ``C^1``
 | [`WendlandKernel`](@ref) | ``\phi_{d,k}(r) = \begin{cases}p_{d,k}(r), &\text{ if } 0\le r\le 1\\0, &\text{ else}\end{cases}, d, k\in\mathbb{N}`` for some polynomial ``p_{d,k}``| ``0`` | ``C^{2k}``
 | [`WuKernel`](@ref) | ``\phi_{l,k}(r) = \begin{cases}p_{l,k}(r), &\text{ if } 0\le r\le 1\\0, &\text{ else}\end{cases}, l, k\in\mathbb{N}`` for some polynomial ``p_{l,k}``| ``0`` | ``C^{2(l - k)}``
