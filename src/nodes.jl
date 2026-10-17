@@ -293,9 +293,14 @@ promote_type_all(x::Real) = typeof(x)
 promote_type_all(x::Tuple) = promote_type(map(typeof, x)...)
 convert_all(::Type{RealT}, x::Real) where {RealT} = convert(RealT, x)
 convert_all(::Type{RealT}, x::Tuple) where {RealT} = map(xi -> convert(RealT, xi), x)
+# The target type is passed as a type parameter instead of being captured in a closure in
+# `float_promote`, since the latter is not inferred on Julia < 1.12.
+function convert_args(::Type{RealT}, args::Tuple) where {RealT}
+    return map(arg -> convert_all(RealT, arg), args)
+end
 function float_promote(args...)
     RealT = float(promote_type(map(promote_type_all, args)...))
-    return map(arg -> convert_all(RealT, arg), args)
+    return convert_args(RealT, args)
 end
 """
     random_hypercube([rng], n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
