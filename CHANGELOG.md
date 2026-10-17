@@ -55,6 +55,12 @@ for human readability.
   the inner constructors, such that they also apply if the constructor with all type parameters
   is called directly, e.g., `MultiquadricKernel{2, Float64}(1.0, 1.0)` ([#223]).
 
+- All kernels with a shape parameter throw an `ArgumentError` if it is not positive. For a shape
+  parameter `0`, the kernel is constant, and for a negative one, e.g., the `WendlandKernel`,
+  `WuKernel`, `RadialCharacteristicKernel`, Matern kernels, and `RieszKernel` are not positive
+  definite or not defined. `InverseMultiquadricKernel` throws an `ArgumentError` for `beta <= 0`
+  and `MaternKernel` for `nu <= 0` ([#224]).
+
 #### Fixed
 
 - `RadialCharacteristicKernel` was treated as not positive definite for `beta = (Dim + 1) / 2`,

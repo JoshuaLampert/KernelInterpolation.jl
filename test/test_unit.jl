@@ -2228,6 +2228,30 @@ end
     @test_throws ArgumentError RadialCharacteristicKernel{3, Float64}(1.0, 1.0)
     @test_nowarn MultiquadricKernel{2, Float64}(0.5, 1.0)
 
+    # The shape parameter has to be positive for all kernels, which have one
+    for kernel_type in (GaussKernel, Matern12Kernel, Matern32Kernel, Matern52Kernel,
+                        Matern72Kernel)
+        @test_throws ArgumentError kernel_type{2}(shape_parameter = 0.0)
+        @test_throws ArgumentError kernel_type{2}(shape_parameter = -1.0)
+        @test_throws ArgumentError kernel_type{2, Float64}(-1.0)
+    end
+    @test_throws ArgumentError GaussKernel{2}(shape_parameter = NaN)
+    @test_throws ArgumentError MultiquadricKernel{2}(shape_parameter = 0.0)
+    @test_throws ArgumentError InverseMultiquadricKernel{2}(shape_parameter = -1.0)
+    @test_throws ArgumentError WendlandKernel{2}(1; shape_parameter = 0.0)
+    @test_throws ArgumentError WuKernel{2}(1, 0; shape_parameter = -0.5)
+    @test_throws ArgumentError RadialCharacteristicKernel{2}(; shape_parameter = 0.0)
+    @test_throws ArgumentError MaternKernel{2}(; shape_parameter = -1.0)
+    @test_throws ArgumentError RieszKernel{2}(1.0; shape_parameter = 0.0)
+    @test_nowarn GaussKernel{2}(shape_parameter = 1)
+    # Parameters, for which the kernels are not positive definite or not defined
+    @test_throws ArgumentError InverseMultiquadricKernel{2}(0.0)
+    @test_throws ArgumentError InverseMultiquadricKernel{2}(-0.5)
+    @test_throws ArgumentError InverseMultiquadricKernel{2, Float64}(-0.5, 1.0)
+    @test_throws ArgumentError MaternKernel{2}(0.0)
+    @test_throws ArgumentError MaternKernel{2}(-1.0)
+    @test_throws ArgumentError MaternKernel{2, Float64}(-1.0, 1.0)
+
     # Evaluating kernels at points of different lengths throws a `DimensionMismatch`
     kernel = GaussKernel{2}()
     @test_throws DimensionMismatch kernel([1.0, 2.0], [1.0])

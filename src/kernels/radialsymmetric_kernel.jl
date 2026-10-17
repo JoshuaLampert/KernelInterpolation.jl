@@ -80,6 +80,17 @@ function order end
 # interpolation, which gives the same interpolant for both signs.
 with_cpd_sign(kernel, value) = isodd(order(kernel)) ? -value : value
 
+# For a shape parameter `0`, the kernel is constant. For a negative shape parameter, kernels
+# depending on `shape_parameter * r` (and not on its square) are not positive definite or not
+# defined. The check is on the primal value to support dual numbers, and it also rejects `NaN`.
+function check_shape_parameter(shape_parameter)
+    if !(primal_value(shape_parameter) > 0)
+        throw(ArgumentError("The shape parameter has to be positive, got shape_parameter = " *
+                            "$shape_parameter."))
+    end
+    return nothing
+end
+
 @doc raw"""
     smoothness(kernel)
 
@@ -125,6 +136,11 @@ See also [`RadialSymmetricKernel`](@ref).
 """
 struct GaussKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     shape_parameter::RealT
+
+    function GaussKernel{Dim, RealT}(shape_parameter) where {Dim, RealT}
+        check_shape_parameter(shape_parameter)
+        return new{Dim, RealT}(shape_parameter)
+    end
 end
 
 function GaussKernel{Dim}(; shape_parameter = 1.0) where {Dim}
@@ -176,6 +192,7 @@ struct MultiquadricKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     # The checks are in the inner constructor, such that they cannot be bypassed. They are on
     # the primal value to support dual numbers.
     function MultiquadricKernel{Dim, RealT}(beta, shape_parameter) where {Dim, RealT}
+        check_shape_parameter(shape_parameter)
         if primal_value(beta) <= 0
             throw(ArgumentError("beta has to be positive, got beta = $beta. For negative beta, " *
                                 "use `InverseMultiquadricKernel` with -beta."))
@@ -212,7 +229,7 @@ Inverse multiquadric kernel function with
 ```math
     \phi(r) = (1 + (\varepsilon r)^2)^{-\beta},
 ```
-where ``\varepsilon`` is the shape parameter. The inverse multiquadric kernel
+where ``\varepsilon`` is the shape parameter and ``\beta > 0``. The inverse multiquadric kernel
 is always positive definite.
 See Wendland (2004), p. 76 and p. 95.
 
@@ -226,6 +243,16 @@ See also [`RadialSymmetricKernel`](@ref).
 struct InverseMultiquadricKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     beta::RealT
     shape_parameter::RealT
+
+    function InverseMultiquadricKernel{Dim, RealT}(beta, shape_parameter) where {Dim, RealT}
+        # The check is on the primal value to support dual numbers
+        if !(primal_value(beta) > 0)
+            throw(ArgumentError("beta has to be positive, got beta = $beta. For negative " *
+                                "beta, use `MultiquadricKernel` with -beta."))
+        end
+        check_shape_parameter(shape_parameter)
+        return new{Dim, RealT}(beta, shape_parameter)
+    end
 end
 
 function InverseMultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where {Dim}
@@ -376,6 +403,7 @@ struct WendlandKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     d::Int
 
     function WendlandKernel{Dim, RealT}(k, shape_parameter, d) where {Dim, RealT}
+        check_shape_parameter(shape_parameter)
         if d > Dim
             throw(ArgumentError("d has to be smaller than or equal to Dim = $Dim, got d = $d."))
         end
@@ -454,6 +482,7 @@ struct WuKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     shape_parameter::RealT
 
     function WuKernel{Dim, RealT}(l, k, shape_parameter) where {Dim, RealT}
+        check_shape_parameter(shape_parameter)
         if l < k
             throw(ArgumentError("l has to be larger than or equal to k, got l = $l and k = $k."))
         end
@@ -549,6 +578,7 @@ struct RadialCharacteristicKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 
     function RadialCharacteristicKernel{Dim, RealT}(beta,
                                                     shape_parameter) where {Dim, RealT}
+        check_shape_parameter(shape_parameter)
         # The check is on the primal value to support dual numbers
         if primal_value(beta) < (Dim + 1) / 2
             throw(ArgumentError("beta has to be at least (Dim + 1) / 2 = $((Dim + 1) / 2) " *
@@ -582,7 +612,8 @@ Matern kernel with
 ```math
     \phi_\nu(r) =  \frac{2^{1-\nu}}{\Gamma(\nu)}\big(\sqrt{2\nu}\varepsilon r\big)^\nu K_\nu\big(\sqrt{2\nu}\varepsilon r\big),
 ```
-where ``\varepsilon`` is the shape parameter. The Matern kernel is positive definite.
+where ``\varepsilon`` is the shape parameter and ``\nu > 0``. The Matern kernel is positive
+definite.
 
 See [Wikipedia](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function) and Fasshauer (2007), p. 41.
 
@@ -596,6 +627,15 @@ See also [`RadialSymmetricKernel`](@ref).
 struct MaternKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     nu::RealT
     shape_parameter::RealT
+
+    function MaternKernel{Dim, RealT}(nu, shape_parameter) where {Dim, RealT}
+        # The check is on the primal value to support dual numbers
+        if !(primal_value(nu) > 0)
+            throw(ArgumentError("nu has to be positive, got nu = $nu."))
+        end
+        check_shape_parameter(shape_parameter)
+        return new{Dim, RealT}(nu, shape_parameter)
+    end
 end
 
 function MaternKernel{Dim}(nu = 1.5; shape_parameter = 1.0) where {Dim}
@@ -649,6 +689,11 @@ See also [`MaternKernel`](@ref), [`RadialSymmetricKernel`](@ref).
 """
 struct Matern12Kernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     shape_parameter::RealT
+
+    function Matern12Kernel{Dim, RealT}(shape_parameter) where {Dim, RealT}
+        check_shape_parameter(shape_parameter)
+        return new{Dim, RealT}(shape_parameter)
+    end
 end
 
 function Matern12Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
@@ -687,6 +732,11 @@ See also [`MaternKernel`](@ref), [`RadialSymmetricKernel`](@ref).
 """
 struct Matern32Kernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     shape_parameter::RealT
+
+    function Matern32Kernel{Dim, RealT}(shape_parameter) where {Dim, RealT}
+        check_shape_parameter(shape_parameter)
+        return new{Dim, RealT}(shape_parameter)
+    end
 end
 
 function Matern32Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
@@ -725,6 +775,11 @@ See also [`MaternKernel`](@ref), [`RadialSymmetricKernel`](@ref).
 """
 struct Matern52Kernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     shape_parameter::RealT
+
+    function Matern52Kernel{Dim, RealT}(shape_parameter) where {Dim, RealT}
+        check_shape_parameter(shape_parameter)
+        return new{Dim, RealT}(shape_parameter)
+    end
 end
 
 function Matern52Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
@@ -763,6 +818,11 @@ See also [`MaternKernel`](@ref), [`RadialSymmetricKernel`](@ref).
 """
 struct Matern72Kernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     shape_parameter::RealT
+
+    function Matern72Kernel{Dim, RealT}(shape_parameter) where {Dim, RealT}
+        check_shape_parameter(shape_parameter)
+        return new{Dim, RealT}(shape_parameter)
+    end
 end
 
 function Matern72Kernel{Dim}(; shape_parameter = 1.0) where {Dim}
@@ -802,6 +862,7 @@ struct RieszKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     shape_parameter::RealT
 
     function RieszKernel{Dim, RealT}(beta, shape_parameter) where {Dim, RealT}
+        check_shape_parameter(shape_parameter)
         # The check is on the primal value to support dual numbers
         if !(0 < primal_value(beta) < 2)
             throw(ArgumentError("beta has to be in (0, 2), got beta = $beta."))
