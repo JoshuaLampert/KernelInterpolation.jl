@@ -28,7 +28,7 @@ function TransformationKernel{Dim}(kernel, transformation) where {Dim}
 end
 
 function (kernel::TransformationKernel)(x::AbstractVector, y::AbstractVector)
-    @assert length(x) == length(y)
+    length(x) == length(y) || throw_length_mismatch(x, y)
     K = kernel.kernel
     T = kernel.trafo
     return K(T(x), T(y))
@@ -83,7 +83,10 @@ struct ProductKernel{Dim, Kernels <: Tuple} <: AbstractKernel{Dim}
 
     function ProductKernel{Dim}(kernels) where {Dim}
         kernels = flatten_kernels(ProductKernel, kernels)
-        @assert all(dim.(kernels) .== Dim)
+        if !all(k -> dim(k) == Dim, kernels)
+            throw(DimensionMismatch("All component kernels must have the dimension $Dim, got " *
+                                    "the dimensions $(dim.(kernels))."))
+        end
         if any(k -> order(k) > 0, kernels)
             throw(ArgumentError("All component kernels of a `ProductKernel` have to be " *
                                 "positive definite, i.e., of order 0, got the orders " *
@@ -94,7 +97,7 @@ struct ProductKernel{Dim, Kernels <: Tuple} <: AbstractKernel{Dim}
 end
 
 function (kernel::ProductKernel)(x::AbstractVector, y::AbstractVector)
-    @assert length(x) == length(y)
+    length(x) == length(y) || throw_length_mismatch(x, y)
     # `map` over the tuple is unrolled by the compiler, such that this is type-stable
     return prod(map(k -> k(x, y), kernel.kernels))
 end
@@ -142,13 +145,16 @@ struct SumKernel{Dim, Kernels <: Tuple} <: AbstractKernel{Dim}
 
     function SumKernel{Dim}(kernels) where {Dim}
         kernels = flatten_kernels(SumKernel, kernels)
-        @assert all(dim.(kernels) .== Dim)
+        if !all(k -> dim(k) == Dim, kernels)
+            throw(DimensionMismatch("All component kernels must have the dimension $Dim, got " *
+                                    "the dimensions $(dim.(kernels))."))
+        end
         return new{Dim, typeof(kernels)}(kernels)
     end
 end
 
 function (kernel::SumKernel)(x::AbstractVector, y::AbstractVector)
-    @assert length(x) == length(y)
+    length(x) == length(y) || throw_length_mismatch(x, y)
     # `map` over the tuple is unrolled by the compiler, such that this is type-stable
     return sum(map(k -> k(x, y), kernel.kernels))
 end

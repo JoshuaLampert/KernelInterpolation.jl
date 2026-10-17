@@ -57,7 +57,7 @@ end
 # static vector, e.g., a node of a `NodeSet`. In addition, `Phi` is inlined, since otherwise the
 # evaluation is slower in higher dimensions.
 function (kernel::RadialSymmetricKernel)(x::AbstractVector, y::AbstractVector)
-    @assert length(x)==length(y) "x and y must have the same length"
+    length(x) == length(y) || throw_length_mismatch(x, y)
     return @inline Phi(kernel, difference(x, y))
 end
 
@@ -172,19 +172,24 @@ See also [`RadialSymmetricKernel`](@ref).
 struct MultiquadricKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     beta::RealT
     shape_parameter::RealT
+
+    # The checks are in the inner constructor, such that they cannot be bypassed. They are on
+    # the primal value to support dual numbers.
+    function MultiquadricKernel{Dim, RealT}(beta, shape_parameter) where {Dim, RealT}
+        if primal_value(beta) <= 0
+            throw(ArgumentError("beta has to be positive, got beta = $beta. For negative beta, " *
+                                "use `InverseMultiquadricKernel` with -beta."))
+        end
+        if isinteger(primal_value(beta))
+            throw(ArgumentError("beta must not be an integer, got beta = $beta, since the " *
+                                "kernel is then a polynomial, which is not conditionally " *
+                                "positive definite."))
+        end
+        return new{Dim, RealT}(beta, shape_parameter)
+    end
 end
 
 function MultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where {Dim}
-    # The checks are on the primal value to support dual numbers
-    if primal_value(beta) <= 0
-        throw(ArgumentError("beta has to be positive, got beta = $beta. For negative beta, use " *
-                            "`InverseMultiquadricKernel` with -beta."))
-    end
-    if isinteger(primal_value(beta))
-        throw(ArgumentError("beta must not be an integer, got beta = $beta, since the kernel " *
-                            "is then a polynomial, which is not conditionally positive " *
-                            "definite."))
-    end
     return MultiquadricKernel{Dim, float(typeof(shape_parameter))}(beta, shape_parameter)
 end
 
@@ -369,11 +374,19 @@ struct WendlandKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     k::Int
     shape_parameter::RealT
     d::Int
+
+    function WendlandKernel{Dim, RealT}(k, shape_parameter, d) where {Dim, RealT}
+        if d > Dim
+            throw(ArgumentError("d has to be smaller than or equal to Dim = $Dim, got d = $d."))
+        end
+        if !(k in 0:3)
+            throw(ArgumentError("The kernel is only implemented for k in 0:3, got k = $k."))
+        end
+        return new{Dim, RealT}(k, shape_parameter, d)
+    end
 end
 
 function WendlandKernel{Dim}(k::Int; shape_parameter = 1.0, d::Int = Dim) where {Dim}
-    @assert d<=Dim "d has to be smaller or equal to Dim"
-    @assert k in 0:3 "kernel only implemented for k in 0:3"
     return WendlandKernel{Dim, typeof(shape_parameter)}(k, shape_parameter, d)
 end
 
@@ -439,11 +452,19 @@ struct WuKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     l::Int
     k::Int
     shape_parameter::RealT
+
+    function WuKernel{Dim, RealT}(l, k, shape_parameter) where {Dim, RealT}
+        if l < k
+            throw(ArgumentError("l has to be larger than or equal to k, got l = $l and k = $k."))
+        end
+        if !(l in 0:3)
+            throw(ArgumentError("The kernel is only implemented for l in 0:3, got l = $l."))
+        end
+        return new{Dim, RealT}(l, k, shape_parameter)
+    end
 end
 
 function WuKernel{Dim}(l::Int, k::Int; shape_parameter = 1.0) where {Dim}
-    @assert l>=k "l has to be bigger or equal to k"
-    @assert l in 0:3 "kernel only implemented for l in 0:3"
     return WuKernel{Dim, typeof(shape_parameter)}(l, k, shape_parameter)
 end
 
@@ -525,14 +546,19 @@ See also [`RadialSymmetricKernel`](@ref).
 struct RadialCharacteristicKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     beta::RealT
     shape_parameter::RealT
+
+    function RadialCharacteristicKernel{Dim, RealT}(beta,
+                                                    shape_parameter) where {Dim, RealT}
+        # The check is on the primal value to support dual numbers
+        if primal_value(beta) < (Dim + 1) / 2
+            throw(ArgumentError("beta has to be at least (Dim + 1) / 2 = $((Dim + 1) / 2) " *
+                                "for the kernel to be positive definite, got beta = $beta."))
+        end
+        return new{Dim, RealT}(beta, shape_parameter)
+    end
 end
 
 function RadialCharacteristicKernel{Dim}(beta = 2.0; shape_parameter = 1.0) where {Dim}
-    # The check is on the primal value to support dual numbers
-    if primal_value(beta) < (Dim + 1) / 2
-        throw(ArgumentError("beta has to be at least (Dim + 1) / 2 = $((Dim + 1) / 2) for " *
-                            "the kernel to be positive definite, got beta = $beta."))
-    end
     return RadialCharacteristicKernel{Dim, float(typeof(shape_parameter))}(beta,
                                                                            shape_parameter)
 end
@@ -774,10 +800,17 @@ See also [`RadialSymmetricKernel`](@ref).
 struct RieszKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
     beta::RealT
     shape_parameter::RealT
+
+    function RieszKernel{Dim, RealT}(beta, shape_parameter) where {Dim, RealT}
+        # The check is on the primal value to support dual numbers
+        if !(0 < primal_value(beta) < 2)
+            throw(ArgumentError("beta has to be in (0, 2), got beta = $beta."))
+        end
+        return new{Dim, RealT}(beta, shape_parameter)
+    end
 end
 
 function RieszKernel{Dim}(beta; shape_parameter = 1.0) where {Dim}
-    @assert 0<beta<2 "beta has to be in (0, 2)"
     return RieszKernel{Dim, float(typeof(shape_parameter))}(beta, shape_parameter)
 end
 

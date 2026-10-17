@@ -264,7 +264,11 @@ end
 
 function create_cache(::Collocation, nodeset_inner, nodeset_boundary, nodeset,
                       basis, pdeb_matrix, ::Type{RealT}) where {RealT}
-    @assert length(basis)==length(nodeset) "The basis must have the same number of functions as the number of inner and boundary nodes."
+    if length(basis) != length(nodeset)
+        throw(DimensionMismatch("The basis must have the same number of functions as the " *
+                                "number of inner and boundary nodes, got $(length(basis)) " *
+                                "functions and $(length(nodeset)) nodes."))
+    end
     basis_matrix_inner = kernel_matrix(basis, nodeset_inner)
     basis_matrix_boundary = kernel_matrix(basis, nodeset_boundary)
     # whole basis matrix is not needed for rhs, but for initial condition

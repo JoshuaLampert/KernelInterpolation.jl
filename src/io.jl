@@ -11,7 +11,10 @@ See also [`add_to_pvd`](@ref), [`vtk_read`](@ref).
 """
 function vtk_save(filename, nodeset::NodeSet, functions_or_vectors...;
                   keys = "value_" .* string.(eachindex(functions_or_vectors)))
-    @assert dim(nodeset)<=3 "Only 1D, 2D, and 3D data can be saved to VTK files."
+    if dim(nodeset) > 3
+        throw(ArgumentError("Only 1D, 2D, and 3D data can be saved to VTK files, got " *
+                            "dimension $(dim(nodeset))."))
+    end
     cells = [MeshCell(VTKCellTypes.VTK_VERTEX, (i,)) for i in eachindex(nodeset)]
     points = Base.getindex.(Ref(nodeset), :, eachdim(nodeset))
     vtk_grid(filename, points..., cells, append = false) do vtk
@@ -35,7 +38,10 @@ In contrast to [`vtk_save`](@ref), the functions are time- and space-dependent.
 """
 function add_to_pvd(filename, pvd, time, nodeset::NodeSet, functions_or_vectors...;
                     keys = "value_" .* string.(eachindex(functions_or_vectors)))
-    @assert dim(nodeset)<=3 "Only 1D, 2D, and 3D data can be saved to VTK files."
+    if dim(nodeset) > 3
+        throw(ArgumentError("Only 1D, 2D, and 3D data can be saved to VTK files, got " *
+                            "dimension $(dim(nodeset))."))
+    end
     cells = [MeshCell(VTKCellTypes.VTK_VERTEX, (i,)) for i in eachindex(nodeset)]
     points = Base.getindex.(Ref(nodeset), :, eachdim(nodeset))
     vtk_grid(filename, points..., cells, append = false) do vtk

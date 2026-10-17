@@ -49,6 +49,12 @@ for human readability.
   Evaluating them is now type-stable and does not allocate, which
   makes, e.g., assembling kernel matrices several times faster ([#222]).
 
+- Invalid arguments throw an `ArgumentError`, `DimensionMismatch`, or `BoundsError` instead of an
+  `AssertionError`, e.g., invalid kernel parameters, points of different lengths, or a `dim` keyword
+  argument that does not match the other arguments. The checks of the kernel parameters are in
+  the inner constructors, such that they also apply if the constructor with all type parameters
+  is called directly, e.g., `MultiquadricKernel{2, Float64}(1.0, 1.0)` ([#223]).
+
 #### Fixed
 
 - `RadialCharacteristicKernel` was treated as not positive definite for `beta = (Dim + 1) / 2`,

@@ -209,9 +209,15 @@ function interpolate(basis::AbstractBasis, values::AbstractVector,
                      regularization = NoRegularization(),
                      factorization_method = nothing,
                      linsolve = nothing) where {Dim}
-    @assert dim(basis) == Dim
+    if dim(basis) != Dim
+        throw(DimensionMismatch("The dimension of the basis ($(dim(basis))) and of the " *
+                                "nodeset ($Dim) must be the same."))
+    end
     n = length(nodeset)
-    @assert length(values) == n
+    if length(values) != n
+        throw(DimensionMismatch("The number of values ($(length(values))) must be the same " *
+                                "as the number of nodes ($n)."))
+    end
     RealT = promote_type(eltype(values), eltype(nodeset))
     xx = polyvars(Val(Dim))
     ps = monomials(xx, 0:(m - 1))
@@ -346,7 +352,10 @@ end
 
 # Allow scalar input if interpolant is one-dimensional
 function (itp::Interpolation)(x::RealT) where {RealT <: Real}
-    @assert dim(itp) == 1
+    if dim(itp) != 1
+        throw(DimensionMismatch("A scalar can only be passed to a one-dimensional " *
+                                "interpolation, got dimension $(dim(itp))."))
+    end
     return itp([x])
 end
 
@@ -364,7 +373,10 @@ function (itp::RBFFDInterpolation)(x, j::Integer)
 end
 
 function (itp::RBFFDInterpolation)(x::RealT, j::Integer) where {RealT <: Real}
-    @assert dim(itp) == 1
+    if dim(itp) != 1
+        throw(DimensionMismatch("A scalar can only be passed to a one-dimensional " *
+                                "interpolation, got dimension $(dim(itp))."))
+    end
     return itp([x], j)
 end
 
@@ -375,7 +387,10 @@ end
 
 # To fix a method ambiguity
 function (itp::RBFFDInterpolation)(x::RealT) where {RealT <: Real}
-    @assert dim(itp) == 1
+    if dim(itp) != 1
+        throw(DimensionMismatch("A scalar can only be passed to a one-dimensional " *
+                                "interpolation, got dimension $(dim(itp))."))
+    end
     return itp([x])
 end
 
@@ -537,7 +552,9 @@ See also [`kernel_norm`](@ref).
 """
 function kernel_inner_product(itp1::Interpolation, itp2::Interpolation)
     kernel = interpolation_kernel(itp1)
-    @assert kernel == interpolation_kernel(itp2)
+    if kernel != interpolation_kernel(itp2)
+        throw(ArgumentError("Both interpolations must use the same kernel."))
+    end
     xs, c, ps_f = standard_representation(itp1)
     xis, d, ps_g = standard_representation(itp2)
     c_projected = project_moment_conditions(xs, c, ps_f)
@@ -678,14 +695,22 @@ function multiscale_interpolate(nodesets::AbstractVector{<:NodeSet{Dim, RealT}},
                                 valuesets::AbstractVector{<:AbstractVector},
                                 kernels::AbstractVector;
                                 kwargs...) where {Dim, RealT}
-    @assert length(nodesets) == length(valuesets) == length(kernels)
+    if !(length(nodesets) == length(valuesets) == length(kernels))
+        throw(DimensionMismatch("The number of nodesets ($(length(nodesets))), value sets " *
+                                "($(length(valuesets))), and kernels ($(length(kernels))) " *
+                                "must be the same."))
+    end
     isempty(kernels) &&
         throw(ArgumentError("At least one kernel is required for multiscale interpolation"))
 
     nlevels = length(kernels)
     itps_any = Vector{Any}(undef, nlevels)
     for (i, (nodeset, values, kernel)) in enumerate(zip(nodesets, valuesets, kernels))
-        @assert length(values) == length(nodeset)
+        if length(values) != length(nodeset)
+            throw(DimensionMismatch("The number of values ($(length(values))) must be the " *
+                                    "same as the number of nodes ($(length(nodeset))) on " *
+                                    "level $i."))
+        end
         residual = copy(values)
         for j in 1:(i - 1)
             prev_itp = itps_any[j]
