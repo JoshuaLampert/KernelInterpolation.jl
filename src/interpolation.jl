@@ -471,7 +471,7 @@ function kernel_inner_product(itp1::Interpolation, itp2::Interpolation)
     c_g = kernel_coefficients(itp2)
     xs = centers(itp1)
     xis = centers(itp2)
-    s = 0
+    s = zero(promote_type(eltype(c_f), eltype(c_g), eltype(xs)))
     for i in eachindex(c_f)
         for j in eachindex(c_g)
             s += c_f[i] * c_g[j] * kernel(xs[i], xis[j])

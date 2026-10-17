@@ -271,7 +271,7 @@ function Base.show(io::IO, kernel::ThinPlateSplineKernel{Dim}) where {Dim}
     return nothing
 end
 
-phi(::ThinPlateSplineKernel, r::Real) = iszero(r) ? 0.0 : r^2 * log(r)
+phi(::ThinPlateSplineKernel, r::Real) = iszero(primal_value(r)) ? zero(r) : r^2 * log(r)
 order(::ThinPlateSplineKernel) = 2
 smoothness(::ThinPlateSplineKernel) = 1
 

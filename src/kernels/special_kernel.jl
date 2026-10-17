@@ -109,7 +109,7 @@ end
 
 function (kernel::SumKernel)(x::AbstractVector, y::AbstractVector)
     @assert length(x) == length(y)
-    res = 0.0
+    res = zero(eltype(x))
     for k in kernel.kernels
         res += k(x, y)
     end

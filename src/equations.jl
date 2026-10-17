@@ -37,7 +37,7 @@ defined as
 
 See also [`Laplacian`](@ref).
 """
-struct PoissonEquation{F} <: AbstractStationaryEquation where {F}
+struct PoissonEquation{F} <: AbstractStationaryEquation
     f::F
 
     # accept either a function or a vector
@@ -68,7 +68,7 @@ where `A`, `b` and `c` are space-dependent functions returning a matrix, a vecto
 See also [`EllipticOperator`](@ref).
 """
 struct EllipticEquation{AType, BType, CType, F} <:
-       AbstractStationaryEquation where {AType, BType, CType, F}
+       AbstractStationaryEquation
     op::EllipticOperator{AType, BType, CType}
     f::F
 
@@ -106,7 +106,7 @@ Advection equation with advection velocity `advection_velocity`. The advection e
 ```
 where ``\mathbf{a}`` is the advection velocity and ``f`` a source term.
 """
-struct AdvectionEquation{RealT, F} <: AbstractTimeDependentEquation where {RealT, F}
+struct AdvectionEquation{RealT, F} <: AbstractTimeDependentEquation
     advection_velocity::Vector{RealT}
     f::F
 
@@ -114,8 +114,11 @@ struct AdvectionEquation{RealT, F} <: AbstractTimeDependentEquation where {RealT
         return new{RealT, typeof(f)}(advection_velocity, f)
     end
 
-    function AdvectionEquation(advection_velocity::NTuple, f)
-        return new{eltype(advection_velocity), typeof(f)}(collect(advection_velocity), f)
+    # Allow mixing types of the components, e.g., `(1, 0.5)`
+    function AdvectionEquation(advection_velocity::Tuple, f)
+        advection_velocity_vector = collect(promote(advection_velocity...))
+        return new{eltype(advection_velocity_vector), typeof(f)}(advection_velocity_vector,
+                                                                 f)
     end
 end
 
@@ -167,20 +170,23 @@ where ``\mathbf{a}`` is the advection velocity, ``\kappa`` is the diffusivity, a
 which can be a time- and space-dependent function or a vector.
 """
 struct AdvectionDiffusionEquation{RealT, F} <:
-       AbstractTimeDependentEquation where {RealT, F}
+       AbstractTimeDependentEquation
     diffusivity::RealT
     advection_velocity::Vector{RealT}
     f::F
 
-    function AdvectionDiffusionEquation(diffusivity::RealT,
-                                        advection_velocity::Vector{RealT}, f) where {RealT}
-        return new{typeof(diffusivity), typeof(f)}(diffusivity, advection_velocity, f)
+    # The diffusivity and the advection velocity are converted to a common type, such that,
+    # e.g., `AdvectionDiffusionEquation(1, (0.5, 0.5), f)` works.
+    function AdvectionDiffusionEquation(diffusivity::Real,
+                                        advection_velocity::AbstractVector{<:Real}, f)
+        RealT = promote_type(typeof(diffusivity), eltype(advection_velocity))
+        return new{RealT, typeof(f)}(convert(RealT, diffusivity),
+                                     convert(Vector{RealT}, advection_velocity), f)
     end
 
-    function AdvectionDiffusionEquation(diffusivity::RealT, advection_velocity::NTuple,
-                                        f) where {RealT}
-        return new{typeof(diffusivity), typeof(f)}(diffusivity, collect(advection_velocity),
-                                                   f)
+    function AdvectionDiffusionEquation(diffusivity::Real, advection_velocity::Tuple, f)
+        return AdvectionDiffusionEquation(diffusivity,
+                                          collect(promote(advection_velocity...)), f)
     end
 end
 
