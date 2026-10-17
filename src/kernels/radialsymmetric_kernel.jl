@@ -507,8 +507,9 @@ Radial characteristic function (or also called truncated power or Askey) kernel 
     \phi(r) = (1 - \varepsilon r)^\beta_+,
 ```
 where ``\varepsilon`` is the shape parameter. The radial characteristic function is
-positive definite if ``\beta\ge (d + 1)/2``. It is compactly supported.
-See Wendland (2004), p. 80, Iske (2018), p. 281.
+positive definite if ``\beta\ge (d + 1)/2``, and an `ArgumentError` is thrown otherwise. It is
+compactly supported. See Wendland (2004), Theorem 6.20, p. 80 (for integer ``\beta``), and
+Iske (2018), p. 281.
 
 See also [`RadialSymmetricKernel`](@ref).
 
@@ -527,6 +528,11 @@ struct RadialCharacteristicKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function RadialCharacteristicKernel{Dim}(beta = 2.0; shape_parameter = 1.0) where {Dim}
+    # The check is on the primal value to support dual numbers
+    if primal_value(beta) < (Dim + 1) / 2
+        throw(ArgumentError("beta has to be at least (Dim + 1) / 2 = $((Dim + 1) / 2) for " *
+                            "the kernel to be positive definite, got beta = $beta."))
+    end
     return RadialCharacteristicKernel{Dim, float(typeof(shape_parameter))}(beta,
                                                                            shape_parameter)
 end
@@ -540,9 +546,7 @@ end
 function phi(kernel::RadialCharacteristicKernel, r::Real)
     return max(0, 1 - kernel.shape_parameter * r)^kernel.beta
 end
-function order(kernel::RadialCharacteristicKernel{Dim}) where {Dim}
-    return kernel.beta > (Dim + 1) / 2 ? 0 : Inf
-end
+order(::RadialCharacteristicKernel) = 0
 smoothness(::RadialCharacteristicKernel) = 0
 
 @doc raw"""
@@ -783,6 +787,8 @@ function Base.show(io::IO, kernel::RieszKernel{Dim}) where {Dim}
     return nothing
 end
 
-phi(kernel::RieszKernel, r::Real) = with_cpd_sign(kernel, r^kernel.beta)
+function phi(kernel::RieszKernel, r::Real)
+    return with_cpd_sign(kernel, (kernel.shape_parameter * r)^kernel.beta)
+end
 order(::RieszKernel) = 1
 smoothness(kernel::RieszKernel) = ceil(Int, kernel.beta) - 1

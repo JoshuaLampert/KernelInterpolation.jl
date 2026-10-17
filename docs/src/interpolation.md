@@ -262,8 +262,9 @@ evaluated at the center of a kernel, which requires ``\texttt{smoothness(kernel)
 | [`MaternKernel`](@ref) | ``\phi_{\nu}(r) = \frac{2^{1 - \nu}}{\Gamma(\nu)}\left(\sqrt{2\nu}r\right)^\nu K_{\nu}\left(\sqrt{2\nu}r\right), \nu > 0`` | ``0`` | ``C^{\lceil 2\nu\rceil - 1}``
 | [`RieszKernel`](@ref) | ``\phi(r) = -r^\beta, 0 < \beta < 2`` | ``1`` | ``C^{\lceil\beta\rceil - 1}``
 
-Kernels can be composed by using [`SumKernel`](@ref) and [`ProductKernel`](@ref). Anisotropic kernels can be created by using [`TransformationKernel`](@ref),
-which applies a transformation to the input before evaluating the kernel.
+Kernels can be composed by using [`SumKernel`](@ref) and [`ProductKernel`](@ref). The order of a sum is the maximum of the orders of its components,
+while the components of a product have to be positive definite. Anisotropic kernels can be created by using [`TransformationKernel`](@ref),
+which applies a transformation to the input before evaluating the kernel. For a conditionally positive definite base kernel, the transformation has to be affine.
 
 However, you can also define your own kernel. A radial-symmetric kernel is a subtype of [`KernelInterpolation.RadialSymmetricKernel`](@ref), which in
 turn is a subtype of [`KernelInterpolation.AbstractKernel`](@ref) and needs to implement the functions [`phi`](@ref) and [`order`](@ref).

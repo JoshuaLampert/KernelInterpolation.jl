@@ -118,6 +118,12 @@ end
     @test_nowarn display(kernel7)
     @test_nowarn get_name(kernel7)
     @test order(kernel7) == 0
+    # Positive definite for beta >= (d + 1) / 2, including the boundary case
+    @test order(RadialCharacteristicKernel{3}()) == 0
+    @test_nowarn interpolate(homogeneous_hypercube(3; dim = 3), ones(27),
+                             RadialCharacteristicKernel{3}())
+    @test_throws ArgumentError RadialCharacteristicKernel{2}(1.0)
+    @test_throws ArgumentError RadialCharacteristicKernel{4}()
     @test isapprox(phi(kernel7, 0.0), 1.0)
     @test isapprox(phi(kernel7, 0.5), 0.25)
     @test isapprox(kernel7(x, y), 0.48599089995881917)
@@ -165,6 +171,7 @@ end
     @test isapprox(phi(kernel9, 0.0), 0.0)
     @test isapprox(phi(kernel9, 0.5), -0.4665164957684037)
     @test isapprox(kernel9(x, y), -0.26877021157823217)
+    @test isapprox(phi(RieszKernel{2}(1.5; shape_parameter = 2.0), 1.0), -2.0^1.5)
 
     trafo(x) = [x[1] + x[2]^2 + 2 * x[3] * x[2], x[3] - x[1]]
     kernel10 = @test_nowarn TransformationKernel{3}(kernel1, trafo)
@@ -176,19 +183,23 @@ end
     y3 = [2.3, 4.2, -12.3]
     @test isapprox(kernel10(x3, y3), kernel1(trafo(x3), trafo(y3)))
 
-    kernel11 = @test_nowarn ProductKernel{2}([kernel1, kernel2])
+    kernel11 = @test_nowarn ProductKernel{2}([kernel1, kernel3])
     @test_nowarn println(kernel11)
     @test_nowarn display(kernel11)
     @test_nowarn get_name(kernel11)
-    @test order(kernel11) == 1
-    @test isapprox(kernel11(x, y), kernel1(x, y) * kernel2(x, y))
-    @test isapprox((kernel1 * kernel2)(x, y), kernel1(x, y) * kernel2(x, y))
+    @test order(kernel11) == 0
+    @test isapprox(kernel11(x, y), kernel1(x, y) * kernel3(x, y))
+    @test isapprox((kernel1 * kernel3)(x, y), kernel1(x, y) * kernel3(x, y))
+    # Products of conditionally positive definite kernels are not supported
+    @test_throws ArgumentError ProductKernel{2}([kernel1, kernel2])
+    @test_throws ArgumentError kernel1*kernel4
 
     kernel12 = @test_nowarn SumKernel{2}([kernel1, kernel2])
     @test_nowarn println(kernel12)
     @test_nowarn display(kernel12)
     @test_nowarn get_name(kernel12)
-    @test order(kernel12) == 0
+    @test order(kernel12) == 1
+    @test order(kernel1 + kernel4 + kernel2) == 2
     @test isapprox(kernel12(x, y), kernel1(x, y) + kernel2(x, y))
     @test isapprox((kernel1 + kernel2)(x, y), kernel1(x, y) + kernel2(x, y))
 
@@ -263,7 +274,11 @@ end
                    WuKernel{2}(3, 2), RadialCharacteristicKernel{2}(2.0),
                    MaternKernel{2}(2.5), Matern12Kernel{2}(), Matern32Kernel{2}(),
                    Matern52Kernel{2}(), Matern72Kernel{2}(), RieszKernel{2}(0.5),
-                   RieszKernel{2}(1.5))
+                   RieszKernel{2}(1.5),
+                   # Composite kernels
+                   GaussKernel{2}() + ThinPlateSplineKernel{2}(),
+                   MultiquadricKernel{2}() + RieszKernel{2}(1.0),
+                   GaussKernel{2}() * Matern32Kernel{2}())
         xx = polyvars(Val(2))
         ps = KernelInterpolation.monomials(xx, 0:(order(kernel) - 1))
         P = KernelInterpolation.polynomial_matrix(nodeset_cpd, ps)

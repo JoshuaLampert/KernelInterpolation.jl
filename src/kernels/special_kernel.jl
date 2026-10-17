@@ -10,6 +10,12 @@ i.e., the new kernel ``K_T`` is given by
 where ``K`` is the base `kernel` and ``T`` the transformation, i.e. if ``K``
 is a kernel of dimension ``d``, ``T`` is a function from dimension `Dim` to ``d``,
 where `Dim` is the dimension of the new kernel.
+
+The [`order`](@ref) of the new kernel is the order ``m`` of the base kernel. If the base kernel is
+conditionally positive definite of order ``m > 0``, ``K_T`` is conditionally positive definite with
+respect to the polynomials ``p\circ T`` of order ``m``. The interpolation, however, is augmented by
+polynomials of order ``m`` in ``x``, which span the same space only if ``T`` is affine. Hence, ``T``
+has to be affine (and injective) in this case.
 """
 struct TransformationKernel{Dim, Kernel, Transformation} <: AbstractKernel{Dim}
     kernel::Kernel
@@ -48,12 +54,30 @@ results of the component kernels, i.e., the new kernel ``K`` is given by
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
 Note that all component kernels need to have the same [`dim`](@ref).
 A `ProductKernel` can also be constructed using the `*` operator.
+
+All component kernels have to be positive definite, i.e., of [`order`](@ref) 0, and an
+`ArgumentError` is thrown otherwise. The product of positive definite kernels is positive definite
+by the Schur product theorem, see Wendland (2004), Theorem 6.2 (6), p. 65, while the product of conditionally
+positive definite kernels is in general not conditionally positive definite. For example, the
+product of ``\Phi(x) = -\Vert x\Vert`` (order 1) with itself is ``\Vert x\Vert^2``, for which
+``\sum_{i,j}c_ic_j\Vert x_i - x_j\Vert^2 = -2\Vert\sum_ic_ix_i\Vert^2\le 0`` if
+``\sum_ic_i = 0``.
+
+- Holger Wendland (2004)
+  Scattered Data Approximation
+  Cambridge University Press
+  [DOI: 10.1017/CBO9780511617539](https://doi.org/10.1017/CBO9780511617539)
 """
 struct ProductKernel{Dim} <: AbstractKernel{Dim}
     kernels::Vector{AbstractKernel}
 
     function ProductKernel{Dim}(kernels) where {Dim}
         @assert all(dim.(kernels) .== Dim)
+        if any(k -> order(k) > 0, kernels)
+            throw(ArgumentError("All component kernels of a `ProductKernel` have to be " *
+                                "positive definite, i.e., of order 0, got the orders " *
+                                "$(order.(kernels))."))
+        end
         return new(kernels)
     end
 end
@@ -80,8 +104,8 @@ function Base.show(io::IO, kernel::ProductKernel{Dim}) where {Dim}
     return nothing
 end
 
-# TODO: Is that correct in general?
-order(kernel::ProductKernel) = maximum(order.(kernel.kernels))
+# All component kernels are positive definite, see the constructor
+order(::ProductKernel) = 0
 smoothness(kernel::ProductKernel) = minimum(smoothness.(kernel.kernels))
 
 Base.:*(k1::AbstractKernel, k2::AbstractKernel) = ProductKernel{dim(k1)}([k1, k2])
@@ -97,6 +121,11 @@ results of the component kernels, i.e., the new kernel ``K`` is given by
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
 Note that all component kernels need to have the same [`dim`](@ref).
 A `SumKernel` can also be constructed using the `+` operator.
+
+If the component kernels are conditionally positive definite of orders ``m_i``, the sum is
+conditionally positive definite of order ``\max_i m_i``, since every conditionally positive
+definite kernel of order ``m`` is also conditionally positive definite of every order larger than
+``m``. Hence, the [`order`](@ref) of a `SumKernel` is the maximum of the orders of its components.
 """
 struct SumKernel{Dim} <: AbstractKernel{Dim}
     kernels::Vector{AbstractKernel}
@@ -129,8 +158,7 @@ function Base.show(io::IO, kernel::SumKernel{Dim}) where {Dim}
     return nothing
 end
 
-# TODO: Is that correct in general?
-order(kernel::SumKernel) = minimum(order.(kernel.kernels))
+order(kernel::SumKernel) = maximum(order.(kernel.kernels))
 smoothness(kernel::SumKernel) = minimum(smoothness.(kernel.kernels))
 
 Base.:+(k1::AbstractKernel, k2::AbstractKernel) = SumKernel{dim(k2)}([k1, k2])
