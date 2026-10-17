@@ -53,9 +53,9 @@ function NodeSet(nodes::Vector{<:StaticVector{Dim, RealT}}) where {Dim, RealT}
 end
 function NodeSet(nodes::AbstractVector{Vector{RealT}}) where {RealT}
     n = length(nodes)
-    @assert n > 0
+    n > 0 || throw(ArgumentError("At least one node is required."))
     ndims = length(nodes[1])
-    @assert ndims > 0
+    ndims > 0 || throw(ArgumentError("The nodes must have at least one dimension."))
     data = Vector{MVector{ndims, RealT}}(undef, n)
     for i in 1:n
         data[i] = MVector{ndims, RealT}(nodes[i])
@@ -67,7 +67,7 @@ function NodeSet(nodes::AbstractMatrix{RealT}) where {RealT}
     return NodeSet(MVector{d, RealT}.(eachrow(nodes)))
 end
 function NodeSet(nodes::AbstractVector{RealT}) where {RealT}
-    @assert length(nodes) > 0
+    isempty(nodes) && throw(ArgumentError("At least one node is required."))
     return NodeSet(MVector{1}.([[node] for node in nodes]))
 end
 NodeSet(nodeset::NodeSet) = nodeset
@@ -175,7 +175,7 @@ end
 Base.getindex(nodeset::NodeSet, i::Int) = nodeset.nodes[i]
 Base.getindex(nodeset::NodeSet, is::AbstractVector) = nodeset.nodes[is]
 function Base.getindex(nodeset::NodeSet, ::Colon, i::Int)
-    @assert dim(nodeset) >= i
+    1 <= i <= dim(nodeset) || throw(BoundsError(nodeset, (:, i)))
     x_i = Vector{eltype(nodeset)}(undef, length(nodeset))
     for (j, node) in enumerate(nodeset)
         x_i[j] = node[i]
@@ -195,7 +195,10 @@ function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::MVector{Dim, RealT},
 end
 function Base.setindex!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT},
                         i::Int) where {Dim, RealT}
-    @assert length(v) == dim(nodeset)
+    if length(v) != dim(nodeset)
+        throw(DimensionMismatch("The node must have the same length as the dimension " *
+                                "$(dim(nodeset)) of the nodeset, got length $(length(v))."))
+    end
     nodeset.nodes[i] = v
     # update separation distance of nodeset because it possibly changed
     # could be done more efficiently
@@ -215,7 +218,10 @@ function Base.push!(nodeset::NodeSet{Dim, RealT}, v::MVector{Dim, RealT}) where 
     return update_separation_distance!(nodeset)
 end
 function Base.push!(nodeset::NodeSet{Dim, RealT}, v::Vector{RealT}) where {Dim, RealT}
-    @assert length(v) == dim(nodeset)
+    if length(v) != dim(nodeset)
+        throw(DimensionMismatch("The node must have the same length as the dimension " *
+                                "$(dim(nodeset)) of the nodeset, got length $(length(v))."))
+    end
     push!(nodeset.nodes, v)
     # update separation distance of nodeset because it possibly changed
     # could be done more efficiently
@@ -308,6 +314,16 @@ function float_promote(args...)
     RealT = float(promote_type(map(promote_type_all, args)...))
     return convert_args(RealT, args)
 end
+
+# Check that the keyword argument `dim` matches the dimension `Dim` of the other arguments
+function check_dim(dim, Dim)
+    if dim != Dim
+        throw(DimensionMismatch("The keyword argument `dim = $dim` does not match the " *
+                                "dimension $Dim of the other arguments."))
+    end
+    return nothing
+end
+
 """
     random_hypercube([rng], n, x_min = ntuple(_ -> 0.0, dim), x_max = ntuple(_ -> 1.0, dim); [dim])
 
@@ -331,7 +347,7 @@ end
 function random_hypercube(rng::Random.AbstractRNG, n::Int, x_min::NTuple{Dim, Real},
                           x_max::NTuple{Dim, Real};
                           dim = Dim) where {Dim}
-    @assert dim == Dim
+    check_dim(dim, Dim)
     x_min, x_max = float_promote(x_min, x_max)
     nodes = rand(rng, eltype(x_min), n, dim)
     for i in 1:dim
@@ -377,7 +393,7 @@ end
 function random_hypercube_boundary(rng::Random.AbstractRNG, n::Int,
                                    x_min::NTuple{Dim, Real}, x_max::NTuple{Dim, Real};
                                    dim = Dim) where {Dim}
-    @assert dim == Dim
+    check_dim(dim, Dim)
     x_min, x_max = float_promote(x_min, x_max)
     if Dim == 1 && n >= 2
         @warn "For one dimension the boundary of the hypercube consists only of 2 points"
@@ -409,13 +425,13 @@ end
 
 function homogeneous_hypercube(n::NTuple{Dim}, x_min::Real, x_max::Real;
                                dim = Dim) where {Dim}
-    @assert Dim == dim
+    check_dim(dim, Dim)
     return homogeneous_hypercube(n, ntuple(_ -> x_min, Dim), ntuple(_ -> x_max, Dim))
 end
 
 function homogeneous_hypercube(n::Int, x_min::NTuple{Dim, Real}, x_max::NTuple{Dim, Real};
                                dim = Dim) where {Dim}
-    @assert Dim == dim
+    check_dim(dim, Dim)
     return homogeneous_hypercube(ntuple(_ -> n, Dim), x_min, x_max)
 end
 
@@ -423,7 +439,7 @@ function homogeneous_hypercube(n::NTuple{Dim, Int},
                                x_min::NTuple{Dim, Real} = ntuple(_ -> 0.0, Dim),
                                x_max::NTuple{Dim, Real} = ntuple(_ -> 1.0, Dim);
                                dim = Dim) where {Dim}
-    @assert Dim == dim
+    check_dim(dim, Dim)
     x_min, x_max = float_promote(x_min, x_max)
     RealT = eltype(x_min)
     nodes = Vector{MVector{Dim, RealT}}(undef, prod(n))
@@ -459,7 +475,7 @@ end
 
 function homogeneous_hypercube_boundary(n::NTuple{Dim}, x_min::Real, x_max::Real;
                                         dim = Dim) where {Dim}
-    @assert Dim == dim
+    check_dim(dim, Dim)
     return homogeneous_hypercube_boundary(n, ntuple(_ -> x_min, Dim),
                                           ntuple(_ -> x_max, Dim))
 end
@@ -467,7 +483,7 @@ end
 function homogeneous_hypercube_boundary(n::Int, x_min::NTuple{Dim, Real},
                                         x_max::NTuple{Dim, Real};
                                         dim = Dim) where {Dim}
-    @assert Dim == dim
+    check_dim(dim, Dim)
     return homogeneous_hypercube_boundary(ntuple(_ -> n, Dim), x_min, x_max)
 end
 
@@ -494,7 +510,7 @@ function homogeneous_hypercube_boundary(n::NTuple{Dim},
         #         @warn "For one dimension the boundary of the hypercube consists only of 2 points"
         return NodeSet([x_min[1], x_max[1]])
     end
-    @assert Dim == dim
+    check_dim(dim, Dim)
     nodes = Vector{MVector{Dim, RealT}}(undef, number_of_nodes(n, Dim))
     local i = 1
     # Left side is like homogeneous hypercube in `dim - 1` hypercube
@@ -551,7 +567,7 @@ end
 
 function random_hypersphere(rng::Random.AbstractRNG, n, r::Real,
                             center::NTuple{Dim, Real}; dim = Dim) where {Dim}
-    @assert Dim == dim
+    check_dim(dim, Dim)
     r, center = float_promote(r, center)
     RealT = typeof(r)
     nodes = randn(rng, RealT, n, dim)
@@ -587,7 +603,7 @@ end
 function random_hypersphere_boundary(rng::Random.AbstractRNG, n, r::Real,
                                      center::NTuple{Dim, Real};
                                      dim = Dim) where {Dim}
-    @assert Dim == dim
+    check_dim(dim, Dim)
     r, center = float_promote(r, center)
     if Dim == 1 && n >= 2
         @warn "For one dimension the boundary of the hypersphere consists only of 2 points"

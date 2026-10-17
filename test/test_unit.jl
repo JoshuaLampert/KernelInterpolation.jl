@@ -2210,3 +2210,67 @@ end
                         solve_shape(2.0 - h, make_basis)(x)) / (2 * h), rtol = 1e-4)
     end
 end
+
+@testitem "Argument checks" setup=[Setup, AdditionalImports] begin
+    # Invalid kernel parameters throw an `ArgumentError`, also if the inner constructor with all
+    # type parameters is called directly
+    @test_throws ArgumentError WendlandKernel{2}(4)
+    @test_throws ArgumentError WendlandKernel{2}(1; d = 3)
+    @test_throws ArgumentError WendlandKernel{2, Float64}(4, 1.0, 2)
+    @test_throws ArgumentError WuKernel{2}(1, 2)
+    @test_throws ArgumentError WuKernel{2}(4, 0)
+    @test_throws ArgumentError WuKernel{2, Float64}(1, 2, 1.0)
+    @test_throws ArgumentError RieszKernel{2}(0.0)
+    @test_throws ArgumentError RieszKernel{2}(2.0)
+    @test_throws ArgumentError RieszKernel{2, Float64}(2.5, 1.0)
+    @test_throws ArgumentError MultiquadricKernel{2, Float64}(1.0, 1.0)
+    @test_throws ArgumentError MultiquadricKernel{2, Float64}(-0.5, 1.0)
+    @test_throws ArgumentError RadialCharacteristicKernel{3, Float64}(1.0, 1.0)
+    @test_nowarn MultiquadricKernel{2, Float64}(0.5, 1.0)
+
+    # Evaluating kernels at points of different lengths throws a `DimensionMismatch`
+    kernel = GaussKernel{2}()
+    @test_throws DimensionMismatch kernel([1.0, 2.0], [1.0])
+    @test_throws DimensionMismatch kernel(1.0, [1.0, 2.0])
+    @test_throws DimensionMismatch kernel([1.0, 2.0], 1.0)
+    @test_throws DimensionMismatch (kernel + kernel)([1.0, 2.0], [1.0])
+    @test_throws DimensionMismatch (kernel * kernel)([1.0, 2.0], [1.0])
+    trafo_kernel = TransformationKernel{2}(kernel, x -> x)
+    @test_throws DimensionMismatch trafo_kernel([1.0, 2.0], [1.0])
+    @test_throws DimensionMismatch Laplacian()(kernel, [1.0, 2.0], [1.0])
+    @test_throws DimensionMismatch Laplacian()(kernel, [1.0, 2.0, 3.0], [1.0, 2.0, 3.0])
+    @test_throws DimensionMismatch SumKernel{2}([kernel, GaussKernel{3}()])
+    @test_throws DimensionMismatch ProductKernel{2}([kernel, GaussKernel{3}()])
+
+    # NodeSets
+    @test_throws ArgumentError NodeSet(Vector{Float64}[])
+    @test_throws ArgumentError NodeSet(Float64[])
+    nodeset = homogeneous_hypercube(3; dim = 2)
+    @test_throws BoundsError nodeset[:, 3]
+    @test_throws BoundsError nodeset[:, 0]
+    @test_throws DimensionMismatch nodeset[1]=[1.0, 2.0, 3.0]
+    @test_throws DimensionMismatch push!(homogeneous_hypercube(3; dim = 2), [1.0, 2.0, 3.0])
+    @test_throws DimensionMismatch homogeneous_hypercube(3, (0.0, 0.0), (1.0, 1.0); dim = 3)
+    @test_throws DimensionMismatch homogeneous_hypercube((3, 3), 0.0, 1.0; dim = 3)
+    @test_throws DimensionMismatch homogeneous_hypercube_boundary(3, (0.0, 0.0), (1.0, 1.0);
+                                                                  dim = 3)
+    @test_throws DimensionMismatch random_hypercube(3, (0.0, 0.0), (1.0, 1.0); dim = 3)
+    @test_throws DimensionMismatch random_hypercube_boundary(3, (0.0, 0.0), (1.0, 1.0);
+                                                             dim = 3)
+    @test_throws DimensionMismatch random_hypersphere(3, 1.0, (0.0, 0.0); dim = 3)
+    @test_throws DimensionMismatch random_hypersphere_boundary(3, 1.0, (0.0, 0.0); dim = 3)
+    @test_throws ArgumentError vtk_save("nodeset_4d", homogeneous_hypercube(2; dim = 4))
+
+    # Interpolation
+    values = ones(length(nodeset))
+    @test_throws DimensionMismatch interpolate(nodeset, ones(length(nodeset) + 1), kernel)
+    @test_throws DimensionMismatch interpolate(StandardBasis(nodeset, kernel), values,
+                                               homogeneous_hypercube(2; dim = 3))
+    itp = interpolate(nodeset, values, kernel)
+    @test_throws DimensionMismatch itp(0.5)
+    itp_other = interpolate(nodeset, values, GaussKernel{2}(shape_parameter = 2.0))
+    @test_throws ArgumentError KernelInterpolation.kernel_inner_product(itp, itp_other)
+    @test_throws DimensionMismatch multiscale_interpolate([nodeset, nodeset], [values],
+                                                          [kernel, kernel])
+    @test_throws DimensionMismatch multiscale_interpolate([nodeset], [ones(2)], [kernel])
+end

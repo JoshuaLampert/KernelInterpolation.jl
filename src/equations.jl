@@ -5,8 +5,17 @@ const DifferentialOperatorOrEquation = Union{AbstractDifferentialOperator, Abstr
 # The methods along the call chain from here down to the operators applied to a `CallableKernel`
 # are inlined. Together with `difference`, this avoids allocations without making the evaluation
 # slower in higher dimensions, cf. the evaluation of a `RadialSymmetricKernel`.
+# The error is thrown in a separate function, such that building the error message does not
+# prevent inlining.
+@noinline function throw_dimension_mismatch(kernel, x, y)
+    throw(DimensionMismatch("x and y must have the same length as the dimension $(dim(kernel)) " *
+                            "of the kernel, got lengths $(length(x)) and $(length(y))."))
+end
+
 @inline function (op::DifferentialOperatorOrEquation)(kernel::RadialSymmetricKernel, x, y)
-    @assert length(x) == length(y) == dim(kernel)
+    if !(length(x) == length(y) == dim(kernel))
+        throw_dimension_mismatch(kernel, x, y)
+    end
     return op(kernel, difference(x, y))
 end
 
