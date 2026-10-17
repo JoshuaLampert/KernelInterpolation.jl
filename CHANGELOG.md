@@ -28,8 +28,25 @@ for human readability.
   throws a `DomainError` if the squared native space norm is then negative beyond the level of
   round-off errors, instead of silently returning `0` ([#220]).
 
+- `RieszKernel` now uses its `shape_parameter`, i.e., `phi(r) = -(shape_parameter * r)^beta` as
+  documented, instead of ignoring it. Interpolants do not change, since the kernel is only scaled
+  ([#221]).
+- The order of a `SumKernel` is the maximum instead of the minimum of the orders of its
+  components, since a sum of conditionally positive definite kernels is in general only
+  conditionally positive definite of the largest order. Hence, interpolations with such a kernel
+  are augmented by polynomials of higher order ([#221]).
+- `ProductKernel` throws an `ArgumentError` if one of its components is not positive definite
+  (i.e., has an order larger than 0), since the product of conditionally positive definite
+  kernels is in general not conditionally positive definite ([#221]).
+- `RadialCharacteristicKernel` throws an `ArgumentError` for `beta < (Dim + 1) / 2`, where it is
+  not guaranteed to be positive definite. Before, its `order` returned `Inf` in this case, and
+  `interpolate` failed with an `InexactError` ([#221]).
+
 #### Fixed
 
+- `RadialCharacteristicKernel` was treated as not positive definite for `beta = (Dim + 1) / 2`,
+  e.g., for the default `beta = 2` in three dimensions, although it is positive definite there
+  ([#221]).
 - `kernel_norm` and `kernel_inner_product` returned wrong values for interpolations in the
   `LagrangeBasis`, since they used the coefficients with respect to the cardinal functions as
   kernel coefficients. They now compute the native space (semi-)norm and inner product, which
