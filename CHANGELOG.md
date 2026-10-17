@@ -18,8 +18,11 @@ for human readability.
   now returns the native space semi-norm for these kernels instead of `0`, and interpolants with
   an `L2Regularization` change, since the regularization only acts as intended with the sign
   ([#220]).
-- `kernel_norm` throws a `DomainError` if the squared native space norm is negative beyond the
-  level of round-off errors instead of silently returning `0` ([#220]).
+- `kernel_norm` projects the kernel coefficients onto the vectors satisfying the moment
+  conditions of the polynomials (which hold for interpolations up to round-off errors and for
+  least squares approximations only approximately) and throws a `DomainError` if the squared
+  native space norm is then negative beyond the level of round-off errors, instead of silently
+  returning `0` ([#220]).
 
 #### Removed
 
