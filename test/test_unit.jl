@@ -215,7 +215,14 @@ end
     @test (kernel1 * kernel3 * kernel1).kernels == (kernel1, kernel3, kernel1)
     @test (@inferred (kernel1 + kernel4 + kernel2)(x, y)) isa Float64
     @test (@inferred (kernel1 * kernel3 * kernel1)(x, y)) isa Float64
-    @test (@inferred ((kernel1 + kernel3) * kernel3 + kernel2)(x, y)) isa Float64
+    # A sum of products of sums calls the evaluation of the sum recursively. Julia v1.10 cannot
+    # infer this for all component types (e.g., not with the `InverseMultiquadricKernel`), such
+    # that the evaluation is correct, but not type-stable there.
+    if VERSION >= v"1.11"
+        @test (@inferred ((kernel1 + kernel3) * kernel3 + kernel2)(x, y)) isa Float64
+    end
+    @test isapprox(((kernel1 + kernel3) * kernel3 + kernel2)(x, y),
+                   (kernel1(x, y) + kernel3(x, y)) * kernel3(x, y) + kernel2(x, y))
 
     # Test evaluating 1D kernels at a scalar
     kernel13 = @test_nowarn GaussKernel{1}(shape_parameter = 2.0)
