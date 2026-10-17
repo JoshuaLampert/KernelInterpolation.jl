@@ -202,6 +202,14 @@ end
     @test order(kernel1 + kernel4 + kernel2) == 2
     @test isapprox(kernel12(x, y), kernel1(x, y) + kernel2(x, y))
     @test isapprox((kernel1 + kernel2)(x, y), kernel1(x, y) + kernel2(x, y))
+    # The component kernels are stored in a tuple, such that the evaluation is type-stable
+    @test kernel11.kernels isa Tuple
+    @test kernel12.kernels isa Tuple
+    @test ProductKernel{2}((kernel1, kernel3)) == kernel11
+    @test SumKernel{2}((kernel1, kernel2)) == kernel12
+    @test (@inferred kernel11(x, y)) isa Float64
+    @test (@inferred kernel12(x, y)) isa Float64
+    @test (@inferred (kernel1 + kernel4 + kernel2)(x, y)) isa Float64
 
     # Test evaluating 1D kernels at a scalar
     kernel13 = @test_nowarn GaussKernel{1}(shape_parameter = 2.0)

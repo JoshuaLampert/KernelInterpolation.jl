@@ -46,14 +46,15 @@ smoothness(kernel::TransformationKernel) = smoothness(kernel.kernel)
 @doc raw"""
     ProductKernel{Dim}(kernels)
 
-Given a vector of `kernels`, construct a new kernel that multiplies the
+Given a tuple or vector of `kernels`, construct a new kernel that multiplies the
 results of the component kernels, i.e., the new kernel ``K`` is given by
 ```math
     K(x, y) = \prod_{i = 1}^n K_i(x, y),
 ```
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
 Note that all component kernels need to have the same [`dim`](@ref).
-A `ProductKernel` can also be constructed using the `*` operator.
+A `ProductKernel` can also be constructed using the `*` operator. The component kernels are
+stored in a `Tuple`, such that evaluating the kernel is type-stable.
 
 All component kernels have to be positive definite, i.e., of [`order`](@ref) 0, and an
 `ArgumentError` is thrown otherwise. The product of positive definite kernels is positive definite
@@ -68,27 +69,25 @@ product of ``\Phi(x) = -\Vert x\Vert`` (order 1) with itself is ``\Vert x\Vert^2
   Cambridge University Press
   [DOI: 10.1017/CBO9780511617539](https://doi.org/10.1017/CBO9780511617539)
 """
-struct ProductKernel{Dim} <: AbstractKernel{Dim}
-    kernels::Vector{AbstractKernel}
+struct ProductKernel{Dim, Kernels <: Tuple} <: AbstractKernel{Dim}
+    kernels::Kernels
 
     function ProductKernel{Dim}(kernels) where {Dim}
+        kernels = Tuple(kernels)
         @assert all(dim.(kernels) .== Dim)
         if any(k -> order(k) > 0, kernels)
             throw(ArgumentError("All component kernels of a `ProductKernel` have to be " *
                                 "positive definite, i.e., of order 0, got the orders " *
                                 "$(order.(kernels))."))
         end
-        return new(kernels)
+        return new{Dim, typeof(kernels)}(kernels)
     end
 end
 
 function (kernel::ProductKernel)(x::AbstractVector, y::AbstractVector)
     @assert length(x) == length(y)
-    res = eltype(x)(1.0)
-    for k in kernel.kernels
-        res *= k(x, y)
-    end
-    return res
+    # `map` over the tuple is unrolled by the compiler, such that this is type-stable
+    return prod(map(k -> k(x, y), kernel.kernels))
 end
 
 function Base.show(io::IO, kernel::ProductKernel{Dim}) where {Dim}
@@ -106,43 +105,42 @@ end
 
 # All component kernels are positive definite, see the constructor
 order(::ProductKernel) = 0
-smoothness(kernel::ProductKernel) = minimum(smoothness.(kernel.kernels))
+smoothness(kernel::ProductKernel) = minimum(smoothness, kernel.kernels)
 
-Base.:*(k1::AbstractKernel, k2::AbstractKernel) = ProductKernel{dim(k1)}([k1, k2])
+Base.:*(k1::AbstractKernel, k2::AbstractKernel) = ProductKernel{dim(k1)}((k1, k2))
 
 @doc raw"""
     SumKernel{Dim}(kernels)
 
-Given a vector of `kernels`, construct a new kernel that sums the
+Given a tuple or vector of `kernels`, construct a new kernel that sums the
 results of the component kernels, i.e., the new kernel ``K`` is given by
 ```math
     K(x, y) = \sum_{i = 1}^n K_i(x, y),
 ```
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
 Note that all component kernels need to have the same [`dim`](@ref).
-A `SumKernel` can also be constructed using the `+` operator.
+A `SumKernel` can also be constructed using the `+` operator. The component kernels are stored
+in a `Tuple`, such that evaluating the kernel is type-stable.
 
 If the component kernels are conditionally positive definite of orders ``m_i``, the sum is
 conditionally positive definite of order ``\max_i m_i``, since every conditionally positive
 definite kernel of order ``m`` is also conditionally positive definite of every order larger than
 ``m``. Hence, the [`order`](@ref) of a `SumKernel` is the maximum of the orders of its components.
 """
-struct SumKernel{Dim} <: AbstractKernel{Dim}
-    kernels::Vector{AbstractKernel}
+struct SumKernel{Dim, Kernels <: Tuple} <: AbstractKernel{Dim}
+    kernels::Kernels
 
     function SumKernel{Dim}(kernels) where {Dim}
+        kernels = Tuple(kernels)
         @assert all(dim.(kernels) .== Dim)
-        return new(kernels)
+        return new{Dim, typeof(kernels)}(kernels)
     end
 end
 
 function (kernel::SumKernel)(x::AbstractVector, y::AbstractVector)
     @assert length(x) == length(y)
-    res = zero(eltype(x))
-    for k in kernel.kernels
-        res += k(x, y)
-    end
-    return res
+    # `map` over the tuple is unrolled by the compiler, such that this is type-stable
+    return sum(map(k -> k(x, y), kernel.kernels))
 end
 
 function Base.show(io::IO, kernel::SumKernel{Dim}) where {Dim}
@@ -158,7 +156,7 @@ function Base.show(io::IO, kernel::SumKernel{Dim}) where {Dim}
     return nothing
 end
 
-order(kernel::SumKernel) = maximum(order.(kernel.kernels))
-smoothness(kernel::SumKernel) = minimum(smoothness.(kernel.kernels))
+order(kernel::SumKernel) = maximum(order, kernel.kernels)
+smoothness(kernel::SumKernel) = minimum(smoothness, kernel.kernels)
 
-Base.:+(k1::AbstractKernel, k2::AbstractKernel) = SumKernel{dim(k2)}([k1, k2])
+Base.:+(k1::AbstractKernel, k2::AbstractKernel) = SumKernel{dim(k2)}((k1, k2))
