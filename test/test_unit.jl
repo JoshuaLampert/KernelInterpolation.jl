@@ -202,6 +202,27 @@ end
     @test order(kernel1 + kernel4 + kernel2) == 2
     @test isapprox(kernel12(x, y), kernel1(x, y) + kernel2(x, y))
     @test isapprox((kernel1 + kernel2)(x, y), kernel1(x, y) + kernel2(x, y))
+    # The component kernels are stored in a tuple, such that the evaluation is type-stable
+    @test kernel11.kernels isa Tuple
+    @test kernel12.kernels isa Tuple
+    @test ProductKernel{2}((kernel1, kernel3)) == kernel11
+    @test SumKernel{2}((kernel1, kernel2)) == kernel12
+    @test (@inferred kernel11(x, y)) isa Float64
+    @test (@inferred kernel12(x, y)) isa Float64
+    # Nested sums and products are flattened
+    @test (kernel1 + kernel4 + kernel2).kernels == (kernel1, kernel4, kernel2)
+    @test SumKernel{2}([kernel12, kernel4]).kernels == (kernel1, kernel2, kernel4)
+    @test (kernel1 * kernel3 * kernel1).kernels == (kernel1, kernel3, kernel1)
+    @test (@inferred (kernel1 + kernel4 + kernel2)(x, y)) isa Float64
+    @test (@inferred (kernel1 * kernel3 * kernel1)(x, y)) isa Float64
+    # A sum of products of sums calls the evaluation of the sum recursively. Julia v1.10 cannot
+    # infer this for all component types (e.g., not with the `InverseMultiquadricKernel`), such
+    # that the evaluation is correct, but not type-stable there.
+    if VERSION >= v"1.11"
+        @test (@inferred ((kernel1 + kernel3) * kernel3 + kernel2)(x, y)) isa Float64
+    end
+    @test isapprox(((kernel1 + kernel3) * kernel3 + kernel2)(x, y),
+                   (kernel1(x, y) + kernel3(x, y)) * kernel3(x, y) + kernel2(x, y))
 
     # Test evaluating 1D kernels at a scalar
     kernel13 = @test_nowarn GaussKernel{1}(shape_parameter = 2.0)
