@@ -18,6 +18,10 @@ for human readability.
   now returns the native space semi-norm for these kernels instead of `0`, and interpolants with
   an `L2Regularization` change, since the regularization only acts as intended with the sign
   ([#220]).
+- `MultiquadricKernel` throws an `ArgumentError` for `beta <= 0` (use `InverseMultiquadricKernel`
+  with `-beta` for negative `beta`) and for integer `beta` (the kernel is then a polynomial and
+  not conditionally positive definite). `PolyharmonicSplineKernel` throws an `ArgumentError` for
+  `k < 1` ([#220]).
 - `kernel_norm` projects the kernel coefficients onto the vectors satisfying the moment
   conditions of the polynomials (which hold for interpolations up to round-off errors and for
   least squares approximations only approximately) and throws a `DomainError` if the squared

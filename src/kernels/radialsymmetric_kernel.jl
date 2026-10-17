@@ -63,7 +63,7 @@ function order end
 # positive for all coefficient vectors that are orthogonal to the polynomials of order `m`. This
 # is needed, e.g., for the native space (semi-)norm and for regularization, but not for plain
 # interpolation, which gives the same interpolant for both signs.
-with_cpd_sign(kernel, value) = isodd(max(order(kernel), 0)) ? -value : value
+with_cpd_sign(kernel, value) = isodd(order(kernel)) ? -value : value
 
 @doc raw"""
     smoothness(kernel)
@@ -134,6 +134,8 @@ Multiquadric kernel function with
 ```
 where ``\varepsilon`` is the shape parameter and ``\beta > 0``, ``\beta\notin\mathbb{N}``. The
 multiquadric kernel is conditionally positive definite of order ``m = \lceil\beta \rceil``.
+For ``\beta < 0``, use [`InverseMultiquadricKernel`](@ref) with ``-\beta``. For ``\beta\in\mathbb{N}``,
+the kernel is a polynomial, which is not conditionally positive definite.
 See Wendland (2004), Corollary 8.18, p. 113, and Fasshauer (2007), Section 8.1, p. 67.
 
 The multiquadric kernel is often written without the sign ``(-1)^{\lceil\beta\rceil}``. This
@@ -158,6 +160,16 @@ struct MultiquadricKernel{Dim, RealT} <: RadialSymmetricKernel{Dim}
 end
 
 function MultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where {Dim}
+    # The checks are on the primal value to support dual numbers
+    if primal_value(beta) <= 0
+        throw(ArgumentError("beta has to be positive, got beta = $beta. For negative beta, use " *
+                            "`InverseMultiquadricKernel` with -beta."))
+    end
+    if isinteger(primal_value(beta))
+        throw(ArgumentError("beta must not be an integer, got beta = $beta, since the kernel " *
+                            "is then a polynomial, which is not conditionally positive " *
+                            "definite."))
+    end
     return MultiquadricKernel{Dim, float(typeof(shape_parameter))}(beta, shape_parameter)
 end
 
@@ -223,8 +235,9 @@ Polyharmonic spline kernel function with
         (-1)^{k/2 + 1} r^k\log(r), &\text{ if } k \text{ even}
     \end{cases}.
 ```
-The polyharmonic spline is conditionally positive definite of order ``m = \lceil k/2\rceil``
-for odd `k` and order ``m = k/2 + 1`` for even `k`, i.e., the sign is ``(-1)^m`` in both cases.
+Here, ``k\in\mathbb{N}``, i.e., ``k\ge 1``. The polyharmonic spline is conditionally positive
+definite of order ``m = \lceil k/2\rceil`` for odd `k` and order ``m = k/2 + 1`` for even `k`,
+i.e., the sign is ``(-1)^m`` in both cases.
 See Wendland (2004), Corollary 8.18, p. 113, and Fasshauer (2007), Sections 8.2 and 8.3,
 pp. 69--70.
 
@@ -247,6 +260,11 @@ See also [`RadialSymmetricKernel`](@ref).
 """
 struct PolyharmonicSplineKernel{Dim} <: RadialSymmetricKernel{Dim}
     k::Int
+
+    function PolyharmonicSplineKernel{Dim}(k) where {Dim}
+        k >= 1 || throw(ArgumentError("k has to be a positive integer, got k = $k."))
+        return new{Dim}(k)
+    end
 end
 
 function get_name(kernel::PolyharmonicSplineKernel)

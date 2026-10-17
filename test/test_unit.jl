@@ -240,6 +240,13 @@ end
     @test isapprox(phi(PolyharmonicSplineKernel{2}(4), 0.5), -0.5^4 * log(0.5))
     @test isapprox(phi(PolyharmonicSplineKernel{2}(5), 0.5), -0.5^5)
     @test isapprox(phi(MultiquadricKernel{2}(1.5), 0.5), 1.25^1.5)
+    # Parameters for which the kernels are not conditionally positive definite are rejected
+    @test_throws ArgumentError MultiquadricKernel{2}(0.0)
+    @test_throws ArgumentError MultiquadricKernel{2}(-0.5)
+    @test_throws ArgumentError MultiquadricKernel{2}(1)
+    @test_throws ArgumentError MultiquadricKernel{2}(2.0)
+    @test_throws ArgumentError PolyharmonicSplineKernel{2}(0)
+    @test_throws ArgumentError PolyharmonicSplineKernel{2}(-1)
     # With the sign, the quadratic form of the kernel matrix is positive for all coefficient
     # vectors orthogonal to the polynomials of order m (which is the definition)
     nodeset_cpd = homogeneous_hypercube(5; dim = 2)
