@@ -2260,6 +2260,9 @@ end
     @test_throws DimensionMismatch random_hypersphere(3, 1.0, (0.0, 0.0); dim = 3)
     @test_throws DimensionMismatch random_hypersphere_boundary(3, 1.0, (0.0, 0.0); dim = 3)
     @test_throws ArgumentError vtk_save("nodeset_4d", homogeneous_hypercube(2; dim = 4))
+    @test_throws ArgumentError KernelInterpolation.add_to_pvd("nodeset_4d", nothing, 0.0,
+                                                              homogeneous_hypercube(2;
+                                                                                    dim = 4))
 
     # Interpolation
     values = ones(length(nodeset))
@@ -2273,4 +2276,17 @@ end
     @test_throws DimensionMismatch multiscale_interpolate([nodeset, nodeset], [values],
                                                           [kernel, kernel])
     @test_throws DimensionMismatch multiscale_interpolate([nodeset], [ones(2)], [kernel])
+    itp_rbffd = interpolate(RBFFDBasis(nodeset, kernel, KNearestNeighbors(4)), values)
+    @test_throws DimensionMismatch itp_rbffd(0.5)
+    @test_throws DimensionMismatch itp_rbffd(0.5, 1)
+
+    # Semidiscretization with a basis with a different number of functions than nodes
+    f_heat(t, x, equations) = 0.0
+    g_heat(t, x) = 0.0
+    u_heat(t, x, equations) = 0.0
+    nodeset_inner = homogeneous_hypercube(3, 0.2, 0.8; dim = 2)
+    nodeset_boundary = homogeneous_hypercube_boundary(3; dim = 2)
+    sd = SpatialDiscretization(HeatEquation(1.0, f_heat), nodeset_inner, g_heat,
+                               nodeset_boundary, StandardBasis(nodeset_inner, kernel))
+    @test_throws DimensionMismatch Semidiscretization(sd, u_heat)
 end
