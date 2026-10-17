@@ -248,12 +248,18 @@ end
     @test_throws ArgumentError PolyharmonicSplineKernel{2}(0)
     @test_throws ArgumentError PolyharmonicSplineKernel{2}(-1)
     # With the sign, the quadratic form of the kernel matrix is positive for all coefficient
-    # vectors orthogonal to the polynomials of order m (which is the definition)
+    # vectors orthogonal to the polynomials of order m (which is the definition). This is
+    # checked for all radial-symmetric kernels, such that a kernel with the wrong sign fails.
     nodeset_cpd = homogeneous_hypercube(5; dim = 2)
-    for kernel in (MultiquadricKernel{2}(), MultiquadricKernel{2}(1.5),
-                   PolyharmonicSplineKernel{2}(1), ThinPlateSplineKernel{2}(),
-                   PolyharmonicSplineKernel{2}(3), PolyharmonicSplineKernel{2}(4),
-                   PolyharmonicSplineKernel{2}(5), RieszKernel{2}(1.5))
+    for kernel in (GaussKernel{2}(), MultiquadricKernel{2}(), MultiquadricKernel{2}(1.5),
+                   InverseMultiquadricKernel{2}(), PolyharmonicSplineKernel{2}(1),
+                   ThinPlateSplineKernel{2}(), PolyharmonicSplineKernel{2}(3),
+                   PolyharmonicSplineKernel{2}(4), PolyharmonicSplineKernel{2}(5),
+                   WendlandKernel{2}(0), WendlandKernel{2}(3), WuKernel{2}(1, 0),
+                   WuKernel{2}(3, 2), RadialCharacteristicKernel{2}(2.0),
+                   MaternKernel{2}(2.5), Matern12Kernel{2}(), Matern32Kernel{2}(),
+                   Matern52Kernel{2}(), Matern72Kernel{2}(), RieszKernel{2}(0.5),
+                   RieszKernel{2}(1.5))
         xx = polyvars(Val(2))
         ps = KernelInterpolation.monomials(xx, 0:(order(kernel) - 1))
         P = KernelInterpolation.polynomial_matrix(nodeset_cpd, ps)

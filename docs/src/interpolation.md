@@ -267,7 +267,10 @@ which applies a transformation to the input before evaluating the kernel.
 
 However, you can also define your own kernel. A radial-symmetric kernel is a subtype of [`KernelInterpolation.RadialSymmetricKernel`](@ref), which in
 turn is a subtype of [`KernelInterpolation.AbstractKernel`](@ref) and needs to implement the functions [`phi`](@ref) and [`order`](@ref).
-Optionally, it can implement [`smoothness`](@ref); the fallback is the conservative value ``0``, which means that derivatives of
+The function ``\phi`` has to be chosen such that the kernel is conditionally positive definite of order ``m`` given by [`order`](@ref). For
+conditionally positive definite kernels, this means that ``\phi`` is ``(-1)^m`` times the formula often found in the literature (see
+[^Wendland2004], Corollary 8.18), as for the polyharmonic splines above. If the sign is wrong, the interpolant is still the same, but
+[`kernel_norm`](@ref) throws an error and regularization does not act as intended. Optionally, it can implement [`smoothness`](@ref); the fallback is the conservative value ``0``, which means that derivatives of
 the kernel are refused exactly at its center. Let's define an exponential
 kernel with ``\phi(r) = \mathrm{e}^{-r^{1.5}}`` and use it for the interpolation problem above.
 

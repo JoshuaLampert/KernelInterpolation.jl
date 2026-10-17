@@ -25,7 +25,18 @@ abstract type RadialSymmetricKernel{Dim} <: AbstractKernel{Dim} end
 For a [`RadialSymmetricKernel`](@ref) `kernel` return value of the univariate function
 ``\phi`` defining the kernel.
 
+The function ``\phi`` has to be chosen such that the kernel is conditionally positive definite of
+order ``m`` = [`order(kernel)`](@ref order), i.e., positive definite if ``m = 0``. For conditionally
+positive definite kernels, this means that ``\phi`` is ``(-1)^m`` times the formula often found in
+the literature, which changes the sign for odd ``m``, e.g., for the [`MultiquadricKernel`](@ref)
+and the [`PolyharmonicSplineKernel`](@ref), see Wendland (2004), Corollary 8.18, p. 113.
+
 See also [`RadialSymmetricKernel`](@ref), [`Phi`](@ref).
+
+- Holger Wendland (2004)
+  Scattered Data Approximation
+  Cambridge University Press
+  [DOI: 10.1017/CBO9780511617539](https://doi.org/10.1017/CBO9780511617539)
 """
 function phi end
 
@@ -50,10 +61,14 @@ function (kernel::RadialSymmetricKernel)(x::AbstractVector, y::AbstractVector)
     return @inline Phi(kernel, difference(x, y))
 end
 
-"""
+@doc raw"""
     order(kernel)
 
-Return order of kernel.
+Return the order ``m`` of the kernel, for which the kernel is conditionally positive definite. A
+positive definite kernel has order ``0``. The order is the default order (i.e., degree plus one) of
+the polynomials augmenting an interpolation, see [`interpolate`](@ref). For a
+[`RadialSymmetricKernel`](@ref), the function [`phi`](@ref) has to be chosen such that the kernel
+is conditionally positive definite of this order, which determines the sign of ``\phi``.
 """
 function order end
 
@@ -767,6 +782,6 @@ function Base.show(io::IO, kernel::RieszKernel{Dim}) where {Dim}
     return nothing
 end
 
-phi(kernel::RieszKernel, r::Real) = -r^kernel.beta
+phi(kernel::RieszKernel, r::Real) = with_cpd_sign(kernel, r^kernel.beta)
 order(::RieszKernel) = 1
 smoothness(kernel::RieszKernel) = ceil(Int, kernel.beta) - 1
