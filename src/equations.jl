@@ -58,7 +58,7 @@ end
 @doc raw"""
     EllipticEquation(A, b, c, f)
 
-Libear second-order elliptic equation with matrix `A`, vector `b`, and scalar `c` and right-hand side `f`.
+Linear second-order elliptic equation with matrix `A`, vector `b`, and scalar `c` and right-hand side `f`.
 The elliptic equation is defined as
 ```math
     \mathcal{L}u = -\sum_{i,j = 1}^d a_{ij}(x)\partial_{x_i,x_j}^2u + \sum_{i = 1}^db_i(x)\partial_{x_i}u + c(x)u = f,

@@ -150,6 +150,14 @@ Base.iterate(nodeset::NodeSet, state = 1) = iterate(nodeset.nodes, state)
 Base.collect(nodeset::NodeSet) = collect(nodeset.nodes)
 Base.axes(nodeset::NodeSet) = axes(nodeset.nodes)
 Base.eachindex(nodeset::NodeSet) = eachindex(nodeset.nodes)
+"""
+    eachdim(nodeset::NodeSet)
+
+Return an iterator over the indices of the dimensions of the nodes in `nodeset`, i.e.,
+`1:dim(nodeset)`.
+
+See also [`dim`](@ref).
+"""
 eachdim(nodeset::NodeSet) = Base.OneTo(dim(nodeset))
 Base.isassigned(nodeset::NodeSet, i::Int) = isassigned(nodeset.nodes, i)
 function Base.similar(nodeset::NodeSet{Dim, RealT}) where {Dim, RealT}

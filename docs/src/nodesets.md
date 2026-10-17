@@ -63,8 +63,10 @@ h = fill_distance(nodes, nodes_fine)
 ```
 
 Note that this is only an estimate. The true fill distance is ``\sqrt{2}/2\approx 0.707`` (and reached by placing ``x\in\Omega`` at
-``(0.5, 0.5)^T``). The estimate can be improved by taking a finer evaluation grid. Internally, [`fill_distance`](@ref) uses
-[`distance_matrix`](@ref) to compute the nearest-node distance for each reference point and returns the maximum.
+``(0.5, 0.5)^T``). The estimate can be improved by taking a finer evaluation grid. Internally, [`fill_distance`](@ref) finds the
+nearest node of each reference point with a k-d tree (from [NearestNeighbors.jl](https://github.com/KristofferC/NearestNeighbors.jl))
+and returns the maximum of these distances. This gives the same value as taking the minimum of each row of
+`distance_matrix(nodes_fine, nodes)` and then the maximum, but without computing the full distance matrix.
 
 Next to [`homogeneous_hypercube`](@ref), KernelInterpolation.jl provides additional convenience functions to create specific commonly
 used [`NodeSet`](@ref)s. These are [`homogeneous_hypercube_boundary`](@ref) to create equally spaced nodes at the boundary of a hypercube,

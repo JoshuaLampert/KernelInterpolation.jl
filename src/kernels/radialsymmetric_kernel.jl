@@ -145,8 +145,8 @@ function MultiquadricKernel{Dim}(beta = 0.5; shape_parameter = 1.0) where {Dim}
 end
 
 function Base.show(io::IO, kernel::MultiquadricKernel{Dim}) where {Dim}
-    print(io, "MultiquadricKernel{", Dim, "}(shape_parameter = ", kernel.shape_parameter,
-          ")")
+    print(io, "MultiquadricKernel{", Dim, "}(beta = ", kernel.beta, ", shape_parameter = ",
+          kernel.shape_parameter, ")")
     return nothing
 end
 
@@ -653,7 +653,7 @@ smoothness(::Matern52Kernel) = 4
 
 Matern kernel with ``\nu = 7/2``, i.e.,
 ```math
-    \phi(r) =  (1 + \sqrt{7}\varepsilon r + 12\cdot(\varepsilon r)^2/5 + 7\cdot(\varepsilon r)^3/15)\exp(-\sqrt{7}\varepsilon r),
+    \phi(r) =  (1 + \sqrt{7}\varepsilon r + 14\cdot(\varepsilon r)^2/5 + 7\sqrt{7}\cdot(\varepsilon r)^3/15)\exp(-\sqrt{7}\varepsilon r),
 ```
 where ``\varepsilon`` is the shape parameter. The Matern kernel is positive definite.
 
