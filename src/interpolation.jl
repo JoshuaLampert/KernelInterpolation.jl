@@ -477,24 +477,17 @@ See also [`kernel_norm`](@ref).
 function kernel_inner_product(itp1::Interpolation, itp2::Interpolation)
     kernel = interpolation_kernel(itp1)
     @assert kernel == interpolation_kernel(itp2)
-    s, _ = kernel_inner_product_and_scale(kernel, kernel_coefficients(itp1), centers(itp1),
-                                          kernel_coefficients(itp2), centers(itp2))
-    return s
-end
-
-# The inner product and the sum of the absolute values of its terms, which is the scale for the
-# round-off errors in the inner product.
-function kernel_inner_product_and_scale(kernel, c_f, xs, c_g, xis)
+    c_f = kernel_coefficients(itp1)
+    c_g = kernel_coefficients(itp2)
+    xs = centers(itp1)
+    xis = centers(itp2)
     s = zero(promote_type(eltype(c_f), eltype(c_g), eltype(xs)))
-    scale = abs(s)
     for i in eachindex(c_f)
         for j in eachindex(c_g)
-            term = c_f[i] * c_g[j] * kernel(xs[i], xis[j])
-            s += term
-            scale += abs(term)
+            s += c_f[i] * c_g[j] * kernel(xs[i], xis[j])
         end
     end
-    return s, scale
+    return s
 end
 
 @doc raw"""
@@ -522,6 +515,7 @@ sign ``(-1)^m`` (see [`MultiquadricKernel`](@ref)).
 See also [`kernel_inner_product`](@ref).
 """
 function kernel_norm(itp::Interpolation)
+    kernel = interpolation_kernel(itp)
     c = kernel_coefficients(itp)
     xs = centers(itp)
     ps = polynomial_basis(itp)
@@ -530,11 +524,25 @@ function kernel_norm(itp::Interpolation)
     # Interpolations satisfy this only up to round-off errors and least squares approximations
     # only approximately, so `c` is projected onto the null space of `P'` (`P \ c` is the least
     # squares solution, such that `c - P * (P \ c)` is orthogonal to the range of `P`).
-    if !isempty(ps)
+    if isempty(ps)
+        c_projected = c
+    else
         P = polynomial_matrix(xs, ps)
-        c = c - P * (P \ c)
+        c_projected = c - P * (P \ c)
     end
-    s, scale = kernel_inner_product_and_scale(interpolation_kernel(itp), c, xs, c, xs)
+    # The round-off errors of the projection are of the order of `eps` times the original
+    # coefficients `c`. Hence, the scale for the round-off errors in the quadratic form is
+    # computed with `c` and not with `c_projected`, which can itself be round-off noise (e.g.,
+    # if the exact coefficients vanish).
+    s = zero(promote_type(eltype(c_projected), eltype(xs)))
+    scale = abs(zero(promote_type(eltype(c), eltype(xs))))
+    for i in eachindex(c)
+        for j in eachindex(c)
+            K_ij = kernel(xs[i], xs[j])
+            s += c_projected[i] * c_projected[j] * K_ij
+            scale += abs(c[i] * c[j] * K_ij)
+        end
+    end
     # The comparison is on the primal values, such that dual numbers are also supported.
     s_value, scale_value = primal_value(s), primal_value(scale)
     if s_value < -sqrt(eps(float(typeof(scale_value)))) * scale_value

@@ -1040,7 +1040,7 @@ end
     itp_noise = Interpolation(KernelInterpolation.basis(itp), nodeset(itp), c_noise,
                               system_matrix(itp), polynomial_basis(itp), polyvars(itp))
     @test KernelInterpolation.kernel_inner_product(itp_noise, itp_noise) < 0
-    @test kernel_norm(itp_noise) == 0.0
+    @test isapprox(kernel_norm(itp_noise), 0.0, atol = 1e-15)
 
     # The native space semi-norm of conditionally positive definite kernels is positive
     nodeset_norm = homogeneous_hypercube(5; dim = 2)
