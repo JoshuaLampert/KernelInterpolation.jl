@@ -450,6 +450,61 @@ function (diff_op_or_pde::DifferentialOperatorOrEquation)(itp::Interpolation)
     return x -> diff_op_or_pde(itp, x)
 end
 
+# Return the centers, the kernel coefficients, and the polynomials of the kernel part of an
+# interpolation, which is represented in the `StandardBasis`, i.e., as a linear combination of
+# `K(., x_j)` for the centers `x_j`.
+function standard_representation(itp::Interpolation{<:StandardBasis})
+    return centers(itp), kernel_coefficients(itp), polynomial_basis(itp)
+end
+
+# An interpolation in the `LagrangeBasis` is a linear combination of the cardinal functions,
+# which are interpolations in the `StandardBasis` with the same centers and polynomials. Hence,
+# its kernel coefficients are the linear combination of the kernel coefficients of the cardinal
+# functions. Polynomials of the interpolation itself do not contribute to the native space
+# (semi-)inner product.
+function standard_representation(itp::LagrangeInterpolation)
+    basis_functions = collect(basis(itp))
+    C = reduce(hcat, kernel_coefficients.(basis_functions))
+    return centers(itp), C * kernel_coefficients(itp),
+           polynomial_basis(first(basis_functions))
+end
+
+function standard_representation(itp::Interpolation)
+    throw(ArgumentError("The native space (semi-)inner product and norm are only " *
+                        "implemented for interpolations with a `StandardBasis` or a " *
+                        "`LagrangeBasis`, got a `$(nameof(typeof(basis(itp))))`."))
+end
+
+# For a conditionally positive definite kernel, the quadratic form is only nonnegative for
+# coefficients satisfying `P' * c = 0`, where `P` is the polynomial matrix at the centers.
+# Interpolations satisfy this only up to round-off errors and least squares approximations only
+# approximately, so `c` is projected onto the null space of `P'` (`P \ c` is the least squares
+# solution, such that `c - P * (P \ c)` is orthogonal to the range of `P`).
+function project_moment_conditions(xs, c, ps)
+    isempty(ps) && return collect(c)
+    P = polynomial_matrix(xs, ps)
+    return c - P * (P \ c)
+end
+
+# Return the double sum `sum_ij c_projected[i] * d_projected[j] * K(xs[i], xis[j])` and the sum
+# of the absolute values of the terms with the original coefficients `c` and `d`. The round-off
+# errors of the projection are of the order of `eps` times the original coefficients. Hence,
+# the scale for the round-off errors in the double sum is computed with `c` and `d` and not with
+# the projected coefficients, which can themselves be round-off noise (e.g., if the exact
+# coefficients vanish).
+function kernel_double_sum(kernel, xs, c, c_projected, xis, d, d_projected)
+    s = zero(promote_type(eltype(c_projected), eltype(d_projected), eltype(xs)))
+    scale = abs(zero(promote_type(eltype(c), eltype(d), eltype(xs))))
+    for i in eachindex(c)
+        for j in eachindex(d)
+            K_ij = kernel(xs[i], xis[j])
+            s += c_projected[i] * d_projected[j] * K_ij
+            scale += abs(c[i] * d[j] * K_ij)
+        end
+    end
+    return s, scale
+end
+
 @doc raw"""
     kernel_inner_product(itp1, itp2)
 
@@ -460,12 +515,18 @@ with the same kernel. The inner product is defined as
 ```
 for the interpolants ``f(x) = \sum_{i = 1}^Nc_i^fK(x, x_i) + p_f(x)`` and
 ``g(x) = \sum_{j = 1}^Mc_j^gK(x, \xi_j) + p_g(x)`` with polynomials ``p_f`` and ``p_g``.
+For an interpolation in the [`LagrangeBasis`](@ref), the coefficients ``c^f`` are computed from
+the coefficients of the cardinal functions. Interpolations in other bases, e.g., RBF-FD, are not
+supported.
 
 For a conditionally positive definite kernel of order ``m``, this is the semi-inner product of
 the native space, see Wendland (2004), Section 10.3, provided the kernel coefficients satisfy
 ``\sum_{i = 1}^Nc_i^fp(x_i) = 0`` (and analogously for ``g``) for all polynomials ``p`` of
-order ``m``. This holds for interpolations with polynomial augmentation of order ``m``. The
-polynomial parts do not contribute.
+order ``m``. These conditions hold for interpolations with polynomial augmentation of order ``m``
+up to round-off errors and approximately for least squares approximations. Therefore, if
+polynomials are added, the kernel coefficients are first projected onto the vectors satisfying
+these conditions for the polynomials of the interpolation. The polynomial parts do not
+contribute.
 
 See also [`kernel_norm`](@ref).
 
@@ -477,16 +538,11 @@ See also [`kernel_norm`](@ref).
 function kernel_inner_product(itp1::Interpolation, itp2::Interpolation)
     kernel = interpolation_kernel(itp1)
     @assert kernel == interpolation_kernel(itp2)
-    c_f = kernel_coefficients(itp1)
-    c_g = kernel_coefficients(itp2)
-    xs = centers(itp1)
-    xis = centers(itp2)
-    s = zero(promote_type(eltype(c_f), eltype(c_g), eltype(xs)))
-    for i in eachindex(c_f)
-        for j in eachindex(c_g)
-            s += c_f[i] * c_g[j] * kernel(xs[i], xis[j])
-        end
-    end
+    xs, c, ps_f = standard_representation(itp1)
+    xis, d, ps_g = standard_representation(itp2)
+    c_projected = project_moment_conditions(xs, c, ps_f)
+    d_projected = project_moment_conditions(xis, d, ps_g)
+    s, _ = kernel_double_sum(kernel, xs, c, c_projected, xis, d, d_projected)
     return s
 end
 
@@ -498,51 +554,26 @@ The norm is defined as
 ```math
     \|f\|_K^2 = \sum_{i,j=1}^Nc_ic_jK(x_i, x_j)
 ```
-for the interpolant ``f(x) = \sum_{j = 1}^Nc_jK(x, x_j) + p(x)`` with a polynomial ``p``.
-For a conditionally positive definite kernel, this is the semi-norm of the native space, see
-[`kernel_inner_product`](@ref).
+for the interpolant ``f(x) = \sum_{j = 1}^Nc_jK(x, x_j) + p(x)`` with a polynomial ``p``, i.e.,
+``\|f\|_K^2 = \langle f, f\rangle_K``, see [`kernel_inner_product`](@ref), which also explains the
+supported bases. For a conditionally positive definite kernel, this is the semi-norm of the native
+space.
 
-If polynomials are added, the kernel coefficients ``c`` are first projected onto the vectors
-satisfying ``\sum_{j = 1}^Nc_jp(x_j) = 0`` for all polynomials ``p`` of the interpolation, see
-[`kernel_inner_product`](@ref). These conditions hold for interpolations up to round-off
-errors and approximately for least squares approximations. For a conditionally positive
-definite kernel, ``\|f\|_K^2`` is then nonnegative, and small negative values caused by
-round-off errors are set to zero. A `DomainError` is thrown if ``\|f\|_K^2`` is negative
-beyond the level of round-off errors, which means that the kernel is not conditionally
-positive definite of the order used for the interpolation, e.g., a custom kernel without the
-sign ``(-1)^m`` (see [`MultiquadricKernel`](@ref)).
+As described in [`kernel_inner_product`](@ref), the kernel coefficients ``c`` are first projected
+onto the vectors satisfying ``\sum_{j = 1}^Nc_jp(x_j) = 0`` for all polynomials ``p`` of the
+interpolation. For a conditionally positive definite kernel, ``\|f\|_K^2`` is then nonnegative,
+and small negative values caused by round-off errors are set to zero. A `DomainError` is thrown
+if ``\|f\|_K^2`` is negative beyond the level of round-off errors, which means that the kernel is
+not conditionally positive definite of the order used for the interpolation, e.g., a custom
+kernel without the sign ``(-1)^m`` (see [`MultiquadricKernel`](@ref)).
 
 See also [`kernel_inner_product`](@ref).
 """
 function kernel_norm(itp::Interpolation)
     kernel = interpolation_kernel(itp)
-    c = kernel_coefficients(itp)
-    xs = centers(itp)
-    ps = polynomial_basis(itp)
-    # For a conditionally positive definite kernel, the quadratic form is only nonnegative for
-    # coefficients satisfying `P' * c = 0`, where `P` is the polynomial matrix at the centers.
-    # Interpolations satisfy this only up to round-off errors and least squares approximations
-    # only approximately, so `c` is projected onto the null space of `P'` (`P \ c` is the least
-    # squares solution, such that `c - P * (P \ c)` is orthogonal to the range of `P`).
-    if isempty(ps)
-        c_projected = c
-    else
-        P = polynomial_matrix(xs, ps)
-        c_projected = c - P * (P \ c)
-    end
-    # The round-off errors of the projection are of the order of `eps` times the original
-    # coefficients `c`. Hence, the scale for the round-off errors in the quadratic form is
-    # computed with `c` and not with `c_projected`, which can itself be round-off noise (e.g.,
-    # if the exact coefficients vanish).
-    s = zero(promote_type(eltype(c_projected), eltype(xs)))
-    scale = abs(zero(promote_type(eltype(c), eltype(xs))))
-    for i in eachindex(c)
-        for j in eachindex(c)
-            K_ij = kernel(xs[i], xs[j])
-            s += c_projected[i] * c_projected[j] * K_ij
-            scale += abs(c[i] * c[j] * K_ij)
-        end
-    end
+    xs, c, ps = standard_representation(itp)
+    c_projected = project_moment_conditions(xs, c, ps)
+    s, scale = kernel_double_sum(kernel, xs, c, c_projected, xs, c, c_projected)
     # The comparison is on the primal values, such that dual numbers are also supported.
     s_value, scale_value = primal_value(s), primal_value(scale)
     if s_value < -sqrt(eps(float(typeof(scale_value)))) * scale_value

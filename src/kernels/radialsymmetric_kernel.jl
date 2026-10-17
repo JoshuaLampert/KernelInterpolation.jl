@@ -277,7 +277,9 @@ struct PolyharmonicSplineKernel{Dim} <: RadialSymmetricKernel{Dim}
     k::Int
 
     function PolyharmonicSplineKernel{Dim}(k) where {Dim}
-        k >= 1 || throw(ArgumentError("k has to be a positive integer, got k = $k."))
+        if !(isinteger(k) && k >= 1)
+            throw(ArgumentError("k has to be a positive integer, got k = $k."))
+        end
         return new{Dim}(k)
     end
 end
@@ -304,10 +306,9 @@ function phi(kernel::PolyharmonicSplineKernel, r::Real)
     return with_cpd_sign(kernel, value)
 end
 
-function order(kernel::PolyharmonicSplineKernel)
-    k2 = ceil(Int, kernel.k / 2)
-    return isodd(kernel.k) ? k2 : k2 + 1
-end
+# This is `ceil(k / 2)` for odd `k` and `k / 2 + 1` for even `k`. Integer arithmetic is used,
+# since `phi` calls `order` via `with_cpd_sign` in every evaluation.
+order(kernel::PolyharmonicSplineKernel) = div(kernel.k, 2) + 1
 smoothness(kernel::PolyharmonicSplineKernel) = kernel.k - 1
 
 @doc raw"""

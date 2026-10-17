@@ -20,13 +20,22 @@ for human readability.
   ([#220]).
 - `MultiquadricKernel` throws an `ArgumentError` for `beta <= 0` (use `InverseMultiquadricKernel`
   with `-beta` for negative `beta`) and for integer `beta` (the kernel is then a polynomial and
-  not conditionally positive definite). `PolyharmonicSplineKernel` throws an `ArgumentError` for
-  `k < 1` ([#220]).
-- `kernel_norm` projects the kernel coefficients onto the vectors satisfying the moment
-  conditions of the polynomials (which hold for interpolations up to round-off errors and for
-  least squares approximations only approximately) and throws a `DomainError` if the squared
-  native space norm is then negative beyond the level of round-off errors, instead of silently
-  returning `0` ([#220]).
+  not conditionally positive definite). `PolyharmonicSplineKernel` throws an `ArgumentError` if
+  `k` is not a positive integer ([#220]).
+- `kernel_norm` and `kernel_inner_product` project the kernel coefficients onto the vectors
+  satisfying the moment conditions of the polynomials (which hold for interpolations up to
+  round-off errors and for least squares approximations only approximately). `kernel_norm`
+  throws a `DomainError` if the squared native space norm is then negative beyond the level of
+  round-off errors, instead of silently returning `0` ([#220]).
+
+#### Fixed
+
+- `kernel_norm` and `kernel_inner_product` returned wrong values for interpolations in the
+  `LagrangeBasis`, since they used the coefficients with respect to the cardinal functions as
+  kernel coefficients. They now compute the native space (semi-)norm and inner product, which
+  agree with the ones of the same interpolation in the standard basis. For interpolations in an
+  `RBFFDBasis`, which have no global native space representation, they throw an
+  `ArgumentError` instead of returning a meaningless value ([#220]).
 
 #### Removed
 
