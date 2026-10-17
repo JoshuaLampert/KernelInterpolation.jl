@@ -5,6 +5,42 @@ KernelInterpolation.jl follows the interpretation of
 used in the Julia ecosystem. Notable changes will be documented in this file
 for human readability.
 
+## Changes when updating to v0.4 from v0.3.x
+
+#### Changed
+
+- `MultiquadricKernel` and `PolyharmonicSplineKernel` now include the sign `(-1)^m`, where `m` is
+  the order of the kernel, such that they are conditionally positive definite of order `m` (see
+  Wendland (2004), Corollary 8.18, and Fasshauer (2007), Chapter 8). This changes the sign of
+  `phi` and of the kernel coefficients of the `MultiquadricKernel` with odd `ceil(beta)` (e.g.,
+  the default `beta = 0.5`) and of the `PolyharmonicSplineKernel` with `k = 1, 4, 5, 8, 9, ...`.
+  Interpolants and least squares approximations are the same as before. However, `kernel_norm`
+  now returns the native space semi-norm for these kernels instead of `0`, and interpolants with
+  an `L2Regularization` change, since the regularization only acts as intended with the sign
+  ([#220]).
+- `MultiquadricKernel` throws an `ArgumentError` for `beta <= 0` (use `InverseMultiquadricKernel`
+  with `-beta` for negative `beta`) and for integer `beta` (the kernel is then a polynomial and
+  not conditionally positive definite). `PolyharmonicSplineKernel` throws an `ArgumentError` if
+  `k` is not a positive integer ([#220]).
+- `kernel_norm` and `kernel_inner_product` project the kernel coefficients onto the vectors
+  satisfying the moment conditions of the polynomials (which hold for interpolations up to
+  round-off errors and for least squares approximations only approximately). `kernel_norm`
+  throws a `DomainError` if the squared native space norm is then negative beyond the level of
+  round-off errors, instead of silently returning `0` ([#220]).
+
+#### Fixed
+
+- `kernel_norm` and `kernel_inner_product` returned wrong values for interpolations in the
+  `LagrangeBasis`, since they used the coefficients with respect to the cardinal functions as
+  kernel coefficients. They now compute the native space (semi-)norm and inner product, which
+  agree with the ones of the same interpolation in the standard basis. For interpolations in an
+  `RBFFDBasis`, which have no global native space representation, they throw an
+  `ArgumentError` instead of returning a meaningless value ([#220]).
+
+#### Removed
+
+- The deprecated function `values_along_dim` is removed. Use `nodeset[:, i]` instead ([#220]).
+
 ## Changes in the v0.3 lifecycle
 
 #### Added

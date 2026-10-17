@@ -22,9 +22,10 @@ end
     @test_nowarn display(kernel2)
     @test_nowarn get_name(kernel2)
     @test order(kernel2) == 1
-    @test isapprox(phi(kernel2, 0.0), 1.0)
-    @test isapprox(phi(kernel2, 0.5), 1.118033988749895)
-    @test isapprox(kernel2(x, y), 1.0448588176555913)
+    # With the sign (-1)^m = -1 for the order m = 1
+    @test isapprox(phi(kernel2, 0.0), -1.0)
+    @test isapprox(phi(kernel2, 0.5), -1.118033988749895)
+    @test isapprox(kernel2(x, y), -1.0448588176555913)
 
     kernel3 = @test_nowarn InverseMultiquadricKernel{2}()
     @test_nowarn println(kernel3)
@@ -230,6 +231,45 @@ end
             @test kernel(nodeset_alloc[1], nodeset_alloc[2]) ≈
                   kernel(collect(nodeset_alloc[1]), x_vector)
         end
+    end
+
+    # Conditionally positive definite kernels of order m include the sign (-1)^m, see Wendland
+    # (2004), Corollary 8.18
+    @test phi(PolyharmonicSplineKernel{2}(1), 0.5) == -0.5
+    @test phi(PolyharmonicSplineKernel{2}(3), 0.5) == 0.125
+    @test isapprox(phi(PolyharmonicSplineKernel{2}(4), 0.5), -0.5^4 * log(0.5))
+    @test isapprox(phi(PolyharmonicSplineKernel{2}(5), 0.5), -0.5^5)
+    @test isapprox(phi(MultiquadricKernel{2}(1.5), 0.5), 1.25^1.5)
+    # Parameters for which the kernels are not conditionally positive definite are rejected
+    @test_throws ArgumentError MultiquadricKernel{2}(0.0)
+    @test_throws ArgumentError MultiquadricKernel{2}(-0.5)
+    @test_throws ArgumentError MultiquadricKernel{2}(1)
+    @test_throws ArgumentError MultiquadricKernel{2}(2.0)
+    @test_throws ArgumentError PolyharmonicSplineKernel{2}(0)
+    @test_throws ArgumentError PolyharmonicSplineKernel{2}(-1)
+    @test_throws ArgumentError PolyharmonicSplineKernel{2}(1.5)
+    @test order(PolyharmonicSplineKernel{2}(2.0)) == 2
+    # ceil(k / 2) for odd k and k / 2 + 1 for even k
+    @test [order(PolyharmonicSplineKernel{2}(k)) for k in 1:6] == [1, 2, 2, 3, 3, 4]
+    # With the sign, the quadratic form of the kernel matrix is positive for all coefficient
+    # vectors orthogonal to the polynomials of order m (which is the definition). This is
+    # checked for all radial-symmetric kernels, such that a kernel with the wrong sign fails.
+    nodeset_cpd = homogeneous_hypercube(5; dim = 2)
+    for kernel in (GaussKernel{2}(), MultiquadricKernel{2}(), MultiquadricKernel{2}(1.5),
+                   InverseMultiquadricKernel{2}(), PolyharmonicSplineKernel{2}(1),
+                   ThinPlateSplineKernel{2}(), PolyharmonicSplineKernel{2}(3),
+                   PolyharmonicSplineKernel{2}(4), PolyharmonicSplineKernel{2}(5),
+                   WendlandKernel{2}(0), WendlandKernel{2}(3), WuKernel{2}(1, 0),
+                   WuKernel{2}(3, 2), RadialCharacteristicKernel{2}(2.0),
+                   MaternKernel{2}(2.5), Matern12Kernel{2}(), Matern32Kernel{2}(),
+                   Matern52Kernel{2}(), Matern72Kernel{2}(), RieszKernel{2}(0.5),
+                   RieszKernel{2}(1.5))
+        xx = polyvars(Val(2))
+        ps = KernelInterpolation.monomials(xx, 0:(order(kernel) - 1))
+        P = KernelInterpolation.polynomial_matrix(nodeset_cpd, ps)
+        Q = LinearAlgebra.nullspace(Matrix(P'))
+        A = kernel_matrix(nodeset_cpd, kernel)
+        @test minimum(LinearAlgebra.eigvals(Symmetric(Q' * A * Q))) > 0
     end
 end
 
@@ -1002,6 +1042,53 @@ end
     @test size(system_matrix(itp)) == (7, 6)
     @test isapprox(itp([0.5, 0.5]), 1.0)
     @test isapprox(kernel_norm(itp), 0.0, atol = 1e-15)
+    # Kernel coefficients of the size of round-off errors that violate the moment conditions,
+    # as they can occur in least squares approximations, are projected before computing the
+    # norm. Otherwise, the quadratic form can be negative beyond its own round-off level.
+    c_noise = copy(coefficients(itp))
+    c_noise[1:3] .= [1e-16, -2e-16, 3e-16]
+    itp_noise = Interpolation(KernelInterpolation.basis(itp), nodeset(itp), c_noise,
+                              system_matrix(itp), polynomial_basis(itp), polyvars(itp))
+    c_noise_kernel = kernel_coefficients(itp_noise)
+    @test dot(c_noise_kernel, kernel_matrix(centers, kernel), c_noise_kernel) < 0
+    @test isapprox(kernel_norm(itp_noise), 0.0, atol = 1e-15)
+    @test isapprox(KernelInterpolation.kernel_inner_product(itp_noise, itp_noise), 0.0,
+                   atol = 1e-30)
+
+    # The native space semi-norm of conditionally positive definite kernels is positive
+    nodeset_norm = homogeneous_hypercube(5; dim = 2)
+    values_norm = sin.(nodeset_norm[:, 1]) .+ nodeset_norm[:, 2] .^ 2
+    for kernel in (PolyharmonicSplineKernel{2}(1), MultiquadricKernel{2}(),
+                   RieszKernel{2}(1.5))
+        itp_norm = interpolate(nodeset_norm, values_norm, kernel)
+        @test kernel_norm(itp_norm) > 0.1
+        @test isapprox(kernel_norm(itp_norm)^2,
+                       KernelInterpolation.kernel_inner_product(itp_norm, itp_norm))
+    end
+    # A kernel without the sign (-1)^m is not conditionally positive definite, so the squared
+    # norm is negative, which is not silently set to zero
+    struct UnsignedMultiquadricKernel <: KernelInterpolation.RadialSymmetricKernel{2} end
+    KernelInterpolation.phi(::UnsignedMultiquadricKernel, r::Real) = sqrt(1 + r^2)
+    KernelInterpolation.order(::UnsignedMultiquadricKernel) = 1
+    itp_unsigned = interpolate(nodeset_norm, values_norm, UnsignedMultiquadricKernel())
+    @test_throws DomainError kernel_norm(itp_unsigned)
+    # Interpolations in the Lagrange basis have the same native space (semi-)norm as in the
+    # standard basis, since they are the same function
+    for kernel in (PolyharmonicSplineKernel{2}(1), ThinPlateSplineKernel{2}(),
+                   GaussKernel{2}(shape_parameter = 2.0))
+        itp_standard = interpolate(nodeset_norm, values_norm, kernel)
+        itp_lagrange = interpolate(LagrangeBasis(nodeset_norm, kernel), values_norm)
+        @test isapprox(kernel_norm(itp_lagrange), kernel_norm(itp_standard))
+        @test isapprox(KernelInterpolation.kernel_inner_product(itp_lagrange, itp_standard),
+                       kernel_norm(itp_standard)^2)
+    end
+    # RBF-FD interpolations do not have a global native space representation
+    basis_rbffd = RBFFDBasis(nodeset_norm, PolyharmonicSplineKernel{2}(3),
+                             KNearestNeighbors(9))
+    itp_rbffd = interpolate(basis_rbffd, values_norm)
+    @test_throws ArgumentError kernel_norm(itp_rbffd)
+    @test_throws ArgumentError KernelInterpolation.kernel_inner_product(itp_rbffd,
+                                                                        itp_rbffd)
 
     itp = @test_nowarn interpolate(centers, nodes, ff,
                                    Matern52Kernel{dim(nodes)}(shape_parameter = 0.5);
