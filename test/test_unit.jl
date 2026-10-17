@@ -209,7 +209,13 @@ end
     @test SumKernel{2}((kernel1, kernel2)) == kernel12
     @test (@inferred kernel11(x, y)) isa Float64
     @test (@inferred kernel12(x, y)) isa Float64
+    # Nested sums and products are flattened
+    @test (kernel1 + kernel4 + kernel2).kernels == (kernel1, kernel4, kernel2)
+    @test SumKernel{2}([kernel12, kernel4]).kernels == (kernel1, kernel2, kernel4)
+    @test (kernel1 * kernel3 * kernel1).kernels == (kernel1, kernel3, kernel1)
     @test (@inferred (kernel1 + kernel4 + kernel2)(x, y)) isa Float64
+    @test (@inferred (kernel1 * kernel3 * kernel1)(x, y)) isa Float64
+    @test (@inferred ((kernel1 + kernel3) * kernel3 + kernel2)(x, y)) isa Float64
 
     # Test evaluating 1D kernels at a scalar
     kernel13 = @test_nowarn GaussKernel{1}(shape_parameter = 2.0)

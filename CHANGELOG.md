@@ -45,7 +45,8 @@ for human readability.
 - `SumKernel` and `ProductKernel` store their component kernels in a `Tuple` instead of a
   `Vector{AbstractKernel}` and have the type of this tuple as an additional type parameter, e.g.,
   `SumKernel{2, Tuple{GaussKernel{2, Float64}, ThinPlateSplineKernel{2}}}`. They can still be
-  constructed from a vector. Evaluating them is now type-stable and does not allocate, which
+  constructed from a vector. Nested sums (products) are flattened into a single sum (product).
+  Evaluating them is now type-stable and does not allocate, which
   makes, e.g., assembling kernel matrices several times faster ([#222]).
 
 #### Fixed

@@ -43,6 +43,14 @@ order(kernel::TransformationKernel) = order(kernel.kernel)
 # Assumes the transformation itself is smooth.
 smoothness(kernel::TransformationKernel) = smoothness(kernel.kernel)
 
+# Nested sums (products) are flattened into a single sum (product), which does not change the
+# kernel, since summation (multiplication) is associative. Otherwise, the evaluation of a sum of
+# sums calls the same method recursively, which Julia v1.10 cannot infer. The components are
+# already flat, since they are constructed by the same constructor.
+function flatten_kernels(::Type{K}, kernels) where {K}
+    return Tuple(Iterators.flatten(k isa K ? k.kernels : (k,) for k in kernels))
+end
+
 @doc raw"""
     ProductKernel{Dim}(kernels)
 
@@ -54,7 +62,8 @@ results of the component kernels, i.e., the new kernel ``K`` is given by
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
 Note that all component kernels need to have the same [`dim`](@ref).
 A `ProductKernel` can also be constructed using the `*` operator. The component kernels are
-stored in a `Tuple`, such that evaluating the kernel is type-stable.
+stored in a `Tuple`, such that evaluating the kernel is type-stable. Nested `ProductKernel`s are
+flattened, e.g., `(k1 * k2) * k3` has the three components `k1`, `k2`, and `k3`.
 
 All component kernels have to be positive definite, i.e., of [`order`](@ref) 0, and an
 `ArgumentError` is thrown otherwise. The product of positive definite kernels is positive definite
@@ -73,7 +82,7 @@ struct ProductKernel{Dim, Kernels <: Tuple} <: AbstractKernel{Dim}
     kernels::Kernels
 
     function ProductKernel{Dim}(kernels) where {Dim}
-        kernels = Tuple(kernels)
+        kernels = flatten_kernels(ProductKernel, kernels)
         @assert all(dim.(kernels) .== Dim)
         if any(k -> order(k) > 0, kernels)
             throw(ArgumentError("All component kernels of a `ProductKernel` have to be " *
@@ -120,7 +129,8 @@ results of the component kernels, i.e., the new kernel ``K`` is given by
 where ``K_i`` are the component kernels and ``n`` the number of kernels.
 Note that all component kernels need to have the same [`dim`](@ref).
 A `SumKernel` can also be constructed using the `+` operator. The component kernels are stored
-in a `Tuple`, such that evaluating the kernel is type-stable.
+in a `Tuple`, such that evaluating the kernel is type-stable. Nested `SumKernel`s are flattened,
+e.g., `(k1 + k2) + k3` has the three components `k1`, `k2`, and `k3`.
 
 If the component kernels are conditionally positive definite of orders ``m_i``, the sum is
 conditionally positive definite of order ``\max_i m_i``, since every conditionally positive
@@ -131,7 +141,7 @@ struct SumKernel{Dim, Kernels <: Tuple} <: AbstractKernel{Dim}
     kernels::Kernels
 
     function SumKernel{Dim}(kernels) where {Dim}
-        kernels = Tuple(kernels)
+        kernels = flatten_kernels(SumKernel, kernels)
         @assert all(dim.(kernels) .== Dim)
         return new{Dim, typeof(kernels)}(kernels)
     end
